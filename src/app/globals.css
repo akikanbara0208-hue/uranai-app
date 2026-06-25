@@ -1,26 +1,134 @@
 @import "tailwindcss";
 
 :root {
-  --background: #ffffff;
-  --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
-  }
+  --bg-dark: #0a0a1a;
+  --bg-card: #12122a;
+  --accent-gold: #c9a227;
+  --accent-purple: #7c3aed;
+  --text-primary: #e8e0d0;
+  --text-muted: #9988aa;
 }
 
 body {
-  background: var(--background);
-  color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  background-color: var(--bg-dark);
+  color: var(--text-primary);
+  min-height: 100vh;
+}
+
+.mystical-bg {
+  background: radial-gradient(ellipse at top, #1a0a3a 0%, #0a0a1a 60%);
+  min-height: 100vh;
+}
+
+.card-mystical {
+  background: linear-gradient(135deg, rgba(124, 58, 237, 0.1) 0%, rgba(18, 18, 42, 0.9) 100%);
+  border: 1px solid rgba(201, 162, 39, 0.2);
+  backdrop-filter: blur(8px);
+  transition: all 0.3s ease;
+}
+
+.card-mystical:hover {
+  border-color: rgba(201, 162, 39, 0.5);
+  box-shadow: 0 0 20px rgba(124, 58, 237, 0.2), 0 0 40px rgba(201, 162, 39, 0.1);
+  transform: translateY(-2px);
+}
+
+.gold-text {
+  color: var(--accent-gold);
+}
+
+.gold-gradient {
+  background: linear-gradient(90deg, #c9a227, #f0d070, #c9a227);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.result-card {
+  background: linear-gradient(135deg, rgba(30, 10, 60, 0.95) 0%, rgba(10, 10, 26, 0.95) 100%);
+  border: 1px solid rgba(201, 162, 39, 0.4);
+  box-shadow: 0 0 30px rgba(124, 58, 237, 0.15);
+}
+
+@keyframes float {
+  0%, 100% { transform: translateY(0px); }
+  50% { transform: translateY(-8px); }
+}
+
+.float-anim {
+  animation: float 4s ease-in-out infinite;
+}
+
+@keyframes glow-pulse {
+  0%, 100% { box-shadow: 0 0 5px rgba(201, 162, 39, 0.2); }
+  50% { box-shadow: 0 0 20px rgba(201, 162, 39, 0.5), 0 0 40px rgba(124, 58, 237, 0.2); }
+}
+
+.glow-pulse {
+  animation: glow-pulse 2s ease-in-out infinite;
+}
+
+.category-badge {
+  font-size: 0.65rem;
+  padding: 2px 8px;
+  border-radius: 9999px;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+}
+
+.category-purple { background: rgba(124, 58, 237, 0.3); color: #c4b5fd; border: 1px solid rgba(124, 58, 237, 0.4); }
+.category-blue { background: rgba(37, 99, 235, 0.3); color: #93c5fd; border: 1px solid rgba(37, 99, 235, 0.4); }
+.category-indigo { background: rgba(67, 56, 202, 0.3); color: #a5b4fc; border: 1px solid rgba(67, 56, 202, 0.4); }
+.category-green { background: rgba(5, 150, 105, 0.3); color: #6ee7b7; border: 1px solid rgba(5, 150, 105, 0.4); }
+.category-red { background: rgba(185, 28, 28, 0.3); color: #fca5a5; border: 1px solid rgba(185, 28, 28, 0.4); }
+
+input[type="date"], input[type="text"], input[type="number"], select, textarea {
+  background: rgba(18, 18, 42, 0.8);
+  border: 1px solid rgba(201, 162, 39, 0.3);
+  color: var(--text-primary);
+  border-radius: 8px;
+  padding: 10px 14px;
+  width: 100%;
+  outline: none;
+  transition: border-color 0.2s;
+}
+
+input:focus, select:focus, textarea:focus {
+  border-color: rgba(201, 162, 39, 0.7);
+  box-shadow: 0 0 0 2px rgba(201, 162, 39, 0.1);
+}
+
+input[type="date"]::-webkit-calendar-picker-indicator {
+  filter: invert(0.7) sepia(1) saturate(2) hue-rotate(10deg);
+}
+
+.btn-gold {
+  background: linear-gradient(135deg, #c9a227, #f0d070);
+  color: #0a0a1a;
+  font-weight: 700;
+  padding: 12px 32px;
+  border-radius: 8px;
+  transition: all 0.2s;
+  letter-spacing: 0.1em;
+  cursor: pointer;
+  border: none;
+  width: 100%;
+}
+
+.btn-gold:hover {
+  background: linear-gradient(135deg, #f0d070, #c9a227);
+  box-shadow: 0 0 20px rgba(201, 162, 39, 0.4);
+  transform: translateY(-1px);
+}
+
+.btn-gold:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.divider-gold {
+  border: none;
+  border-top: 1px solid rgba(201, 162, 39, 0.2);
+  margin: 16px 0;
 }
