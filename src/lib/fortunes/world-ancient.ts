@@ -369,25 +369,18 @@ export function getGeomancyReading(question: string): FortuneResult {
 
   return {
     title: `ジオマンシー鑑定 ── 大地の声が答える`,
-    summary: `中世ヨーロッパと中東で発展した地相術（ジオマンシー）。砂や点の乱数から生まれる16の図形があなたの問いに答えます。\n各図形は上から「火・風・水・地」の4行で構成され、●（1点）= 奇数（能動）、● ●（2点）= 偶数（受動）を表します。`,
+    summary: `中世ヨーロッパと中東で発展した地相術（ジオマンシー）。砂や点の乱数から生まれる16の図形があなたの問いに答えます。各図形は「火・風・水・地」4行の点で構成され、1点（奇数）= 能動、2点（偶数）= 受動を表します。`,
     details: [
-      {
-        label: `第一の図（現在の状況）：${fig1.name}`,
-        content: `${dotsToArt(fig1.dots)}\n\n意味：${fig1.quality}\n\n${fig1.desc}`,
-      },
-      {
-        label: `第二の図（障害と課題）：${fig2.name}`,
-        content: `${dotsToArt(fig2.dots)}\n\n意味：${fig2.quality}\n\n課題の側面として「${fig2.quality}」のエネルギーが働いています。${fig2.desc}`,
-      },
-      {
-        label: `第三の図（結果と方向性）：${fig3.name}`,
-        content: `${dotsToArt(fig3.dots)}\n\n意味：${fig3.quality}\n\n最終的な流れとして「${fig3.quality}」が示されています。${fig3.desc}`,
-      },
       { label: "大地の判断", content: pick([
         "三つの図形は総じて前進のエネルギーを示しています。地の力があなたの選択を支持しています。",
         "図形は慎重さと準備の必要性を示しています。急がず、基盤を固めてから動くことが大地の意志です。",
         "変容のエネルギーが強く働いています。古いものを手放し、新しい流れに身を任せることが鍵です。",
       ], r)},
+    ],
+    geomancyFigures: [
+      { name: fig1.name, role: "第一の図（現在の状況）", dots: fig1.dots, meaning: fig1.quality, description: fig1.desc },
+      { name: fig2.name, role: "第二の図（障害と課題）", dots: fig2.dots, meaning: fig2.quality, description: `課題の側面として「${fig2.quality}」のエネルギーが働いています。${fig2.desc}` },
+      { name: fig3.name, role: "第三の図（結果と方向性）", dots: fig3.dots, meaning: fig3.quality, description: `最終的な流れとして「${fig3.quality}」が示されています。${fig3.desc}` },
     ],
     lucky: { color: pick(colors, r), item: pick(items, r) },
     advice: `ジオマンシーの伝統では「大地は嘘をつかない」と言われます。第三の図「${fig3.name}」が示す${fig3.quality}のエネルギーを意識しながら、地に足をつけた行動をすることで、大地の守護を最大限に受けることができます。`,

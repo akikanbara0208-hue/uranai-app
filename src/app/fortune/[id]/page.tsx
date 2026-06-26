@@ -77,6 +77,7 @@ import {
 // ── 総合鑑定 ──
 import { getComprehensiveReading } from "@/lib/fortunes/world-comprehensive";
 
+import { GeomancyFigure } from "@/lib/types";
 import { detectTheme, getThemeLabel } from "@/lib/questionAnalyzer";
 
 // ──────────────────────────────────────────────────────────────
@@ -104,6 +105,41 @@ function reorderDetails(
 }
 
 // ──────────────────────────────────────────────────────────────
+function GeomancyFigureCard({ fig }: { fig: GeomancyFigure }) {
+  const ROW_LABELS = ["火", "風", "水", "地"];
+  return (
+    <div className="bg-white/5 border border-yellow-500/20 rounded-xl p-4">
+      <p className="text-xs text-yellow-500/50 tracking-wider mb-1">{fig.role}</p>
+      <h3 className="text-base font-bold gold-text mb-4">{fig.name}</h3>
+      <div className="flex justify-center mb-4">
+        <div className="space-y-2">
+          {fig.dots.map((d, i) => (
+            <div key={i} className="flex items-center gap-3">
+              <span className="text-xs text-gray-600 w-4 text-right">{ROW_LABELS[i]}</span>
+              <div className="flex items-center justify-center w-14 gap-1.5">
+                {d === 2 ? (
+                  <>
+                    <div className="w-4 h-4 rounded-full bg-yellow-400" />
+                    <div className="w-4 h-4 rounded-full bg-yellow-400" />
+                  </>
+                ) : (
+                  <div className="w-4 h-4 rounded-full bg-yellow-400 opacity-90" />
+                )}
+              </div>
+              <span className="text-xs text-gray-600">{d === 2 ? "2点（偶）" : "1点（奇）"}</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div className="border-t border-white/10 pt-3 space-y-1">
+        <p className="text-xs text-purple-300/70">意味：{fig.meaning}</p>
+        <p className="text-sm text-gray-300 leading-relaxed">{fig.description}</p>
+      </div>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────
 function ResultDisplay({ result, question }: { result: FortuneResult; question?: string }) {
   const orderedDetails = question ? reorderDetails(result.details, question) : result.details;
   const theme = question ? detectTheme(question) : "general";
@@ -127,6 +163,20 @@ function ResultDisplay({ result, question }: { result: FortuneResult; question?:
         <h2 className="text-2xl md:text-3xl font-bold gold-gradient mb-2">{result.title}</h2>
         <p className="text-gray-300 text-sm leading-relaxed">{result.summary}</p>
       </div>
+
+      {result.geomancyFigures && result.geomancyFigures.length > 0 && (
+        <>
+          <hr className="divider-gold" />
+          <div>
+            <p className="text-xs text-yellow-500/70 tracking-wider mb-3">✦ 図形（上から 火・風・水・地）</p>
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+              {result.geomancyFigures.map((fig, i) => (
+                <GeomancyFigureCard key={i} fig={fig} />
+              ))}
+            </div>
+          </div>
+        </>
+      )}
 
       <hr className="divider-gold" />
 

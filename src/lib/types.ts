@@ -20,6 +20,14 @@ export type FortuneInputType =
   | "keyword"
   | "quiz";
 
+export interface GeomancyFigure {
+  name: string;
+  role: string;
+  dots: [number, number, number, number]; // 1=●（1点）, 2=● ●（2点）
+  meaning: string;
+  description: string;
+}
+
 export interface FortuneResult {
   title: string;
   summary: string;
@@ -33,5 +41,6 @@ export interface FortuneResult {
     item?: string;
     direction?: string;
   };
+  geomancyFigures?: GeomancyFigure[];
   advice: string;
 }
