@@ -694,9 +694,12 @@ function getReading(id: string, values: Record<string, string>): FortuneResult |
   const q  = values.question || "今";
   const nm = values.name || "";
 
+  // カード・霊的占いは押すたびに違う結果にする
+  const rq = q + "|" + Date.now();
+
   switch (id) {
     // ── 既存 ──
-    case "tarot":       return getTarotReading(q);
+    case "tarot":       return getTarotReading(rq);
     case "astrology": {
       if (!bd) return null;
       let h: number | undefined;
@@ -705,10 +708,10 @@ function getReading(id: string, values: Record<string, string>): FortuneResult |
     }
     case "numerology":  return bd ? getNumerologyReading(bd, nm) : null;
     case "omikuji":     return getOmikujiReading();
-    case "rune":        return getRuneReading(q);
-    case "iching":      return getIChingReading(q);
+    case "rune":        return getRuneReading(rq);
+    case "iching":      return getIChingReading(rq);
     case "blood-type":  return values.blood_type ? getBloodTypeReading(values.blood_type) : null;
-    case "oracle":      return getOracleReading(q);
+    case "oracle":      return getOracleReading(rq);
     case "dream":       return getDreamReading(values.keyword || "");
     case "angel-number":return getAngelNumberReading(values.keyword || "111");
     case "birthstone":  return bd ? getBirthstoneReading(bd) : null;
@@ -737,16 +740,16 @@ function getReading(id: string, values: Record<string, string>): FortuneResult |
     case "egypt":       return bd ? getEgyptReading(bd) : null;
     case "babylon":     return bd ? getBabylonReading(bd) : null;
     case "celtic-tree": return bd ? getCelticReading(bd) : null;
-    case "geomancy":    return getGeomancyReading(q);
+    case "geomancy":    return getGeomancyReading(rq);
     // ── カード ──
-    case "lenormand":   return getLenormandReading(q);
-    case "gypsy-cards": return getGypsyReading(q);
+    case "lenormand":   return getLenormandReading(rq);
+    case "gypsy-cards": return getGypsyReading(rq);
     // ── スピリチュアル ──
     case "past-life":   return bd ? getPastLifeReading(bd) : null;
     case "aura":        return bd ? getAuraReading(bd) : null;
-    case "chakra":      return getChakraReading(q);
-    case "akashic":     return getAkashicReading(q);
-    case "spirit-animal":return getSpiritAnimalReading(q);
+    case "chakra":      return getChakraReading(rq);
+    case "akashic":     return getAkashicReading(rq);
+    case "spirit-animal":return getSpiritAnimalReading(rq);
     // ── 自然・数 ──
     case "birth-flower":return bd ? getBirthFlowerReading(bd) : null;
     case "moon-phase":  return bd ? getMoonReading(bd) : null;
