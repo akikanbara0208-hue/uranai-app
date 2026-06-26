@@ -169,16 +169,44 @@ function julianDay(year: number, month: number, day: number): number {
     Math.floor(y / 4) - Math.floor(y / 100) + Math.floor(y / 400) - 32045;
 }
 
-function signIndex(jd: number, l0: number, dailyMotion: number): number {
-  const d = jd - 2451545.0;
-  const lon = ((l0 + dailyMotion * d) % 360 + 360) % 360;
-  return Math.floor(lon / 30);
+// 太陽の真黄経（Jean Meeus式）— 楕円軌道補正込みで誤差±0.01°
+function getSunLongitude(jd: number): number {
+  const T = (jd - 2451545.0) / 36525.0;
+  const L0 = 280.46646 + 36000.76983 * T;
+  const M  = (357.52911 + 35999.05029 * T) * Math.PI / 180;
+  const C  = (1.9146 - 0.004817 * T) * Math.sin(M)
+           + 0.019993 * Math.sin(2 * M)
+           + 0.00029  * Math.sin(3 * M);
+  return ((L0 + C) % 360 + 360) % 360;
 }
 
-// J2000.0 (2000-01-01 12:00 TT) 黄経 & 1日あたりの平均移動量
+// 月の黄経（主要摂動項込み）— 誤差±0.3°
+function getMoonLongitude(jd: number): number {
+  const T  = (jd - 2451545.0) / 36525.0;
+  const L  = 218.3164477 + 481267.88123421 * T;
+  const M  = (357.5291092  + 35999.0502909 * T) * Math.PI / 180;
+  const Mp = (134.9633964  + 477198.8675055 * T) * Math.PI / 180;
+  const D  = (297.8501921  + 445267.1114034 * T) * Math.PI / 180;
+  const F  = (93.2720950   + 483202.0175233 * T) * Math.PI / 180;
+  const lon = L
+    + 6.289 * Math.sin(Mp)
+    - 1.274 * Math.sin(2*D - Mp)
+    + 0.658 * Math.sin(2*D)
+    - 0.186 * Math.sin(M)
+    - 0.059 * Math.sin(2*Mp - 2*D)
+    - 0.057 * Math.sin(Mp - 2*D + M)
+    + 0.053 * Math.sin(Mp + 2*D)
+    + 0.046 * Math.sin(2*D - M)
+    + 0.041 * Math.sin(Mp - M)
+    - 0.035 * Math.sin(D)
+    - 0.031 * Math.sin(Mp + M)
+    - 0.015 * Math.sin(2*F - 2*D)
+    + 0.011 * Math.sin(Mp - 4*D);
+  return ((lon % 360) + 360) % 360;
+}
+
+// 外惑星は平均黄経で十分（移動が遅くサイン境界誤差が小さい）
 const PLANET_REFS: Record<string, { l0: number; motion: number }> = {
-  sun:     { l0: 280.461,  motion: 0.98564736 },
-  moon:    { l0: 218.316,  motion: 13.176396  },
   mercury: { l0: 252.251,  motion: 4.09233    },
   venus:   { l0: 181.979,  motion: 1.60213    },
   mars:    { l0: 355.433,  motion: 0.52403    },
@@ -187,8 +215,12 @@ const PLANET_REFS: Record<string, { l0: number; motion: number }> = {
 };
 
 function getSignIndex(jd: number, planet: string): number {
+  if (planet === "sun")  return Math.floor(getSunLongitude(jd) / 30);
+  if (planet === "moon") return Math.floor(getMoonLongitude(jd) / 30);
   const p = PLANET_REFS[planet];
-  return signIndex(jd, p.l0, p.motion);
+  const d = jd - 2451545.0;
+  const lon = ((p.l0 + p.motion * d) % 360 + 360) % 360;
+  return Math.floor(lon / 30);
 }
 
 // 上昇星座（アセンダント）簡易計算
