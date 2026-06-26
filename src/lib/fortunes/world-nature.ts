@@ -253,7 +253,7 @@ function getDayOfWeek(y: number, m: number, d: number): number {
   const k = y % 100;
   const j = Math.floor(y / 100);
   const h = (d + Math.floor(13 * (m + 1) / 5) + k + Math.floor(k / 4) + Math.floor(j / 4) - 2 * j) % 7;
-  return ((h + 5) % 7); // 0=Sun, 1=Mon, ..., 6=Sat
+  return ((h + 6) % 7); // 0=Sun, 1=Mon, ..., 6=Sat
 }
 
 export function getBirthDayReading(birthday: string): FortuneResult {
