@@ -5,7 +5,7 @@ export interface Fortune {
   description: string;
   origin: string;
   icon: string;
-  category: "cards" | "numbers" | "astrology" | "nature" | "eastern";
+  category: "cards" | "numbers" | "astrology" | "nature" | "eastern" | "ancient" | "spiritual" | "personality" | "comprehensive";
   inputType: FortuneInputType;
 }
 
@@ -17,7 +17,8 @@ export type FortuneInputType =
   | "draw"
   | "birthday_time"
   | "blood_type"
-  | "keyword";
+  | "keyword"
+  | "quiz";
 
 export interface FortuneResult {
   title: string;

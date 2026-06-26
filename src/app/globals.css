@@ -81,6 +81,10 @@ body {
 .category-indigo { background: rgba(67, 56, 202, 0.3); color: #a5b4fc; border: 1px solid rgba(67, 56, 202, 0.4); }
 .category-green { background: rgba(5, 150, 105, 0.3); color: #6ee7b7; border: 1px solid rgba(5, 150, 105, 0.4); }
 .category-red { background: rgba(185, 28, 28, 0.3); color: #fca5a5; border: 1px solid rgba(185, 28, 28, 0.4); }
+.category-amber { background: rgba(180, 120, 10, 0.3); color: #fcd34d; border: 1px solid rgba(180, 120, 10, 0.4); }
+.category-violet { background: rgba(139, 92, 246, 0.3); color: #ddd6fe; border: 1px solid rgba(139, 92, 246, 0.4); }
+.category-teal { background: rgba(13, 148, 136, 0.3); color: #99f6e4; border: 1px solid rgba(13, 148, 136, 0.4); }
+.category-gold { background: rgba(201, 162, 39, 0.25); color: #f5d76e; border: 1px solid rgba(201, 162, 39, 0.5); }
 
 input[type="date"], input[type="text"], input[type="number"], select, textarea {
   background: rgba(18, 18, 42, 0.8);

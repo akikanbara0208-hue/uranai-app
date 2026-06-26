@@ -5,6 +5,8 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { FORTUNES } from "@/lib/fortunes";
 import { FortuneResult } from "@/lib/types";
+
+// ── 既存占い ──
 import { getTarotReading } from "@/lib/fortunes/tarot";
 import { getAstrologyReading } from "@/lib/fortunes/astrology";
 import { getNumerologyReading } from "@/lib/fortunes/numerology";
@@ -17,17 +19,71 @@ import {
   getDreamReading,
   getAngelNumberReading,
   getBirthstoneReading,
-  getHandReading,
   getFengShuiReading,
   getKyuseiReading,
   getShichuReading,
 } from "@/lib/fortunes/others";
+
+// ── 東洋 ──
+import {
+  getSeimeiReading,
+  getEtoReading,
+  getRokuyoReading,
+  getSanmeigakuReading,
+  getShibiReading,
+} from "@/lib/fortunes/world-eastern";
+
+// ── 古代 ──
+import {
+  getVedicReading,
+  getMayaReading,
+  getEgyptReading,
+  getBabylonReading,
+  getCelticReading,
+  getGeomancyReading,
+} from "@/lib/fortunes/world-ancient";
+
+// ── カード ──
+import { getLenormandReading, getGypsyReading } from "@/lib/fortunes/world-cards";
+
+// ── スピリチュアル ──
+import {
+  getPastLifeReading,
+  getAuraReading,
+  getChakraReading,
+  getAkashicReading,
+  getSpiritAnimalReading,
+} from "@/lib/fortunes/world-spiritual";
+
+// ── 自然・数 ──
+import {
+  getBirthFlowerReading,
+  getMoonReading,
+  getAnimalFortune,
+  getKabbalahReading,
+  getBirthDayReading,
+  getDiceReading,
+} from "@/lib/fortunes/world-nature";
+
+// ── 性格診断 ──
+import {
+  getMBTIReading,
+  getHSPReading,
+  getEnneagramReading,
+  getBigFiveReading,
+  getLoveLanguageReading,
+} from "@/lib/fortunes/world-personality";
+
+// ── 総合鑑定 ──
+import { getComprehensiveReading } from "@/lib/fortunes/world-comprehensive";
+
 import { detectTheme, getThemeLabel } from "@/lib/questionAnalyzer";
 
+// ──────────────────────────────────────────────────────────────
 const THEME_DETAIL_KEYWORDS: Record<string, string[]> = {
-  love: ["恋愛", "愛", "love", "ラブ", "縁", "パートナー", "結婚"],
-  work: ["仕事", "キャリア", "work", "転職", "昇進", "ビジネス"],
-  money: ["金運", "財", "お金", "money", "収入"],
+  love:   ["恋愛", "愛", "love", "ラブ", "縁", "パートナー", "結婚"],
+  work:   ["仕事", "キャリア", "work", "転職", "昇進", "ビジネス"],
+  money:  ["金運", "財", "お金", "money", "収入"],
   health: ["健康", "体", "health", "ヒーリング"],
   spirit: ["スピリチュアル", "霊", "spirit", "魂", "メッセージ"],
 };
@@ -39,9 +95,7 @@ function reorderDetails(
   const theme = detectTheme(question);
   if (theme === "general") return details;
   const keywords = THEME_DETAIL_KEYWORDS[theme] ?? [];
-  const idx = details.findIndex((d) =>
-    keywords.some((kw) => d.label.includes(kw))
-  );
+  const idx = details.findIndex((d) => keywords.some((kw) => d.label.includes(kw)));
   if (idx <= 0) return details;
   const reordered = [...details];
   const [matched] = reordered.splice(idx, 1);
@@ -49,6 +103,7 @@ function reorderDetails(
   return reordered;
 }
 
+// ──────────────────────────────────────────────────────────────
 function ResultDisplay({ result, question }: { result: FortuneResult; question?: string }) {
   const orderedDetails = question ? reorderDetails(result.details, question) : result.details;
   const theme = question ? detectTheme(question) : "general";
@@ -82,7 +137,7 @@ function ResultDisplay({ result, question }: { result: FortuneResult; question?:
             className={`flex flex-col gap-1 ${i === 0 && question && theme !== "general" ? "bg-yellow-500/5 border border-yellow-500/20 rounded-lg p-3" : ""}`}
           >
             <span className="text-xs text-yellow-500/70 tracking-wider uppercase">{detail.label}</span>
-            <p className="text-gray-200 leading-relaxed text-sm md:text-base">{detail.content}</p>
+            <p className="text-gray-200 leading-relaxed text-sm md:text-base whitespace-pre-line">{detail.content}</p>
           </div>
         ))}
       </div>
@@ -132,6 +187,23 @@ function ResultDisplay({ result, question }: { result: FortuneResult; question?:
   );
 }
 
+// ──────────────────────────────────────────────────────────────
+const SLIDER_STYLE: React.CSSProperties = {
+  width: "100%",
+  accentColor: "var(--gold)",
+  cursor: "pointer",
+};
+
+const SELECT_STYLE: React.CSSProperties = {
+  background: "rgba(18, 18, 42, 0.8)",
+  border: "1px solid rgba(201, 162, 39, 0.3)",
+  color: "var(--text-primary)",
+  borderRadius: "8px",
+  padding: "10px 14px",
+  width: "100%",
+  outline: "none",
+};
+
 function InputForm({
   inputType,
   fortuneId,
@@ -141,37 +213,50 @@ function InputForm({
   fortuneId: string;
   onSubmit: (values: Record<string, string>) => void;
 }) {
-  const [values, setValues] = useState<Record<string, string>>({});
+  const [values, setValues] = useState<Record<string, string>>({
+    // HSP デフォルト（中間値5）
+    hsp_0: "5", hsp_1: "5", hsp_2: "5", hsp_3: "5", hsp_4: "5", hsp_5: "5", hsp_6: "5",
+    // BigFive デフォルト（中間値50）
+    big5_O: "50", big5_C: "50", big5_E: "50", big5_A: "50", big5_N: "50",
+  });
 
   const set = (key: string, val: string) => setValues((prev) => ({ ...prev, [key]: val }));
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // HSP: combine scores into hsp_answers for the reading function
+    if (fortuneId === "hsp") {
+      const answers = [0,1,2,3,4,5,6].map(i => values[`hsp_${i}`] || "5").join(",");
+      onSubmit({ ...values, hsp_answers: answers });
+      return;
+    }
     onSubmit(values);
   };
 
-  const isValid = () => {
+  const isValid = (): boolean => {
     if (inputType === "birthday") return !!values.birthday;
-    if (inputType === "birthday_name") return !!values.birthday && !!values.name;
-    if (inputType === "birthday_time") return !!values.birthday; // birthTime は任意
+    if (inputType === "birthday_name") return !!values.birthday;
+    if (inputType === "birthday_time") return !!values.birthday;
     if (inputType === "blood_type") return !!values.blood_type;
-    if (inputType === "question") {
-      if (fortuneId === "hand-reading") {
-        return !!(values.lifeLine || values.heartLine || values.headLine || values.fateLine || values.sunLine);
-      }
-      return !!values.question?.trim();
-    }
+    if (inputType === "question") return !!values.question?.trim();
+    if (inputType === "name") return !!values.name?.trim();
+    if (inputType === "draw") return true;
     if (inputType === "keyword") {
       if (fortuneId === "dream") return (values.keyword || "").split(",").filter(Boolean).length > 0;
       return !!values.keyword?.trim();
     }
-    if (inputType === "name") return !!values.name?.trim();
-    if (inputType === "draw") return true;
+    if (inputType === "quiz") {
+      if (fortuneId === "mbti") return !!values.mbti_ei && !!values.mbti_sn && !!values.mbti_tf && !!values.mbti_jp;
+      if (fortuneId === "enneagram") return !!values.enneagram_type;
+      if (fortuneId === "love-language") return values.love_primary !== undefined && values.love_primary !== "";
+      return true; // hsp, big-five have defaults
+    }
     return false;
   };
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
+      {/* ── 生年月日 ── */}
       {(inputType === "birthday" || inputType === "birthday_name" || inputType === "birthday_time") && (
         <div>
           <label className="block text-sm text-yellow-500/70 mb-2">生年月日</label>
@@ -185,108 +270,42 @@ function InputForm({
         </div>
       )}
 
+      {/* ── 生まれた時間 ── */}
       {inputType === "birthday_time" && (
         <div>
           <label className="block text-sm text-yellow-500/70 mb-2">
-            生まれた時間（わかる場合・時刻まで入力するとASC/MCを正確に算出）
+            生まれた時間（わかる場合・任意）
           </label>
           <input
             type="time"
             value={values.birthTime || ""}
             onChange={(e) => set("birthTime", e.target.value)}
-            style={{
-              background: "rgba(18, 18, 42, 0.8)",
-              border: "1px solid rgba(201, 162, 39, 0.3)",
-              color: "var(--text-primary)",
-              borderRadius: "8px",
-              padding: "10px 14px",
-              width: "100%",
-              outline: "none",
-            }}
+            style={SELECT_STYLE}
           />
           <p className="text-xs text-gray-500 mt-1">入力しなくてもOK（太陽・月・惑星は算出されます）</p>
         </div>
       )}
 
+      {/* ── お名前 ── */}
       {(inputType === "birthday_name" || inputType === "name") && (
         <div>
-          <label className="block text-sm text-yellow-500/70 mb-2">お名前（フルネーム）</label>
+          <label className="block text-sm text-yellow-500/70 mb-2">
+            お名前{inputType === "birthday_name" ? "（任意）" : "（フルネーム）"}
+          </label>
           <input
             type="text"
-            placeholder="例：山田 花子"
+            placeholder={inputType === "birthday_name" ? "例：山田花子（なくてもOK）" : "例：山田 花子"}
             value={values.name || ""}
             onChange={(e) => set("name", e.target.value)}
           />
+          {inputType === "name" && fortuneId === "kabbalah" && (
+            <p className="text-xs text-gray-500 mt-1">ローマ字・英語名・カタカナいずれも可</p>
+          )}
         </div>
       )}
 
-      {inputType === "question" && fortuneId === "hand-reading" && (
-        <div className="space-y-4">
-          <p className="text-sm text-yellow-500/70">自分の手のひらを見ながら答えてください（右手・利き手）</p>
-          {[
-            {
-              key: "lifeLine", label: "① 生命線（親指の付け根を囲む弧の線）",
-              options: [
-                { value: "生命線_長い", label: "長くて深い（手首まで伸びている）" },
-                { value: "生命線_短い", label: "短め（手の中ほどで終わる）" },
-                { value: "", label: "普通・よくわからない" },
-              ],
-            },
-            {
-              key: "heartLine", label: "② 感情線（小指側から人差し指方向へ伸びる一番上の横線）",
-              options: [
-                { value: "感情線_深い", label: "深くはっきりしている" },
-                { value: "感情線_浅い", label: "浅め・薄め" },
-                { value: "", label: "普通・よくわからない" },
-              ],
-            },
-            {
-              key: "headLine", label: "③ 知能線（手の中央を横切る線）",
-              options: [
-                { value: "知能線_長い", label: "長い（小指側まで伸びている）" },
-                { value: "知能線_短い", label: "短め" },
-                { value: "", label: "普通・よくわからない" },
-              ],
-            },
-            {
-              key: "fateLine", label: "④ 運命線（手のひら中央を縦に走る線）",
-              options: [
-                { value: "運命線_ある", label: "はっきりある" },
-                { value: "運命線_ない", label: "ない・ほとんど見えない" },
-                { value: "", label: "うっすらある程度" },
-              ],
-            },
-            {
-              key: "sunLine", label: "⑤ 太陽線（薬指の下の縦線）",
-              options: [
-                { value: "太陽線_ある", label: "ある" },
-                { value: "", label: "ない・わからない" },
-              ],
-            },
-          ].map(({ key, label, options }) => (
-            <div key={key}>
-              <label className="block text-xs text-gray-400 mb-1">{label}</label>
-              <select
-                value={values[key] || ""}
-                onChange={(e) => {
-                  const updated = { ...values, [key]: e.target.value };
-                  const palmDesc = [
-                    updated.lifeLine, updated.heartLine, updated.headLine,
-                    updated.fateLine, updated.sunLine,
-                  ].filter(Boolean).join(" ");
-                  setValues({ ...updated, question: palmDesc || "手相鑑定" });
-                }}
-              >
-                {options.map((o) => (
-                  <option key={o.value} value={o.value}>{o.label}</option>
-                ))}
-              </select>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {inputType === "question" && fortuneId !== "hand-reading" && (
+      {/* ── 質問テキスト ── */}
+      {inputType === "question" && (
         <div>
           <label className="block text-sm text-yellow-500/70 mb-2">
             心に浮かぶ質問や悩みを入力してください
@@ -310,34 +329,35 @@ function InputForm({
         </div>
       )}
 
+      {/* ── 夢占い キーワード ── */}
       {inputType === "keyword" && fortuneId === "dream" && (
         <div>
           <label className="block text-sm text-yellow-500/70 mb-2">
             どんな夢を見ましたか？（複数選択可）
           </label>
           {[
-            { value: "飛ぶ",    label: "空を飛ぶ" },
+            { value: "飛ぶ", label: "空を飛ぶ" },
             { value: "追われる", label: "追いかけられる・逃げる" },
-            { value: "落ちる",  label: "高いところから落ちる" },
-            { value: "歯",      label: "歯が抜ける" },
-            { value: "死",      label: "死ぬ・誰かが死ぬ" },
-            { value: "海",      label: "海・大きな水" },
-            { value: "水",      label: "川・池・水" },
-            { value: "空",      label: "空・雲・青空" },
-            { value: "山",      label: "山・登山" },
-            { value: "火",      label: "火・炎・火事" },
-            { value: "家",      label: "家・部屋" },
-            { value: "人",      label: "知人・見知らぬ人が出てくる" },
-            { value: "花",      label: "花・植物" },
-            { value: "動物",    label: "動物が出てくる" },
-            { value: "道",      label: "道・分かれ道" },
-            { value: "学校",    label: "学校・試験" },
+            { value: "落ちる", label: "高いところから落ちる" },
+            { value: "歯", label: "歯が抜ける" },
+            { value: "死", label: "死ぬ・誰かが死ぬ" },
+            { value: "海", label: "海・大きな水" },
+            { value: "水", label: "川・池・水" },
+            { value: "空", label: "空・雲・青空" },
+            { value: "山", label: "山・登山" },
+            { value: "火", label: "火・炎・火事" },
+            { value: "家", label: "家・部屋" },
+            { value: "人", label: "知人・見知らぬ人が出てくる" },
+            { value: "花", label: "花・植物" },
+            { value: "動物", label: "動物が出てくる" },
+            { value: "道", label: "道・分かれ道" },
+            { value: "学校", label: "学校・試験" },
             { value: "赤ちゃん", label: "赤ちゃん・子供" },
-            { value: "トイレ",   label: "トイレに行く・トイレを探す" },
-            { value: "蛇",       label: "蛇が出てくる" },
-            { value: "結婚",     label: "結婚式・プロポーズ" },
-            { value: "お金",     label: "お金を拾う・もらう・失う" },
-            { value: "虹",       label: "虹が見える" },
+            { value: "トイレ", label: "トイレに行く・探す" },
+            { value: "蛇", label: "蛇が出てくる" },
+            { value: "結婚", label: "結婚式・プロポーズ" },
+            { value: "お金", label: "お金を拾う・もらう・失う" },
+            { value: "虹", label: "虹が見える" },
           ].map(({ value, label }) => {
             const selected = (values.keyword || "").split(",").filter(Boolean);
             const checked = selected.includes(value);
@@ -347,9 +367,7 @@ function InputForm({
                   type="checkbox"
                   checked={checked}
                   onChange={() => {
-                    const next = checked
-                      ? selected.filter((v) => v !== value)
-                      : [...selected, value];
+                    const next = checked ? selected.filter((v) => v !== value) : [...selected, value];
                     set("keyword", next.join(","));
                   }}
                   style={{ accentColor: "var(--gold)", width: "16px", height: "16px" }}
@@ -361,11 +379,10 @@ function InputForm({
         </div>
       )}
 
+      {/* ── エンジェルナンバー キーワード ── */}
       {inputType === "keyword" && fortuneId !== "dream" && (
         <div>
-          <label className="block text-sm text-yellow-500/70 mb-2">
-            数字を入力してください
-          </label>
+          <label className="block text-sm text-yellow-500/70 mb-2">数字を入力してください</label>
           <input
             type="text"
             placeholder="例：111、222、1111など"
@@ -375,10 +392,11 @@ function InputForm({
         </div>
       )}
 
+      {/* ── 血液型 ── */}
       {inputType === "blood_type" && (
         <div>
           <label className="block text-sm text-yellow-500/70 mb-2">血液型</label>
-          <select value={values.blood_type || ""} onChange={(e) => set("blood_type", e.target.value)}>
+          <select value={values.blood_type || ""} onChange={(e) => set("blood_type", e.target.value)} style={SELECT_STYLE}>
             <option value="">選択してください</option>
             <option value="A">A型</option>
             <option value="B">B型</option>
@@ -388,12 +406,228 @@ function InputForm({
         </div>
       )}
 
+      {/* ── おみくじ・六曜・サイコロ（抽選型） ── */}
       {inputType === "draw" && (
         <div className="text-center py-4">
-          <div className="text-6xl float-anim mb-4">🎋</div>
+          <div className="text-6xl float-anim mb-4">
+            {fortuneId === "dice" ? "🎲" : fortuneId === "rokuyo" ? "📅" : "🎋"}
+          </div>
           <p className="text-gray-400 text-sm">
             心を静め、深呼吸して<br />ボタンを押してください
           </p>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════
+          QUIZ 型フォーム
+         ══════════════════════════════════════════════ */}
+
+      {/* ── MBTI ── */}
+      {inputType === "quiz" && fortuneId === "mbti" && (
+        <div className="space-y-6">
+          <p className="text-sm text-yellow-500/70">それぞれ当てはまる方を選んでください（全4問）</p>
+          {[
+            {
+              key: "mbti_ei",
+              question: "エネルギーの源泉はどちらに近い？",
+              options: [
+                { value: "E", label: "E（外向型）", desc: "人と関わることでエネルギーが充電される" },
+                { value: "I", label: "I（内向型）", desc: "一人の時間でエネルギーが充電される" },
+              ],
+            },
+            {
+              key: "mbti_sn",
+              question: "日常の中で自然に重視するのは？",
+              options: [
+                { value: "S", label: "S（感覚型）", desc: "具体的な事実・現実・細部を重視する" },
+                { value: "N", label: "N（直観型）", desc: "可能性・ひらめき・大きな全体像を重視する" },
+              ],
+            },
+            {
+              key: "mbti_tf",
+              question: "決断するとき優先するのは？",
+              options: [
+                { value: "T", label: "T（思考型）", desc: "論理・分析・客観的な基準で判断する" },
+                { value: "F", label: "F（感情型）", desc: "感情・価値観・人への影響で判断する" },
+              ],
+            },
+            {
+              key: "mbti_jp",
+              question: "生活スタイルはどちらに近い？",
+              options: [
+                { value: "J", label: "J（判断型）", desc: "計画的で整理された生活を好む" },
+                { value: "P", label: "P（知覚型）", desc: "柔軟で自発的な生活を好む" },
+              ],
+            },
+          ].map(({ key, question, options }) => (
+            <div key={key} className="bg-white/5 rounded-lg p-4">
+              <p className="text-sm text-gray-300 mb-3">{question}</p>
+              <div className="space-y-2">
+                {options.map((o) => (
+                  <label key={o.value} style={{ display: "flex", alignItems: "flex-start", gap: "10px", cursor: "pointer", padding: "8px", borderRadius: "6px", background: values[key] === o.value ? "rgba(201,162,39,0.15)" : "transparent", border: values[key] === o.value ? "1px solid rgba(201,162,39,0.4)" : "1px solid transparent" }}>
+                    <input
+                      type="radio"
+                      name={key}
+                      value={o.value}
+                      checked={values[key] === o.value}
+                      onChange={() => set(key, o.value)}
+                      style={{ accentColor: "var(--gold)", marginTop: "2px" }}
+                    />
+                    <span>
+                      <span style={{ color: "var(--gold)", fontWeight: 600 }}>{o.label}</span>
+                      <span className="text-gray-400 text-sm ml-2">{o.desc}</span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── HSP ── */}
+      {inputType === "quiz" && fortuneId === "hsp" && (
+        <div className="space-y-5">
+          <p className="text-sm text-yellow-500/70">各質問を0〜10で評価してください（0＝まったく当てはまらない　10＝非常に当てはまる）</p>
+          {[
+            "騒音・強い光・混雑などの外的刺激が気になりやすい",
+            "他人の気持ちや感情の変化に敏感に気づく",
+            "一度に多くのことを要求されると圧倒される",
+            "暴力的な映像やニュースがしばらく心に残る",
+            "繊細な音・味・匂い・感触の違いに気づきやすい",
+            "豊かな内面世界・空想・想像の世界がある",
+            "何かを決める前に深く考え込む傾向がある",
+          ].map((q, i) => (
+            <div key={i} className="bg-white/5 rounded-lg p-4">
+              <p className="text-sm text-gray-300 mb-2">{i + 1}. {q}</p>
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-gray-500 w-6">0</span>
+                <input
+                  type="range"
+                  min={0}
+                  max={10}
+                  value={values[`hsp_${i}`] || "5"}
+                  onChange={(e) => set(`hsp_${i}`, e.target.value)}
+                  style={{ ...SLIDER_STYLE }}
+                />
+                <span className="text-xs text-gray-500 w-6 text-right">10</span>
+                <span className="text-sm font-semibold gold-text w-6 text-right">{values[`hsp_${i}`] || "5"}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── エニアグラム ── */}
+      {inputType === "quiz" && fortuneId === "enneagram" && (
+        <div className="space-y-4">
+          <p className="text-sm text-yellow-500/70">最も当てはまるタイプを選んでください</p>
+          <p className="text-xs text-gray-500">直感で「これが一番しっくりくる」と思う動機を選ぶのがポイントです</p>
+          <select
+            value={values.enneagram_type || ""}
+            onChange={(e) => set("enneagram_type", e.target.value)}
+            style={{ ...SELECT_STYLE }}
+          >
+            <option value="">タイプを選択してください</option>
+            {[
+              [1, "改革者",     "正しくありたい・完璧でありたい"],
+              [2, "助力者",     "愛されたい・必要とされたい"],
+              [3, "達成者",     "価値があると見られたい・成功したい"],
+              [4, "個人主義者", "本物の自分でありたい・独自でありたい"],
+              [5, "観察者",     "知識を持ちたい・理解したい"],
+              [6, "忠実者",     "安全でいたい・確かな支えが欲しい"],
+              [7, "熱狂者",     "楽しく満足していたい・痛みを避けたい"],
+              [8, "挑戦者",     "力強くいたい・コントロールを持ちたい"],
+              [9, "平和主義者", "平和でいたい・対立を避けたい"],
+            ].map(([num, name, motive]) => (
+              <option key={num} value={String(num)}>
+                タイプ{num}：{name}（{motive}）
+              </option>
+            ))}
+          </select>
+          <div className="bg-white/5 rounded-lg p-3">
+            <p className="text-xs text-gray-400">ヒント：「何が自分の一番根本的な動機か」に着目してください。行動の結果ではなく、なぜそうしたいのかという動機で選ぶと正確です。</p>
+          </div>
+        </div>
+      )}
+
+      {/* ── ビッグファイブ ── */}
+      {inputType === "quiz" && fortuneId === "big-five" && (
+        <div className="space-y-5">
+          <p className="text-sm text-yellow-500/70">各特性について自分がどの程度当てはまるかを0〜100で評価してください</p>
+          {[
+            { key: "big5_O", label: "開放性（O）", desc: "好奇心・創造性・新体験への開放度" },
+            { key: "big5_C", label: "誠実性（C）", desc: "計画性・責任感・自制心の高さ" },
+            { key: "big5_E", label: "外向性（E）", desc: "社交性・活発さ・外向的エネルギー" },
+            { key: "big5_A", label: "協調性（A）", desc: "思いやり・信頼性・協力的な姿勢" },
+            { key: "big5_N", label: "神経症傾向（N）", desc: "感情の波・ストレス反応・不安傾向" },
+          ].map(({ key, label, desc }) => (
+            <div key={key} className="bg-white/5 rounded-lg p-4">
+              <p className="text-sm text-gray-200 font-semibold mb-1">{label}</p>
+              <p className="text-xs text-gray-500 mb-2">{desc}</p>
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-gray-500 w-6">低</span>
+                <input
+                  type="range"
+                  min={0}
+                  max={100}
+                  value={values[key] || "50"}
+                  onChange={(e) => set(key, e.target.value)}
+                  style={{ ...SLIDER_STYLE }}
+                />
+                <span className="text-xs text-gray-500 w-6 text-right">高</span>
+                <span className="text-sm font-semibold gold-text w-8 text-right">{values[key] || "50"}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
+      {/* ── 愛情表現タイプ ── */}
+      {inputType === "quiz" && fortuneId === "love-language" && (
+        <div className="space-y-6">
+          <div>
+            <p className="text-sm text-yellow-500/70 mb-3">メインの愛の言語を選んでください（愛を最も感じる方法）</p>
+            <div className="space-y-2">
+              {[
+                [0, "💬 言葉による肯定", "「ありがとう」「好きだよ」など言葉で愛を受け取るとき"],
+                [1, "⏰ クオリティタイム", "相手が自分だけに時間を使ってくれるとき"],
+                [2, "🎁 贈り物",           "思いやりのある贈り物や気遣いを受け取るとき"],
+                [3, "🤝 奉仕の行為",       "相手が率先してやってくれること・助けてもらうとき"],
+                [4, "🤗 身体的なタッチ",   "ハグ・手をつなぐなど身体的なつながりを感じるとき"],
+              ].map(([idx, label, desc]) => (
+                <label key={idx} style={{ display: "flex", flexDirection: "column", gap: "2px", cursor: "pointer", padding: "10px", borderRadius: "8px", background: values.love_primary === String(idx) ? "rgba(201,162,39,0.15)" : "rgba(255,255,255,0.03)", border: values.love_primary === String(idx) ? "1px solid rgba(201,162,39,0.4)" : "1px solid rgba(255,255,255,0.08)" }}>
+                  <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                    <input type="radio" name="love_primary" value={String(idx)} checked={values.love_primary === String(idx)} onChange={() => set("love_primary", String(idx))} style={{ accentColor: "var(--gold)" }} />
+                    <span style={{ color: values.love_primary === String(idx) ? "var(--gold)" : "var(--text-primary)", fontWeight: 600 }}>{label}</span>
+                  </span>
+                  <span className="text-xs text-gray-500 pl-6">{desc}</span>
+                </label>
+              ))}
+            </div>
+          </div>
+
+          {values.love_primary !== undefined && values.love_primary !== "" && (
+            <div>
+              <p className="text-sm text-yellow-500/70 mb-3">第2の愛の言語（次に大切なもの）</p>
+              <select
+                value={values.love_secondary || ""}
+                onChange={(e) => set("love_secondary", e.target.value)}
+                style={{ ...SELECT_STYLE }}
+              >
+                <option value="">選択してください（任意）</option>
+                {[
+                  [0, "💬 言葉による肯定"],
+                  [1, "⏰ クオリティタイム"],
+                  [2, "🎁 贈り物"],
+                  [3, "🤝 奉仕の行為"],
+                  [4, "🤗 身体的なタッチ"],
+                ].filter(([idx]) => String(idx) !== values.love_primary).map(([idx, label]) => (
+                  <option key={idx} value={String(idx)}>{label}</option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
       )}
 
@@ -404,43 +638,86 @@ function InputForm({
   );
 }
 
+// ──────────────────────────────────────────────────────────────
 function getReading(id: string, values: Record<string, string>): FortuneResult | null {
+  const bd = values.birthday;
+  const q  = values.question || "今";
+  const nm = values.name || "";
+
   switch (id) {
-    case "tarot": return getTarotReading(values.question || "今");
+    // ── 既存 ──
+    case "tarot":       return getTarotReading(q);
     case "astrology": {
-      if (!values.birthday) return null;
-      let decimalHour: number | undefined;
-      if (values.birthTime) {
-        const [h, m] = values.birthTime.split(":").map(Number);
-        decimalHour = h + m / 60;
-      }
-      return getAstrologyReading(values.birthday, decimalHour);
+      if (!bd) return null;
+      let h: number | undefined;
+      if (values.birthTime) { const [hh, mm] = values.birthTime.split(":").map(Number); h = hh + mm / 60; }
+      return getAstrologyReading(bd, h);
     }
-    case "numerology": return values.birthday ? getNumerologyReading(values.birthday, values.name || "") : null;
-    case "omikuji": return getOmikujiReading();
-    case "rune": return getRuneReading(values.question || "今");
-    case "iching": return getIChingReading(values.question || "今");
-    case "blood-type": return values.blood_type ? getBloodTypeReading(values.blood_type) : null;
-    case "oracle": return getOracleReading(values.question || "今");
-    case "dream": return getDreamReading(values.keyword || "");
-    case "angel-number": return getAngelNumberReading(values.keyword || "111");
-    case "birthstone": return values.birthday ? getBirthstoneReading(values.birthday) : null;
-    case "hand-reading": return getHandReading(values.question || "今");
-    case "feng-shui": return values.birthday ? getFengShuiReading(values.birthday) : null;
-    case "kyusei-kigaku": return values.birthday ? getKyuseiReading(values.birthday) : null;
+    case "numerology":  return bd ? getNumerologyReading(bd, nm) : null;
+    case "omikuji":     return getOmikujiReading();
+    case "rune":        return getRuneReading(q);
+    case "iching":      return getIChingReading(q);
+    case "blood-type":  return values.blood_type ? getBloodTypeReading(values.blood_type) : null;
+    case "oracle":      return getOracleReading(q);
+    case "dream":       return getDreamReading(values.keyword || "");
+    case "angel-number":return getAngelNumberReading(values.keyword || "111");
+    case "birthstone":  return bd ? getBirthstoneReading(bd) : null;
+    case "feng-shui":   return bd ? getFengShuiReading(bd) : null;
+    case "kyusei-kigaku":return bd ? getKyuseiReading(bd) : null;
     case "shichu-suimei": {
-      if (!values.birthday) return null;
-      let shichuHour: number | undefined;
-      if (values.birthTime) {
-        const [h] = values.birthTime.split(":").map(Number);
-        shichuHour = h;
-      }
-      return getShichuReading(values.birthday, shichuHour);
+      if (!bd) return null;
+      let shH: number | undefined;
+      if (values.birthTime) { const [hh] = values.birthTime.split(":").map(Number); shH = hh; }
+      return getShichuReading(bd, shH);
     }
+    // ── 東洋 ──
+    case "seimei-handan": return nm ? getSeimeiReading(nm) : null;
+    case "eto":         return bd ? getEtoReading(bd) : null;
+    case "rokuyo":      return getRokuyoReading();
+    case "sanmeigaku":  return bd ? getSanmeigakuReading(bd) : null;
+    case "shibi": {
+      if (!bd) return null;
+      let sH: number | undefined;
+      if (values.birthTime) { const [hh] = values.birthTime.split(":").map(Number); sH = hh; }
+      return getShibiReading(bd, sH);
+    }
+    // ── 古代 ──
+    case "vedic":       return bd ? getVedicReading(bd) : null;
+    case "maya":        return bd ? getMayaReading(bd) : null;
+    case "egypt":       return bd ? getEgyptReading(bd) : null;
+    case "babylon":     return bd ? getBabylonReading(bd) : null;
+    case "celtic-tree": return bd ? getCelticReading(bd) : null;
+    case "geomancy":    return getGeomancyReading(q);
+    // ── カード ──
+    case "lenormand":   return getLenormandReading(q);
+    case "gypsy-cards": return getGypsyReading(q);
+    // ── スピリチュアル ──
+    case "past-life":   return bd ? getPastLifeReading(bd) : null;
+    case "aura":        return bd ? getAuraReading(bd) : null;
+    case "chakra":      return getChakraReading(q);
+    case "akashic":     return getAkashicReading(q);
+    case "spirit-animal":return getSpiritAnimalReading(q);
+    // ── 自然・数 ──
+    case "birth-flower":return bd ? getBirthFlowerReading(bd) : null;
+    case "moon-phase":  return bd ? getMoonReading(bd) : null;
+    case "animal-fortune":return bd ? getAnimalFortune(bd) : null;
+    case "kabbalah":    return nm ? getKabbalahReading(nm) : null;
+    case "birth-day":   return bd ? getBirthDayReading(bd) : null;
+    case "dice":        return getDiceReading();
+    // ── 性格診断 ──
+    case "mbti":        return getMBTIReading(values);
+    case "hsp":         return getHSPReading(values);
+    case "enneagram":   return getEnneagramReading(values);
+    case "big-five":    return getBigFiveReading(values);
+    case "love-language":return getLoveLanguageReading(values);
+    // ── 総合鑑定 ──
+    case "comprehensive":return bd ? getComprehensiveReading(bd, nm) : null;
+
     default: return null;
   }
 }
 
+// ──────────────────────────────────────────────────────────────
 export default function FortunePage() {
   const params = useParams();
   const id = params.id as string;
@@ -453,9 +730,7 @@ export default function FortunePage() {
       <div className="mystical-bg min-h-screen flex items-center justify-center">
         <div className="text-center">
           <p className="text-gray-400">占いが見つかりません</p>
-          <Link href="/" className="text-yellow-500 text-sm mt-4 block">
-            ← トップに戻る
-          </Link>
+          <Link href="/" className="text-yellow-500 text-sm mt-4 block">← トップに戻る</Link>
         </div>
       </div>
     );
@@ -475,7 +750,6 @@ export default function FortunePage() {
   return (
     <div className="mystical-bg min-h-screen">
       <div className="max-w-2xl mx-auto px-4 py-12">
-        {/* Back */}
         <Link
           href="/"
           className="inline-flex items-center gap-2 text-gray-500 text-sm hover:text-yellow-500 transition-colors mb-8"
@@ -483,7 +757,6 @@ export default function FortunePage() {
           ← 占い一覧に戻る
         </Link>
 
-        {/* Header */}
         <div className="text-center mb-10">
           <div className="text-6xl mb-4 float-anim">{fortune.icon}</div>
           <h1 className="text-3xl md:text-4xl font-bold gold-gradient mb-2">{fortune.name}</h1>
@@ -494,12 +767,10 @@ export default function FortunePage() {
 
         <div className="h-px bg-gradient-to-r from-transparent via-yellow-500/30 to-transparent mb-8" />
 
-        {/* Form */}
         <div className="card-mystical rounded-xl p-6">
           <InputForm inputType={fortune.inputType} fortuneId={fortune.id} onSubmit={handleSubmit} />
         </div>
 
-        {/* Result */}
         <div id="result">
           {result && <ResultDisplay result={result} question={lastQuestion} />}
         </div>
