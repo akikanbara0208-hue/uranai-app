@@ -52,7 +52,7 @@ export default function Home() {
           <p className="text-gray-400 text-lg max-w-2xl mx-auto leading-relaxed">
             古代より世界中で受け継がれてきた叡智の数々。
             <br />
-            43種類の占いで、あなたの過去・現在・未来を紐解きます。
+            {FORTUNES.length}種類の占いで、あなたの過去・現在・未来を紐解きます。
           </p>
           <div className="flex items-center justify-center gap-2 mt-6">
             <span className="h-px w-16 bg-gradient-to-r from-transparent to-yellow-500/50" />
