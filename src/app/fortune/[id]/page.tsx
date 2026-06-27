@@ -282,10 +282,10 @@ function ResultDisplay({ result, question }: { result: FortuneResult; question?:
             className="inline-flex items-center gap-2 px-5 py-3 rounded-full text-sm font-semibold"
             style={{ background: "linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)", color: "#fff" }}
           >
-            Instagram用にコピー
+            テキストをコピー
           </button>
         </div>
-        <p className="text-xs text-gray-600 mt-2">Instagramはスクショ＋コピーで投稿してね</p>
+        <p className="text-xs text-gray-600 mt-2">Instagram・Lemon8・Substackなどはコピー→貼り付けで投稿してね</p>
       </div>
     </div>
   );
