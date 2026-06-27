@@ -241,6 +241,42 @@ function ResultDisplay({ result, question }: { result: FortuneResult; question?:
         <p className="text-xs text-purple-300/70 mb-2 tracking-wider">✦ アドバイス</p>
         <p className="text-gray-200 leading-relaxed">{result.advice}</p>
       </div>
+
+      <hr className="divider-gold" />
+
+      <div className="text-center">
+        <p className="text-xs text-gray-500 mb-3">結果をシェアする</p>
+        <div className="flex justify-center gap-3 flex-wrap">
+          <button
+            onClick={() => {
+              const text = `🔮 世界の占い堂で占ってみた！\n\n✨ ${result.title}\n\n${result.summary.slice(0, 80)}${result.summary.length > 80 ? "…" : ""}\n\n#世界の占い堂 #占い`;
+              const url = "https://uranai-app-beta-ten.vercel.app";
+              window.open(
+                `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
+                "_blank", "noopener,noreferrer"
+              );
+            }}
+            className="inline-flex items-center gap-2 px-5 py-3 rounded-full text-sm font-semibold"
+            style={{ background: "#000", color: "#fff", border: "1px solid #333" }}
+          >
+            𝕏 でシェア
+          </button>
+          <button
+            onClick={() => {
+              const text = `🔮 世界の占い堂で占ってみた！\n✨ ${result.title}\n${result.summary.slice(0, 60)}${result.summary.length > 60 ? "…" : ""}`;
+              const url = "https://uranai-app-beta-ten.vercel.app";
+              window.open(
+                `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`,
+                "_blank", "noopener,noreferrer"
+              );
+            }}
+            className="inline-flex items-center gap-2 px-5 py-3 rounded-full text-sm font-semibold"
+            style={{ background: "#06C755", color: "#fff" }}
+          >
+            LINE でシェア
+          </button>
+        </div>
+      </div>
     </div>
   );
 }
