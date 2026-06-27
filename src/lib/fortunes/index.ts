@@ -23,7 +23,6 @@ export const FORTUNES: Fortune[] = [
   { id: "birthstone",  name: "誕生石占い",        nameEn: "Birthstone",      description: "誕生月の石が持つ力があなたへのメッセージを示します",             origin: "世界共通",             icon: "💎", category: "nature",        inputType: "birthday"     },
   { id: "birth-flower",name: "誕生花占い",        nameEn: "Birth Flower",    description: "誕生月の花が語る花言葉があなたの魂の本質と人生テーマを示します", origin: "世界共通",             icon: "🌸", category: "nature",        inputType: "birthday"     },
   { id: "moon-phase",  name: "ムーン占い",        nameEn: "Moon Phase",      description: "あなたが生まれた日の月相が示す魂の本質的なリズムと特性",         origin: "世界共通",             icon: "🌕", category: "nature",        inputType: "birthday"     },
-  { id: "animal-fortune",name:"動物占い",         nameEn: "Animal Fortune",  description: "生年月日から導く守護動物が本質的な性格と才能を教えます",         origin: "日本",                 icon: "🦁", category: "nature",        inputType: "birthday"     },
   // ══ 東洋の叡智 ══
   { id: "shichu-suimei",name:"四柱推命",          nameEn: "Bazi (Four Pillars)",description:"生年月日時から四本の柱を立て、運命の流れを読みます",           origin: "中国",                 icon: "🀄", category: "eastern",       inputType: "birthday_time"},
   { id: "kyusei-kigaku",name:"九星気学",          nameEn: "Nine Star Ki",    description: "生まれた年の星が示す今年の運気と方位を読みます",                 origin: "中国・日本",           icon: "⭐", category: "eastern",       inputType: "birthday"     },
@@ -47,11 +46,15 @@ export const FORTUNES: Fortune[] = [
   { id: "akashic",     name: "アカシックレコード",nameEn: "Akashic Records", description: "宇宙の記録から魂の本質と今世のメッセージを読みます",             origin: "スピリチュアル",       icon: "🌌", category: "spiritual",     inputType: "question"     },
   { id: "spirit-animal",name:"スピリットアニマル",nameEn: "Spirit Animal",   description: "守護動物が今のあなたに必要な知恵とパワーを伝えます",             origin: "アメリカ先住民・シャーマニズム",icon:"🦅",category:"spiritual",inputType:"question"},
   // ══ 性格診断 ══
-  { id: "mbti",        name: "MBTI診断",         nameEn: "MBTI Personality", description: "4つの心理的選好から16タイプで性格と才能の本質を明らかにします",  origin: "マイヤーズ＝ブリッグス", icon: "🧠", category: "personality",  inputType: "quiz"         },
-  { id: "hsp",         name: "HSP診断",          nameEn: "HSP Assessment",  description: "高感受性者の特性を診断し、感受性という才能との付き合い方を示します", origin: "エレイン・アーロン博士",icon: "💫", category: "personality",  inputType: "quiz"         },
+  { id: "mbti",        name: "16タイプ性格診断",  nameEn: "16 Type Personality", description: "4つの心理的選好から16タイプで性格と才能の本質を明らかにします", origin: "ユング心理学",          icon: "🧠", category: "personality",  inputType: "quiz"         },
+  { id: "hsp",         name: "高感受性セルフチェック", nameEn: "High Sensitivity Check", description: "感受性の強さを測り、繊細さという才能との付き合い方を示します", origin: "感受性心理学",          icon: "💫", category: "personality",  inputType: "quiz"         },
   { id: "enneagram",   name: "エニアグラム",      nameEn: "Enneagram",       description: "9つのタイプで核心的な動機と成長の道を深く理解する性格分類",       origin: "スーフィズム・現代心理学",icon:"⭕",category: "personality",  inputType: "quiz"         },
   { id: "big-five",    name: "ビッグファイブ",    nameEn: "Big Five (OCEAN)", description: "5つの性格因子で科学的にあなたのパーソナリティを分析します",      origin: "現代心理学",           icon: "📊", category: "personality",  inputType: "quiz"         },
-  { id: "love-language",name:"愛情表現タイプ",    nameEn: "Five Love Languages",description:"5種類の愛の言語であなたの愛し方・愛され方のスタイルを明らかにします",origin:"チャップマン博士",  icon: "❤️", category: "personality",  inputType: "quiz"         },
+  { id: "temperament",   name: "四気質診断",        nameEn: "Four Temperaments",   description: "ヒポクラテスが紀元前460年に提唱した多血質・胆汁質・粘液質・黒胆汁質で本質を読む", origin: "古代ギリシャ",     icon: "🜁", category: "personality",  inputType: "quiz"         },
+  { id: "four-elements", name: "四元素タイプ診断",  nameEn: "Four Elements",       description: "紀元前450年エンペドクレス提唱。火・水・地・風の4元素があなたの本質を示します",  origin: "古代ギリシャ",     icon: "🔥", category: "personality",  inputType: "quiz"         },
+  { id: "aura-color",    name: "オーラカラー診断",  nameEn: "Aura Color Reading",  description: "19世紀神智学が体系化した7色のオーラエネルギーから魂の状態と本質を読み解きます",  origin: "神智学（19世紀）", icon: "🌈", category: "spiritual",    inputType: "quiz"         },
+  { id: "jung-archetype",name: "ユング元型診断",    nameEn: "Jungian Archetypes",  description: "精神科医ユングが提唱した12の元型（アーキタイプ）であなたの魂の深層パターンを探ります", origin: "ユング心理学",    icon: "🧿", category: "personality",  inputType: "quiz"         },
+  { id: "color-personality",name:"色彩性格診断",   nameEn: "Color Personality",   description: "好きな色はあなたの無意識と本質を映す鏡。色彩心理学であなたの性格を読み解きます",  origin: "色彩心理学",      icon: "🎨", category: "personality",  inputType: "quiz"         },
   // ══ 総合鑑定 ══
   { id: "comprehensive",name:"総合鑑定",          nameEn: "Comprehensive Reading", description: "東洋・西洋・古代・スピリチュアルを横断した過去・現在・未来の総合分析", origin: "世界の叡智統合", icon: "🔯", category: "comprehensive", inputType: "birthday_name"},
 ];

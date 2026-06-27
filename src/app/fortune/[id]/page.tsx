@@ -59,7 +59,6 @@ import {
 import {
   getBirthFlowerReading,
   getMoonReading,
-  getAnimalFortune,
   getKabbalahReading,
   getBirthDayReading,
   getDiceReading,
@@ -71,7 +70,11 @@ import {
   getHSPReading,
   getEnneagramReading,
   getBigFiveReading,
-  getLoveLanguageReading,
+  getTemperamentReading,
+  getFourElementsReading,
+  getAuraColorReading,
+  getJungArchetypeReading,
+  getColorPersonalityReading,
 } from "@/lib/fortunes/world-personality";
 
 // ── 総合鑑定 ──
@@ -298,8 +301,10 @@ function InputForm({
     if (inputType === "quiz") {
       if (fortuneId === "mbti") return !!values.mbti_ei && !!values.mbti_sn && !!values.mbti_tf && !!values.mbti_jp;
       if (fortuneId === "enneagram") return !!values.enneagram_type;
-      if (fortuneId === "love-language") return values.love_primary !== undefined && values.love_primary !== "";
-      return true; // hsp, big-five have defaults
+      if (fortuneId === "aura-color") return values.aura_color !== undefined && values.aura_color !== "";
+      if (fortuneId === "jung-archetype") return values.archetype !== undefined && values.archetype !== "";
+      if (fortuneId === "color-personality") return values.fav_color !== undefined && values.fav_color !== "";
+      return true; // hsp, big-five, temperament, four-elements have defaults
     }
     return false;
   };
@@ -633,51 +638,137 @@ function InputForm({
         </div>
       )}
 
-      {/* ── 愛情表現タイプ ── */}
-      {inputType === "quiz" && fortuneId === "love-language" && (
-        <div className="space-y-6">
-          <div>
-            <p className="text-sm text-yellow-500/70 mb-3">メインの愛の言語を選んでください（愛を最も感じる方法）</p>
-            <div className="space-y-2">
-              {[
-                [0, "💬 言葉による肯定", "「ありがとう」「好きだよ」など言葉で愛を受け取るとき"],
-                [1, "⏰ クオリティタイム", "相手が自分だけに時間を使ってくれるとき"],
-                [2, "🎁 贈り物",           "思いやりのある贈り物や気遣いを受け取るとき"],
-                [3, "🤝 奉仕の行為",       "相手が率先してやってくれること・助けてもらうとき"],
-                [4, "🤗 身体的なタッチ",   "ハグ・手をつなぐなど身体的なつながりを感じるとき"],
-              ].map(([idx, label, desc]) => (
-                <label key={idx} style={{ display: "flex", flexDirection: "column", gap: "2px", cursor: "pointer", padding: "10px", borderRadius: "8px", background: values.love_primary === String(idx) ? "rgba(201,162,39,0.15)" : "rgba(255,255,255,0.03)", border: values.love_primary === String(idx) ? "1px solid rgba(201,162,39,0.4)" : "1px solid rgba(255,255,255,0.08)" }}>
-                  <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
-                    <input type="radio" name="love_primary" value={String(idx)} checked={values.love_primary === String(idx)} onChange={() => set("love_primary", String(idx))} style={{ accentColor: "var(--gold)" }} />
-                    <span style={{ color: values.love_primary === String(idx) ? "var(--gold)" : "var(--text-primary)", fontWeight: 600 }}>{label}</span>
-                  </span>
-                  <span className="text-xs text-gray-500 pl-6">{desc}</span>
-                </label>
-              ))}
-            </div>
-          </div>
 
-          {values.love_primary !== undefined && values.love_primary !== "" && (
-            <div>
-              <p className="text-sm text-yellow-500/70 mb-3">第2の愛の言語（次に大切なもの）</p>
-              <select
-                value={values.love_secondary || ""}
-                onChange={(e) => set("love_secondary", e.target.value)}
-                style={{ ...SELECT_STYLE }}
-              >
-                <option value="">選択してください（任意）</option>
-                {[
-                  [0, "💬 言葉による肯定"],
-                  [1, "⏰ クオリティタイム"],
-                  [2, "🎁 贈り物"],
-                  [3, "🤝 奉仕の行為"],
-                  [4, "🤗 身体的なタッチ"],
-                ].filter(([idx]) => String(idx) !== values.love_primary).map(([idx, label]) => (
-                  <option key={idx} value={String(idx)}>{label}</option>
-                ))}
-              </select>
+      {/* ── 四元素タイプ ── */}
+      {inputType === "quiz" && fortuneId === "four-elements" && (
+        <div className="space-y-4">
+          <p className="text-sm text-yellow-500/70">各元素が自分にどの程度当てはまるか評価してください</p>
+          {[
+            { key: "elem_fire",  label: "🔥 火（Fire）",  desc: "情熱的・行動力がある・変化を起こしたい・リーダー気質" },
+            { key: "elem_water", label: "💧 水（Water）", desc: "感受性が高い・直感を信じる・共感力がある・流れに乗る" },
+            { key: "elem_earth", label: "🌍 地（Earth）", desc: "堅実・忍耐強い・安定を好む・現実的・誠実" },
+            { key: "elem_air",   label: "💨 風（Air）",   desc: "知的・自由を愛する・コミュニケーション好き・好奇心旺盛" },
+          ].map(({ key, label, desc }) => (
+            <div key={key} className="bg-white/5 rounded-lg p-4">
+              <p className="text-sm text-gray-200 font-semibold mb-1">{label}</p>
+              <p className="text-xs text-gray-500 mb-2">{desc}</p>
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-gray-500 w-16">当てはまらない</span>
+                <input type="range" min={0} max={10} value={values[key] || "5"} onChange={(e) => set(key, e.target.value)} style={{ ...SLIDER_STYLE }} />
+                <span className="text-xs text-gray-500 w-16 text-right">よく当てはまる</span>
+                <span className="text-sm font-semibold gold-text w-6 text-right">{values[key] || "5"}</span>
+              </div>
             </div>
-          )}
+          ))}
+        </div>
+      )}
+
+      {/* ── オーラカラー診断 ── */}
+      {inputType === "quiz" && fortuneId === "aura-color" && (
+        <div className="space-y-3">
+          <p className="text-sm text-yellow-500/70">今あなたが最も惹かれる色を選んでください</p>
+          {[
+            [0, "🔴 赤",   "エネルギー・情熱・生命力"],
+            [1, "🟠 橙",   "創造性・喜び・社交性"],
+            [2, "🟡 黄",   "知性・楽観・明るさ"],
+            [3, "🟢 緑",   "癒し・調和・成長"],
+            [4, "🔵 青",   "誠実・平和・表現力"],
+            [5, "🟣 藍",   "直感・洞察・内省"],
+            [6, "🔮 紫",   "霊性・神秘・知恵"],
+            [7, "✨ 白・金", "純粋・保護・高次意識"],
+          ].map(([idx, label, desc]) => (
+            <label key={idx} style={{ display: "flex", flexDirection: "column", gap: "2px", cursor: "pointer", padding: "10px", borderRadius: "8px", background: values.aura_color === String(idx) ? "rgba(201,162,39,0.15)" : "rgba(255,255,255,0.03)", border: values.aura_color === String(idx) ? "1px solid rgba(201,162,39,0.4)" : "1px solid rgba(255,255,255,0.08)" }}>
+              <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <input type="radio" name="aura_color" value={String(idx)} checked={values.aura_color === String(idx)} onChange={() => set("aura_color", String(idx))} style={{ accentColor: "var(--gold)" }} />
+                <span style={{ color: values.aura_color === String(idx) ? "var(--gold)" : "var(--text-primary)", fontWeight: 600 }}>{label as string}</span>
+              </span>
+              <span className="text-xs text-gray-500 pl-6">{desc as string}</span>
+            </label>
+          ))}
+        </div>
+      )}
+
+      {/* ── ユング元型診断 ── */}
+      {inputType === "quiz" && fortuneId === "jung-archetype" && (
+        <div className="space-y-3">
+          <p className="text-sm text-yellow-500/70">最も共鳴する元型を選んでください</p>
+          <select value={values.archetype || ""} onChange={(e) => set("archetype", e.target.value)} style={{ ...SELECT_STYLE }}>
+            <option value="">選択してください</option>
+            {[
+              [0,  "⚔️ 英雄（The Hero）",        "困難に挑み、限界を超えることに生きがいを感じる"],
+              [1,  "📚 賢者（The Sage）",          "真実と知恵を探求し、学び続けることに喜びを感じる"],
+              [2,  "🔮 魔術師（The Magician）",    "物事を変容させる力と深い洞察を持つ"],
+              [3,  "🧭 探求者（The Explorer）",    "自由と冒険を愛し、新しい可能性を探し続ける"],
+              [4,  "⚡ 反乱者（The Rebel）",       "現状を打ち破り、変革と革新を起こしたい"],
+              [5,  "❤️ 恋人（The Lover）",         "深い愛と美を求め、つながりに生きがいを感じる"],
+              [6,  "🃏 道化師（The Jester）",      "喜びとユーモアで世界を明るくすることが使命"],
+              [7,  "🤝 普通人（The Everyman）",    "人々とつながり、共に歩む誠実さを持つ"],
+              [8,  "👑 支配者（The Ruler）",       "秩序を守り、責任を持って組織を導く"],
+              [9,  "🎨 創造者（The Creator）",     "新しいものを生み出し、独自のビジョンを形にする"],
+              [10, "🌿 介護者（The Caregiver）",   "他者のために尽くし、支えることに喜びを感じる"],
+              [11, "🌟 無邪気者（The Innocent）",  "純粋な心と楽観的な信念で世界の善を信じる"],
+            ].map(([idx, label, desc]) => (
+              <option key={idx} value={String(idx)}>{label as string} — {desc as string}</option>
+            ))}
+          </select>
+        </div>
+      )}
+
+      {/* ── 色彩性格診断 ── */}
+      {inputType === "quiz" && fortuneId === "color-personality" && (
+        <div className="space-y-3">
+          <p className="text-sm text-yellow-500/70">今あなたが最も好きな色・惹かれる色を選んでください</p>
+          {[
+            ["red",    "🔴 赤",     "情熱・行動力・強さ"],
+            ["orange", "🟠 橙",     "創造性・社交・喜び"],
+            ["yellow", "🟡 黄",     "知性・楽観・明るさ"],
+            ["green",  "🟢 緑",     "調和・癒し・成長"],
+            ["blue",   "🔵 青",     "誠実・知性・平和"],
+            ["purple", "🟣 紫",     "神秘・直感・創造性"],
+            ["pink",   "🩷 ピンク", "愛・優しさ・思いやり"],
+            ["white",  "⬜ 白",     "純粋・完璧・清潔感"],
+            ["black",  "⬛ 黒",     "力・洗練・神秘"],
+            ["brown",  "🟫 茶",     "安定・誠実・堅実"],
+          ].map(([key, label, desc]) => (
+            <label key={key} style={{ display: "flex", flexDirection: "column", gap: "2px", cursor: "pointer", padding: "10px", borderRadius: "8px", background: values.fav_color === key ? "rgba(201,162,39,0.15)" : "rgba(255,255,255,0.03)", border: values.fav_color === key ? "1px solid rgba(201,162,39,0.4)" : "1px solid rgba(255,255,255,0.08)" }}>
+              <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
+                <input type="radio" name="fav_color" value={key} checked={values.fav_color === key} onChange={() => set("fav_color", key)} style={{ accentColor: "var(--gold)" }} />
+                <span style={{ color: values.fav_color === key ? "var(--gold)" : "var(--text-primary)", fontWeight: 600 }}>{label}</span>
+              </span>
+              <span className="text-xs text-gray-500 pl-6">{desc}</span>
+            </label>
+          ))}
+        </div>
+      )}
+
+      {/* ── 四気質診断 ── */}
+      {inputType === "quiz" && fortuneId === "temperament" && (
+        <div className="space-y-4">
+          <p className="text-sm text-yellow-500/70">各気質の説明を読み、自分にどの程度当てはまるかを0〜10で選んでください</p>
+          {[
+            { key: "temp_a", label: "多血質（風）", desc: "社交的・明るい・行動が早い・飽きっぽい・楽観的" },
+            { key: "temp_b", label: "胆汁質（火）", desc: "意志が強い・情熱的・リーダー気質・怒りやすい・決断が速い" },
+            { key: "temp_c", label: "粘液質（水）", desc: "穏やか・忍耐強い・共感力が高い・変化が苦手・安定志向" },
+            { key: "temp_d", label: "黒胆汁質（地）", desc: "深く考える・完璧主義・芸術的感性・心配性・分析が得意" },
+          ].map(({ key, label, desc }) => (
+            <div key={key} className="bg-white/5 rounded-lg p-4">
+              <p className="text-sm text-gray-200 font-semibold mb-1">{label}</p>
+              <p className="text-xs text-gray-500 mb-2">{desc}</p>
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-gray-500 w-16">当てはまらない</span>
+                <input
+                  type="range"
+                  min={0}
+                  max={10}
+                  value={values[key] || "5"}
+                  onChange={(e) => set(key, e.target.value)}
+                  style={{ ...SLIDER_STYLE }}
+                />
+                <span className="text-xs text-gray-500 w-16 text-right">よく当てはまる</span>
+                <span className="text-sm font-semibold gold-text w-6 text-right">{values[key] || "5"}</span>
+              </div>
+            </div>
+          ))}
         </div>
       )}
 
@@ -753,7 +844,6 @@ function getReading(id: string, values: Record<string, string>): FortuneResult |
     // ── 自然・数 ──
     case "birth-flower":return bd ? getBirthFlowerReading(bd) : null;
     case "moon-phase":  return bd ? getMoonReading(bd) : null;
-    case "animal-fortune":return bd ? getAnimalFortune(bd) : null;
     case "kabbalah":    return nm ? getKabbalahReading(nm) : null;
     case "birth-day":   return bd ? getBirthDayReading(bd) : null;
     case "dice":        return getDiceReading();
@@ -762,7 +852,11 @@ function getReading(id: string, values: Record<string, string>): FortuneResult |
     case "hsp":         return getHSPReading(values);
     case "enneagram":   return getEnneagramReading(values);
     case "big-five":    return getBigFiveReading(values);
-    case "love-language":return getLoveLanguageReading(values);
+    case "temperament":      return getTemperamentReading(values);
+    case "four-elements":    return getFourElementsReading(values);
+    case "aura-color":       return getAuraColorReading(values);
+    case "jung-archetype":   return getJungArchetypeReading(values);
+    case "color-personality":return getColorPersonalityReading(values);
     // ── 総合鑑定 ──
     case "comprehensive":return bd ? getComprehensiveReading(bd, nm) : null;
 
