@@ -685,6 +685,80 @@ const COLOR_TYPES: Record<string, { name: string; keyword: string; desc: string;
   brown:  { name: "茶", keyword: "安定・誠実・堅実", desc: "堅実で安定した誠実なタイプです。地に足のついた現実感覚と深い信頼性を持ちます。", strength: "安定感・誠実さ・忍耐力・信頼性・現実感覚", challenge: "変化への挑戦・新しいことへの好奇心・柔軟性", love: "安定した長期的な関係を大切にします。誠実さと信頼が愛の核心です。", work: "農業・建築・工芸・金融など安定と信頼が求められる仕事で力を発揮します。" },
 };
 
+// ══════════════════════════════════════════════
+// 人相学（観相術）
+// ══════════════════════════════════════════════
+const FACE_SHAPES: Record<string, { label: string; core: string; strength: string; caution: string }> = {
+  round:   { label: "丸顔",             core: "明るく社交的な人柄。愛嬌があり人から好かれやすい。楽観的で周囲を和やかにする力がある。",               strength: "コミュニケーション力・愛嬌・柔軟性",       caution: "流されやすい面があるため、自分の軸を持つことが大切。" },
+  oval:    { label: "卵形・楕円形",     core: "バランスの取れた人柄。知性と感性の両方を持ち、どんな状況にも適応できる。美的センスが高い。",         strength: "適応力・知性・美的センス・人間関係",         caution: "完璧を求めすぎてストレスを抱えることがある。" },
+  square:  { label: "四角・角ばった顔", core: "意志が強く頼りがいがある。行動力・リーダーシップがあり、目標に向かって着実に進む。",                 strength: "決断力・行動力・忍耐力・リーダーシップ",   caution: "頑固になりやすい。柔軟性が成長の鍵。" },
+  heart:   { label: "逆三角形・ハート型", core: "創造力と感受性が豊か。独自の視点を持ち、芸術的センスに優れる。繊細で深く考える。",                strength: "創造力・感受性・独自性・直感力",             caution: "繊細さゆえに傷つきやすい。自己ケアを大切に。" },
+  diamond: { label: "ひし形・面長",     core: "鋭い観察眼と分析力を持つ。完璧主義で高い目標を設定し、達成に向けて努力できる。",                   strength: "分析力・完璧主義・野心・観察力",             caution: "他者への要求が高くなりすぎることがある。" },
+};
+
+const FACE_EYES: Record<string, { label: string; meaning: string }> = {
+  round:  { label: "丸い大きな目",     meaning: "感受性豊かで表現力がある。情熱的で直感を大切にし、人の感情を敏感に察知する。" },
+  narrow: { label: "細長い切れ長の目", meaning: "知性的で冷静な観察眼の持ち主。神秘的な雰囲気があり、深く物事を考える。" },
+  almond: { label: "アーモンド型の目", meaning: "バランスが取れており、知性と感情の調和がある。魅力的で思慮深い。" },
+  mono:   { label: "一重・奥二重",     meaning: "芯が強く忍耐力がある。内面が豊かで、信頼できる安定した人柄。" },
+};
+
+const FACE_NOSES: Record<string, { label: string; meaning: string }> = {
+  high:   { label: "高く通った鼻",  meaning: "自尊心と意志力が強く、独立心がある。財運に恵まれ、目標に向かって突き進む力を持つ。" },
+  button: { label: "丸いボタン鼻",  meaning: "愛嬌があり人懐っこい。社交的で柔軟性があり、周囲から愛される。" },
+  wide:   { label: "広い鼻",        meaning: "行動力と実行力に優れる。粘り強く、地に足のついた堅実な性格。" },
+  narrow: { label: "細く尖った鼻",  meaning: "繊細で感受性が高い。完璧主義的で批判的思考を持つ知性派。" },
+};
+
+const FACE_MOUTHS: Record<string, { label: string; meaning: string }> = {
+  large: { label: "大きな口・厚い唇", meaning: "表現力豊かで情熱的。リーダー的存在で、言葉でエネルギーを伝えることができる。" },
+  small: { label: "小さな口・薄い唇", meaning: "繊細で内省的。言葉を選ぶ慎重さがあり、几帳面で丁寧。" },
+  full:  { label: "ふっくらとした唇", meaning: "感受性と愛情が深い。人を引きつける魅力と、豊かな感情表現を持つ。" },
+  firm:  { label: "引き締まった口",   meaning: "意志が強く決断力がある。誠実で信頼性が高く、言葉に責任を持つ。" },
+};
+
+const FACE_BROWS: Record<string, { label: string; meaning: string }> = {
+  thick:    { label: "濃くはっきりした眉", meaning: "意志が強く情熱的。自信を持って行動でき、明確な目標意識を持つ。" },
+  thin:     { label: "薄くアーチ型の眉",  meaning: "繊細で感受性が高い。芸術的センスと優雅さを持つ。" },
+  straight: { label: "真っ直ぐな眉",      meaning: "論理的で誠実。直接的なコミュニケーションを好み、行動力がある。" },
+  angular:  { label: "角のある眉",        meaning: "鋭い判断力とリーダーシップ。決断が速く、頼りにされる存在。" },
+};
+
+export function getFaceReading(values: Record<string, string>): FortuneResult {
+  const shape = FACE_SHAPES[values.face_shape] || FACE_SHAPES.oval;
+  const eye   = FACE_EYES[values.face_eye]     || FACE_EYES.almond;
+  const nose  = FACE_NOSES[values.face_nose]   || FACE_NOSES.high;
+  const mouth = FACE_MOUTHS[values.face_mouth] || FACE_MOUTHS.full;
+  const brow  = FACE_BROWS[values.face_brow]   || FACE_BROWS.straight;
+
+  const seed = [values.face_shape, values.face_eye, values.face_nose, values.face_mouth, values.face_brow]
+    .join("").split("").reduce((a, c) => (a * 31 + c.charCodeAt(0)) | 0, 0);
+  const r = rng(Math.abs(seed) || 1);
+
+  const talents = [
+    "人を引きつける天性の魅力", "深い思考と洞察力", "創造的な発想力", "強いリーダーシップ",
+    "卓越したコミュニケーション力", "繊細な感受性と共感力", "揺るぎない意志力", "柔軟な適応力",
+  ];
+
+  return {
+    title: `人相鑑定：${shape.label}×${eye.label}`,
+    summary: "中国4000年・ギリシャ2500年の観相術。顔のパーツは魂の地図であり、それぞれが内側の性格・才能・運命を映し出しています。",
+    details: [
+      { label: `🔲 顔の形：${shape.label}`,       content: `${shape.core}\n\n【強み】${shape.strength}\n【成長のヒント】${shape.caution}` },
+      { label: `👁️ 目：${eye.label}`,             content: eye.meaning },
+      { label: `👃 鼻：${nose.label}`,             content: nose.meaning },
+      { label: `👄 口：${mouth.label}`,            content: mouth.meaning },
+      { label: `✏️ 眉：${brow.label}`,             content: brow.meaning },
+      { label: "✨ 総合：あなたの天性の才能",       content: `5つのパーツが示す総合的な才能は「${pick(talents, r)}」。${shape.core.split("。")[0]}という基本的な性格に、${eye.meaning.split("。")[0]}という感性が重なり、唯一無二のあなたが生まれています。` },
+    ],
+    lucky: {
+      color: pick(["紫", "金", "白", "青緑", "深紅"], r),
+      item:  pick(["鏡", "水晶", "花", "天然石", "香水"], r),
+    },
+    advice: `観相術では「相は心で変わる」と言われます。${shape.strength.split("・")[0]}を活かしながら、${shape.caution} 内側の美しさが顔に表れるとき、あなたの運命も変わっていきます。`,
+  };
+}
+
 export function getColorPersonalityReading(values: Record<string, string>): FortuneResult {
   const key = values.fav_color || "blue";
   const c = COLOR_TYPES[key] || COLOR_TYPES["blue"];

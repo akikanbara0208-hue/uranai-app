@@ -55,6 +55,9 @@ export const FORTUNES: Fortune[] = [
   { id: "aura-color",    name: "オーラカラー診断",  nameEn: "Aura Color Reading",  description: "19世紀神智学が体系化した7色のオーラエネルギーから魂の状態と本質を読み解きます",  origin: "神智学（19世紀）", icon: "🌈", category: "spiritual",    inputType: "quiz"         },
   { id: "jung-archetype",name: "ユング元型診断",    nameEn: "Jungian Archetypes",  description: "精神科医ユングが提唱した12の元型（アーキタイプ）であなたの魂の深層パターンを探ります", origin: "ユング心理学",    icon: "🧿", category: "personality",  inputType: "quiz"         },
   { id: "color-personality",name:"色彩性格診断",   nameEn: "Color Personality",   description: "好きな色はあなたの無意識と本質を映す鏡。色彩心理学であなたの性格を読み解きます",  origin: "色彩心理学",      icon: "🎨", category: "personality",  inputType: "quiz"         },
+  // ══ バイオリズム・人相学 ══
+  { id: "biorhythm",   name: "バイオリズム",    nameEn: "Biorhythm",          description: "生年月日から身体・感情・知性の3サイクルで今日の状態と明日の予報を示します",     origin: "生理学（1900年代）",   icon: "📊", category: "nature",        inputType: "birthday"     },
+  { id: "face-reading",name: "人相学",          nameEn: "Physiognomy",        description: "顔の形・目・鼻・口・眉の5パーツから中国4000年の観相術で性格と才能を読みます", origin: "中国・古代ギリシャ",   icon: "🪞", category: "personality",  inputType: "quiz"         },
   // ══ 守護神 ══
   { id: "deity",         name: "守護神占い",        nameEn: "Guardian Deity",      description: "生年月日と価値観から日本・ギリシャ・北欧・エジプト・ヒンドゥー・ケルトの守護神を導きます", origin: "世界神話・数秘術",    icon: "⚡", category: "spiritual",    inputType: "quiz"         },
   // ══ 総合鑑定 ══

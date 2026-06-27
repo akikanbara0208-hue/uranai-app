@@ -275,3 +275,74 @@ export function getDiceReading(): FortuneResult {
     advice: reading.advice,
   };
 }
+
+// ══════════════════════════════════════════════
+// バイオリズム
+// ══════════════════════════════════════════════
+function bioBar(val: number): string {
+  const pos = Math.round((val + 1) / 2 * 20);
+  const clamped = Math.max(0, Math.min(20, pos));
+  return "█".repeat(clamped) + "░".repeat(20 - clamped) + ` ${val >= 0 ? "+" : ""}${Math.round(val * 100)}%`;
+}
+
+export function getBiorhythmReading(birthday: string): FortuneResult {
+  const birth = new Date(birthday);
+  birth.setHours(0, 0, 0, 0);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const days = Math.floor((today.getTime() - birth.getTime()) / 86400000);
+
+  const tau = 2 * Math.PI;
+  const phy = Math.sin(tau * days / 23);
+  const emo = Math.sin(tau * days / 28);
+  const int = Math.sin(tau * days / 33);
+
+  const phyNext = Math.sin(tau * (days + 1) / 23);
+  const emoNext = Math.sin(tau * (days + 1) / 28);
+  const intNext = Math.sin(tau * (days + 1) / 33);
+
+  function label(v: number): string {
+    if (Math.abs(v) < 0.1) return "⚠️ クリティカル（転換点）";
+    if (v > 0.7)  return "🌟 ハイ期";
+    if (v > 0.3)  return "⬆️ 上昇期";
+    if (v > 0)    return "↗️ やや上昇";
+    if (v > -0.3) return "↘️ やや下降";
+    if (v > -0.7) return "⬇️ 下降期";
+    return "🌑 ロー期";
+  }
+
+  function advice(v: number, name: string): string {
+    if (Math.abs(v) < 0.1) return `${name}が転換点です。いつもより慎重に行動してください。`;
+    if (v > 0.5) return `${name}は高調期。積極的に使いましょう。`;
+    if (v > 0)   return `${name}は上昇中。着実に活用できます。`;
+    if (v > -0.5) return `${name}はやや低め。無理をしないで。`;
+    return `${name}は低調期。休息と回復に充てることが最善です。`;
+  }
+
+  const criticals: string[] = [];
+  if (Math.abs(phy) < 0.1) criticals.push("身体");
+  if (Math.abs(emo) < 0.1) criticals.push("感情");
+  if (Math.abs(int) < 0.1) criticals.push("知性");
+
+  const total = (phy + emo + int) / 3;
+  const overallLabel = total > 0.5 ? "絶好調！" : total > 0.2 ? "好調" : total > -0.2 ? "平常" : total > -0.5 ? "やや低め" : "休息期";
+
+  const tomorrowSign = (phyNext + emoNext + intNext) > (phy + emo + int) ? "明日は今日より上昇します。" : "明日は今日よりやや落ち着く見込みです。";
+
+  return {
+    title: `今日のバイオリズム：${overallLabel}（生まれてから${days.toLocaleString()}日目）`,
+    summary: "1900年代初頭の生理学研究から生まれたバイオリズム。23日・28日・33日の三つの自然なサイクルが、身体・感情・知性のリズムを形成しています。",
+    details: [
+      { label: "💪 身体サイクル（23日周期）", content: `[${bioBar(phy)}]　${label(phy)}\n${advice(phy, "身体")}` },
+      { label: "❤️ 感情サイクル（28日周期）", content: `[${bioBar(emo)}]　${label(emo)}\n${advice(emo, "感情")}` },
+      { label: "🧠 知性サイクル（33日周期）", content: `[${bioBar(int)}]　${label(int)}\n${advice(int, "知性")}` },
+      { label: "📅 明日のバイオリズム", content: `身体 ${phyNext >= 0 ? "+" : ""}${Math.round(phyNext * 100)}%　感情 ${emoNext >= 0 ? "+" : ""}${Math.round(emoNext * 100)}%　知性 ${intNext >= 0 ? "+" : ""}${Math.round(intNext * 100)}%\n${tomorrowSign}` },
+      ...(criticals.length > 0 ? [{ label: `⚠️ 本日クリティカルデー：${criticals.join("・")}`, content: `「${criticals.join("・")}」のサイクルが今日転換点を迎えています。気持ちの波や体調の変化が起こりやすい日です。いつも以上に慎重に、無理をせず過ごしてください。` }] : []),
+    ],
+    lucky: {
+      color: total > 0.3 ? "金色" : total > -0.3 ? "白" : "深青",
+      item: total > 0.3 ? "エネルギードリンク" : total > -0.3 ? "ミネラルウォーター" : "ハーブティー",
+    },
+    advice: `${advice(phy, "身体")} ${advice(emo, "感情")} ${advice(int, "知性")} バイオリズムは自然なリズムの波。逆らわず、今日の流れに合った過ごし方を選ぶことが開運の鍵です。`,
+  };
+}

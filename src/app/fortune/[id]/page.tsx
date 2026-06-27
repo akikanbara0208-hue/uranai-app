@@ -62,6 +62,7 @@ import {
   getKabbalahReading,
   getBirthDayReading,
   getDiceReading,
+  getBiorhythmReading,
 } from "@/lib/fortunes/world-nature";
 
 // ── 性格診断 ──
@@ -75,6 +76,7 @@ import {
   getAuraColorReading,
   getJungArchetypeReading,
   getColorPersonalityReading,
+  getFaceReading,
 } from "@/lib/fortunes/world-personality";
 
 // ── 守護神 ──
@@ -308,6 +310,7 @@ function InputForm({
       if (fortuneId === "jung-archetype") return values.archetype !== undefined && values.archetype !== "";
       if (fortuneId === "color-personality") return values.fav_color !== undefined && values.fav_color !== "";
       if (fortuneId === "deity") return !!values.birthday && !!values.deity_q1 && !!values.deity_q2 && !!values.deity_q3;
+      if (fortuneId === "face-reading") return !!values.face_shape && !!values.face_eye && !!values.face_nose && !!values.face_mouth && !!values.face_brow;
       return true; // hsp, big-five, temperament, four-elements have defaults
     }
     return false;
@@ -776,6 +779,76 @@ function InputForm({
         </div>
       )}
 
+      {/* ── 人相学 ── */}
+      {inputType === "quiz" && fortuneId === "face-reading" && (
+        <div className="space-y-5">
+          <p className="text-sm text-yellow-500/70">5つのパーツを選んでください（直感でOK）</p>
+          {[
+            {
+              key: "face_shape", label: "🔲 顔の形",
+              opts: [
+                { v: "round",   l: "丸顔",             d: "全体的に丸みがある" },
+                { v: "oval",    l: "卵形・楕円形",     d: "縦長でなめらかな輪郭" },
+                { v: "square",  l: "四角・角ばった顔", d: "あごや頬骨に角がある" },
+                { v: "heart",   l: "逆三角形・ハート型", d: "額が広く、あごが細い" },
+                { v: "diamond", l: "ひし形・面長",     d: "縦に長く、頬骨が張っている" },
+              ],
+            },
+            {
+              key: "face_eye", label: "👁️ 目の形",
+              opts: [
+                { v: "round",  l: "丸い大きな目",     d: "パッチリとした目" },
+                { v: "narrow", l: "細長い切れ長の目", d: "スッとした切れ長" },
+                { v: "almond", l: "アーモンド型",     d: "適度な大きさで整った形" },
+                { v: "mono",   l: "一重・奥二重",     d: "まぶたのラインが内側にある" },
+              ],
+            },
+            {
+              key: "face_nose", label: "👃 鼻の形",
+              opts: [
+                { v: "high",   l: "高く通った鼻",  d: "鼻筋が通っている" },
+                { v: "button", l: "丸いボタン鼻",  d: "鼻先が丸くかわいらしい" },
+                { v: "wide",   l: "広い鼻",        d: "小鼻が広がっている" },
+                { v: "narrow", l: "細く尖った鼻",  d: "細くシャープな鼻" },
+              ],
+            },
+            {
+              key: "face_mouth", label: "👄 口の形",
+              opts: [
+                { v: "large", l: "大きな口・厚い唇",   d: "存在感のある唇" },
+                { v: "small", l: "小さな口・薄い唇",   d: "小ぶりで上品な口元" },
+                { v: "full",  l: "ふっくらとした唇",   d: "ぽってりとした唇" },
+                { v: "firm",  l: "引き締まった口",     d: "きりっとした口元" },
+              ],
+            },
+            {
+              key: "face_brow", label: "✏️ 眉の形",
+              opts: [
+                { v: "thick",    l: "濃くはっきりした眉", d: "存在感のある太い眉" },
+                { v: "thin",     l: "薄くアーチ型の眉",  d: "細く優雅なカーブ" },
+                { v: "straight", l: "真っ直ぐな眉",      d: "水平に近いフラット眉" },
+                { v: "angular",  l: "角のある眉",        d: "途中で角度が折れている" },
+              ],
+            },
+          ].map(({ key, label, opts }) => (
+            <div key={key} className="bg-white/5 rounded-lg p-4">
+              <p className="text-sm text-yellow-500/70 mb-3">{label}</p>
+              <div className="space-y-2">
+                {opts.map((o) => (
+                  <label key={o.v} style={{ display: "flex", alignItems: "flex-start", gap: "10px", cursor: "pointer", padding: "8px", borderRadius: "6px", background: values[key] === o.v ? "rgba(201,162,39,0.15)" : "transparent", border: values[key] === o.v ? "1px solid rgba(201,162,39,0.4)" : "1px solid transparent" }}>
+                    <input type="radio" name={key} value={o.v} checked={values[key] === o.v} onChange={() => set(key, o.v)} style={{ accentColor: "var(--gold)", marginTop: "2px" }} />
+                    <span>
+                      <span style={{ color: values[key] === o.v ? "var(--gold)" : "var(--text-primary)", fontWeight: 600 }}>{o.l}</span>
+                      <span className="text-gray-500 text-xs ml-2">{o.d}</span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {/* ── 守護神占い ── */}
       {inputType === "quiz" && fortuneId === "deity" && (
         <div className="space-y-6">
@@ -926,6 +999,8 @@ function getReading(id: string, values: Record<string, string>): FortuneResult |
     case "kabbalah":    return nm ? getKabbalahReading(nm) : null;
     case "birth-day":   return bd ? getBirthDayReading(bd) : null;
     case "dice":        return getDiceReading();
+    case "biorhythm":   return bd ? getBiorhythmReading(bd) : null;
+    case "face-reading":return getFaceReading(values);
     // ── 性格診断 ──
     case "mbti":        return getMBTIReading(values);
     case "hsp":         return getHSPReading(values);
