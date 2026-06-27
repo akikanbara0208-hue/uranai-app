@@ -148,7 +148,95 @@ function GeomancyFigureCard({ fig }: { fig: GeomancyFigure }) {
 }
 
 // ──────────────────────────────────────────────────────────────
-function ResultDisplay({ result, question }: { result: FortuneResult; question?: string }) {
+function lcg(seed: number, offset: number): number {
+  let s = (Math.abs(seed + offset * 1234567) || 1) >>> 0;
+  s = (Math.imul(s, 1664525) + 1013904223) >>> 0;
+  s = (Math.imul(s, 1664525) + 1013904223) >>> 0;
+  return s >>> 0;
+}
+
+function DailyLuckMeter({ resultTitle }: { resultTitle: string }) {
+  const today = new Date();
+  const dateKey = today.getFullYear() * 10000 + (today.getMonth() + 1) * 100 + today.getDate();
+  const baseSeed = (resultTitle + dateKey).split("").reduce((a, c) => (a * 31 + c.charCodeAt(0)) | 0, 0);
+
+  const scores = [
+    { label: "❤️ 恋愛運", value: lcg(baseSeed, 1) % 101 },
+    { label: "💼 仕事運", value: lcg(baseSeed, 2) % 101 },
+    { label: "💰 金運",   value: lcg(baseSeed, 3) % 101 },
+    { label: "💚 健康運", value: lcg(baseSeed, 4) % 101 },
+  ];
+
+  const luckyHours = ["6〜8時", "9〜11時", "12〜14時", "15〜17時", "18〜20時", "21〜23時"];
+  const luckyHour = luckyHours[lcg(baseSeed, 5) % luckyHours.length];
+  const luckyColors = ["赤", "橙", "黄", "緑", "青", "藍", "紫", "白", "金", "銀"];
+  const luckyColor = luckyColors[lcg(baseSeed, 6) % luckyColors.length];
+  const luckyWords = ["ありがとう", "大丈夫", "できる", "楽しむ", "感謝", "信じる", "進む", "笑顔"];
+  const luckyWord = luckyWords[lcg(baseSeed, 7) % luckyWords.length];
+
+  const rank = (v: number) => v >= 80 ? "★★★★★" : v >= 60 ? "★★★★☆" : v >= 40 ? "★★★☆☆" : v >= 20 ? "★★☆☆☆" : "★☆☆☆☆";
+
+  return (
+    <div className="bg-gradient-to-b from-purple-950/30 to-black/20 border border-yellow-500/20 rounded-xl p-5">
+      <p className="text-xs text-yellow-500/70 tracking-wider mb-4">✦ 今日（{today.getMonth() + 1}/{today.getDate()}）の運勢</p>
+      <div className="space-y-3 mb-4">
+        {scores.map(({ label, value }) => (
+          <div key={label} className="flex items-center gap-3">
+            <span className="text-sm w-20 shrink-0">{label}</span>
+            <div className="flex-1 bg-white/10 rounded-full h-2 overflow-hidden">
+              <div
+                className="h-full rounded-full"
+                style={{ width: `${value}%`, background: value >= 70 ? "linear-gradient(90deg,#c9a227,#f5d060)" : value >= 40 ? "linear-gradient(90deg,#7c5cbf,#a78bfa)" : "linear-gradient(90deg,#374151,#6b7280)" }}
+              />
+            </div>
+            <span className="text-xs text-yellow-400/80 w-24 shrink-0">{rank(value)}</span>
+          </div>
+        ))}
+      </div>
+      <div className="grid grid-cols-3 gap-2 text-center text-xs">
+        <div className="bg-white/5 rounded-lg p-2">
+          <p className="text-gray-500 mb-1">ラッキータイム</p>
+          <p className="text-yellow-400 font-semibold">{luckyHour}</p>
+        </div>
+        <div className="bg-white/5 rounded-lg p-2">
+          <p className="text-gray-500 mb-1">ラッキーカラー</p>
+          <p className="text-yellow-400 font-semibold">{luckyColor}</p>
+        </div>
+        <div className="bg-white/5 rounded-lg p-2">
+          <p className="text-gray-500 mb-1">今日のキーワード</p>
+          <p className="text-yellow-400 font-semibold">「{luckyWord}」</p>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function RelatedFortunes({ currentId }: { currentId: string }) {
+  const baseSeed = (currentId + new Date().getDate()).split("").reduce((a, c) => (a * 31 + c.charCodeAt(0)) | 0, 0);
+  const others = FORTUNES.filter(f => f.id !== currentId);
+  const picks: typeof FORTUNES = [];
+  const used = new Set<number>();
+  for (let i = 0; picks.length < 3 && i < 30; i++) {
+    const idx = lcg(baseSeed, i) % others.length;
+    if (!used.has(idx)) { used.add(idx); picks.push(others[idx]); }
+  }
+  return (
+    <div>
+      <p className="text-xs text-yellow-500/70 tracking-wider mb-3">✦ 次はこれも試してみて</p>
+      <div className="grid grid-cols-3 gap-2">
+        {picks.map(f => (
+          <a key={f.id} href={`/fortune/${f.id}`} className="bg-white/5 border border-white/10 rounded-xl p-3 text-center hover:border-yellow-500/40 hover:bg-yellow-500/5 transition-all">
+            <div className="text-2xl mb-1">{f.icon}</div>
+            <p className="text-xs text-gray-300 leading-tight">{f.name}</p>
+          </a>
+        ))}
+      </div>
+    </div>
+  );
+}
+
+// ──────────────────────────────────────────────────────────────
+function ResultDisplay({ result, question, fortuneId }: { result: FortuneResult; question?: string; fortuneId: string }) {
   const orderedDetails = question ? reorderDetails(result.details, question) : result.details;
   const theme = question ? detectTheme(question) : "general";
 
@@ -241,6 +329,10 @@ function ResultDisplay({ result, question }: { result: FortuneResult; question?:
         <p className="text-xs text-purple-300/70 mb-2 tracking-wider">✦ アドバイス</p>
         <p className="text-gray-200 leading-relaxed">{result.advice}</p>
       </div>
+
+      <DailyLuckMeter resultTitle={result.title} />
+
+      <RelatedFortunes currentId={fortuneId} />
 
       <hr className="divider-gold" />
 
@@ -1121,7 +1213,7 @@ export default function FortunePage() {
         </div>
 
         <div id="result">
-          {result && <ResultDisplay result={result} question={lastQuestion} />}
+          {result && <ResultDisplay result={result} question={lastQuestion} fortuneId={id} />}
         </div>
 
         {result && (
