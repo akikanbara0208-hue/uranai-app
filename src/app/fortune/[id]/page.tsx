@@ -263,19 +263,29 @@ function ResultDisplay({ result, question }: { result: FortuneResult; question?:
           </button>
           <button
             onClick={() => {
-              const text = `🔮 世界の占い堂で占ってみた！\n✨ ${result.title}\n${result.summary.slice(0, 60)}${result.summary.length > 60 ? "…" : ""}`;
-              const url = "https://uranai-app-beta-ten.vercel.app";
+              const text = `🔮 世界の占い堂で占ってみた！\n\n✨ ${result.title}\n\n${result.summary.slice(0, 80)}${result.summary.length > 80 ? "…" : ""}\n\n#世界の占い堂 #占い\n\nhttps://uranai-app-beta-ten.vercel.app`;
               window.open(
-                `https://social-plugins.line.me/lineit/share?url=${encodeURIComponent(url)}&text=${encodeURIComponent(text)}`,
+                `https://www.threads.net/intent/post?text=${encodeURIComponent(text)}`,
                 "_blank", "noopener,noreferrer"
               );
             }}
             className="inline-flex items-center gap-2 px-5 py-3 rounded-full text-sm font-semibold"
-            style={{ background: "#06C755", color: "#fff" }}
+            style={{ background: "#101010", color: "#fff", border: "1px solid #555" }}
           >
-            LINE でシェア
+            Threads でシェア
+          </button>
+          <button
+            onClick={() => {
+              const text = `🔮 世界の占い堂で占ってみた！\n\n✨ ${result.title}\n\n${result.summary.slice(0, 80)}${result.summary.length > 80 ? "…" : ""}\n\n#世界の占い堂 #占い\nhttps://uranai-app-beta-ten.vercel.app`;
+              navigator.clipboard.writeText(text).then(() => alert("コピーしました！Instagramなどに貼り付けてください"));
+            }}
+            className="inline-flex items-center gap-2 px-5 py-3 rounded-full text-sm font-semibold"
+            style={{ background: "linear-gradient(45deg,#f09433,#e6683c,#dc2743,#cc2366,#bc1888)", color: "#fff" }}
+          >
+            Instagram用にコピー
           </button>
         </div>
+        <p className="text-xs text-gray-600 mt-2">Instagramはスクショ＋コピーで投稿してね</p>
       </div>
     </div>
   );
