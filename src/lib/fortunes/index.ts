@@ -55,6 +55,8 @@ export const FORTUNES: Fortune[] = [
   { id: "aura-color",    name: "オーラカラー診断",  nameEn: "Aura Color Reading",  description: "19世紀神智学が体系化した7色のオーラエネルギーから魂の状態と本質を読み解きます",  origin: "神智学（19世紀）", icon: "🌈", category: "spiritual",    inputType: "quiz"         },
   { id: "jung-archetype",name: "ユング元型診断",    nameEn: "Jungian Archetypes",  description: "精神科医ユングが提唱した12の元型（アーキタイプ）であなたの魂の深層パターンを探ります", origin: "ユング心理学",    icon: "🧿", category: "personality",  inputType: "quiz"         },
   { id: "color-personality",name:"色彩性格診断",   nameEn: "Color Personality",   description: "好きな色はあなたの無意識と本質を映す鏡。色彩心理学であなたの性格を読み解きます",  origin: "色彩心理学",      icon: "🎨", category: "personality",  inputType: "quiz"         },
+  // ══ 守護神 ══
+  { id: "deity",         name: "守護神占い",        nameEn: "Guardian Deity",      description: "生年月日と価値観から日本・ギリシャ・北欧・エジプト・ヒンドゥー・ケルトの守護神を導きます", origin: "世界神話・数秘術",    icon: "⚡", category: "spiritual",    inputType: "quiz"         },
   // ══ 総合鑑定 ══
   { id: "comprehensive",name:"総合鑑定",          nameEn: "Comprehensive Reading", description: "東洋・西洋・古代・スピリチュアルを横断した過去・現在・未来の総合分析", origin: "世界の叡智統合", icon: "🔯", category: "comprehensive", inputType: "birthday_name"},
 ];

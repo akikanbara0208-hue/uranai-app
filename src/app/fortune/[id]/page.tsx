@@ -77,6 +77,9 @@ import {
   getColorPersonalityReading,
 } from "@/lib/fortunes/world-personality";
 
+// ── 守護神 ──
+import { getDeityReading } from "@/lib/fortunes/world-deity";
+
 // ── 総合鑑定 ──
 import { getComprehensiveReading } from "@/lib/fortunes/world-comprehensive";
 
@@ -304,6 +307,7 @@ function InputForm({
       if (fortuneId === "aura-color") return values.aura_color !== undefined && values.aura_color !== "";
       if (fortuneId === "jung-archetype") return values.archetype !== undefined && values.archetype !== "";
       if (fortuneId === "color-personality") return values.fav_color !== undefined && values.fav_color !== "";
+      if (fortuneId === "deity") return !!values.birthday && !!values.deity_q1 && !!values.deity_q2 && !!values.deity_q3;
       return true; // hsp, big-five, temperament, four-elements have defaults
     }
     return false;
@@ -772,6 +776,81 @@ function InputForm({
         </div>
       )}
 
+      {/* ── 守護神占い ── */}
+      {inputType === "quiz" && fortuneId === "deity" && (
+        <div className="space-y-6">
+          <div>
+            <label className="block text-sm text-yellow-500/70 mb-2">生年月日</label>
+            <input
+              type="date"
+              value={values.birthday || ""}
+              onChange={(e) => set("birthday", e.target.value)}
+              max={new Date().toISOString().split("T")[0]}
+              min="1900-01-01"
+            />
+            <p className="text-xs text-gray-500 mt-1">数秘術で「魂の領域（9タイプ）」を算出します</p>
+          </div>
+          <p className="text-sm text-yellow-500/70">次に、あなたの価値観から神話世界との縁を探ります（全3問）</p>
+          {[
+            {
+              key: "deity_q1",
+              q: "困難に直面したとき、あなたは？",
+              opts: [
+                { v: "a", label: "冷静に考え、知恵と戦略で解決策を探す" },
+                { v: "b", label: "力強く正面突破する" },
+                { v: "c", label: "過去の経験と知識を整理してから動く" },
+                { v: "d", label: "内なる声を聞き、宇宙の流れを感じる" },
+                { v: "e", label: "周囲との絆を大切にしながら和で進む" },
+                { v: "f", label: "自然の流れに委ね、直感に従う" },
+              ],
+            },
+            {
+              key: "deity_q2",
+              q: "最も大切にしているのは？",
+              opts: [
+                { v: "a", label: "美・秩序・理性・論理" },
+                { v: "b", label: "誠実さ・強さ・仲間との誓い" },
+                { v: "c", label: "知識の蓄積と記録・永続する秩序" },
+                { v: "d", label: "魂の成長・すべては一つという感覚" },
+                { v: "e", label: "縁・感謝・和の精神・謙虚さ" },
+                { v: "f", label: "大地・自然のリズム・土地とのつながり" },
+              ],
+            },
+            {
+              key: "deity_q3",
+              q: "心が惹かれる自然の姿は？",
+              opts: [
+                { v: "a", label: "澄み渡る青空と完璧な幾何学的な美しさ" },
+                { v: "b", label: "激しい嵐と雷・広大な北の海と大地" },
+                { v: "c", label: "果てしない砂漠・ナイルの流れ・永遠の太陽" },
+                { v: "d", label: "熱帯の多様な生命・香り立つ山岳の森" },
+                { v: "e", label: "日本の四季・桜・紅葉・苔の庭・澄んだ水" },
+                { v: "f", label: "霧の深い森・古代の丘・川と草原の静けさ" },
+              ],
+            },
+          ].map(({ key, q, opts }) => (
+            <div key={key} className="bg-white/5 rounded-lg p-4">
+              <p className="text-sm text-gray-300 mb-3">{q}</p>
+              <div className="space-y-2">
+                {opts.map((o) => (
+                  <label key={o.v} style={{ display: "flex", alignItems: "flex-start", gap: "10px", cursor: "pointer", padding: "8px", borderRadius: "6px", background: values[key] === o.v ? "rgba(201,162,39,0.15)" : "transparent", border: values[key] === o.v ? "1px solid rgba(201,162,39,0.4)" : "1px solid transparent" }}>
+                    <input
+                      type="radio"
+                      name={key}
+                      value={o.v}
+                      checked={values[key] === o.v}
+                      onChange={() => set(key, o.v)}
+                      style={{ accentColor: "var(--gold)", marginTop: "2px" }}
+                    />
+                    <span style={{ color: values[key] === o.v ? "var(--gold)" : "var(--text-secondary)", fontSize: "14px" }}>{o.label}</span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       <button type="submit" className="btn-gold" disabled={!isValid()}>
         ✦ 占う ✦
       </button>
@@ -857,6 +936,8 @@ function getReading(id: string, values: Record<string, string>): FortuneResult |
     case "aura-color":       return getAuraColorReading(values);
     case "jung-archetype":   return getJungArchetypeReading(values);
     case "color-personality":return getColorPersonalityReading(values);
+    // ── 守護神 ──
+    case "deity":        return values.birthday ? getDeityReading(values) : null;
     // ── 総合鑑定 ──
     case "comprehensive":return bd ? getComprehensiveReading(bd, nm) : null;
 
