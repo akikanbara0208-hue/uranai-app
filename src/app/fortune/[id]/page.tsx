@@ -262,10 +262,10 @@ function ResultDisplay({ result, question, fortuneId }: { result: FortuneResult;
     <div className="result-card rounded-2xl p-6 md:p-8 mt-8 space-y-6">
       {question && (
         <div className="bg-purple-100 border border-purple-200 rounded-xl p-4">
-          <p className="text-xs text-purple-300/60 tracking-wider mb-1">あなたの質問</p>
-          <p className="text-gray-200 text-sm leading-relaxed">「{question}」</p>
+          <p className="text-sm text-purple-300/60 tracking-wider mb-1">あなたの質問</p>
+          <p className="text-gray-200 text-base leading-relaxed">「{question}」</p>
           {theme !== "general" && (
-            <p className="text-xs text-yellow-500/60 mt-2">
+            <p className="text-sm text-yellow-500/60 mt-2">
               🔍 テーマ検出：<span className="text-yellow-500/90">{getThemeLabel(theme)}</span> に関する質問として読み解きます
             </p>
           )}
@@ -273,16 +273,16 @@ function ResultDisplay({ result, question, fortuneId }: { result: FortuneResult;
       )}
 
       <div className="text-center">
-        <div className="text-xs text-yellow-500/60 tracking-widest mb-2">— 結果 —</div>
+        <div className="text-sm text-yellow-500/60 tracking-widest mb-2">— 結果 —</div>
         <h2 className="text-2xl md:text-3xl font-bold gold-gradient mb-2">{result.title}</h2>
-        <p className="text-gray-300 text-sm leading-relaxed">{result.summary}</p>
+        <p className="text-gray-300 text-base leading-relaxed">{result.summary}</p>
       </div>
 
       {result.geomancyFigures && result.geomancyFigures.length > 0 && (
         <>
           <hr className="divider-gold" />
           <div>
-            <p className="text-xs text-yellow-500/70 tracking-wider mb-3">✦ 図形（上から 火・風・水・地）</p>
+            <p className="text-sm text-yellow-500/70 tracking-wider mb-3">✦ 図形（上から 火・風・水・地）</p>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {result.geomancyFigures.map((fig, i) => (
                 <GeomancyFigureCard key={i} fig={fig} />
@@ -314,8 +314,8 @@ function ResultDisplay({ result, question, fortuneId }: { result: FortuneResult;
             key={i}
             className={`flex flex-col gap-1 ${i === 0 && question && theme !== "general" ? "bg-yellow-500/5 border border-yellow-500/20 rounded-lg p-3" : ""}`}
           >
-            <span className="text-xs text-yellow-500/70 tracking-wider uppercase">{detail.label}</span>
-            <p className="text-gray-200 leading-relaxed text-sm md:text-base whitespace-pre-line">{detail.content}</p>
+            <span className="text-sm text-yellow-500/70 tracking-wider uppercase">{detail.label}</span>
+            <p className="text-gray-200 leading-relaxed text-base md:text-lg whitespace-pre-line">{detail.content}</p>
           </div>
         ))}
       </div>
@@ -324,30 +324,30 @@ function ResultDisplay({ result, question, fortuneId }: { result: FortuneResult;
         <>
           <hr className="divider-gold" />
           <div>
-            <p className="text-xs text-yellow-500/70 tracking-wider mb-3">✦ ラッキー情報</p>
+            <p className="text-sm text-yellow-500/70 tracking-wider mb-3">✦ ラッキー情報</p>
             <div className="grid grid-cols-2 gap-3">
               {result.lucky.color && (
                 <div className="bg-white/5 rounded-lg p-3">
-                  <span className="text-xs text-gray-500">ラッキーカラー</span>
-                  <p className="text-sm font-semibold gold-text">{result.lucky.color}</p>
+                  <span className="text-sm text-gray-500">ラッキーカラー</span>
+                  <p className="text-base font-semibold gold-text">{result.lucky.color}</p>
                 </div>
               )}
               {result.lucky.number && (
                 <div className="bg-white/5 rounded-lg p-3">
-                  <span className="text-xs text-gray-500">ラッキーナンバー</span>
-                  <p className="text-sm font-semibold gold-text">{result.lucky.number}</p>
+                  <span className="text-sm text-gray-500">ラッキーナンバー</span>
+                  <p className="text-base font-semibold gold-text">{result.lucky.number}</p>
                 </div>
               )}
               {result.lucky.item && (
                 <div className="bg-white/5 rounded-lg p-3">
-                  <span className="text-xs text-gray-500">ラッキーアイテム</span>
-                  <p className="text-sm font-semibold gold-text">{result.lucky.item}</p>
+                  <span className="text-sm text-gray-500">ラッキーアイテム</span>
+                  <p className="text-base font-semibold gold-text">{result.lucky.item}</p>
                 </div>
               )}
               {result.lucky.direction && (
                 <div className="bg-white/5 rounded-lg p-3">
-                  <span className="text-xs text-gray-500">吉方位</span>
-                  <p className="text-sm font-semibold gold-text">{result.lucky.direction}</p>
+                  <span className="text-sm text-gray-500">吉方位</span>
+                  <p className="text-base font-semibold gold-text">{result.lucky.direction}</p>
                 </div>
               )}
             </div>
@@ -358,8 +358,8 @@ function ResultDisplay({ result, question, fortuneId }: { result: FortuneResult;
       <hr className="divider-gold" />
 
       <div className="bg-purple-900/20 rounded-xl p-4 border border-purple-500/20">
-        <p className="text-xs text-purple-300/70 mb-2 tracking-wider">✦ アドバイス</p>
-        <p className="text-gray-200 leading-relaxed">{result.advice}</p>
+        <p className="text-sm text-purple-300/70 mb-2 tracking-wider">✦ アドバイス</p>
+        <p className="text-gray-200 leading-relaxed text-base md:text-lg">{result.advice}</p>
       </div>
 
       <DailyLuckMeter resultTitle={result.title} />

@@ -36,7 +36,7 @@ function SingleCard({ card, index }: { card: DrawnCard; index: number }) {
 export function CardRevealRow({ cards }: { cards: DrawnCard[] }) {
   return (
     <div>
-      <p className="text-xs text-yellow-500/70 tracking-wider mb-3 text-center">✦ カードをめくっています ✦</p>
+      <p className="text-sm text-yellow-500/70 tracking-wider mb-3 text-center">✦ カードをめくっています ✦</p>
       <div
         style={{
           display: "flex",
@@ -82,7 +82,7 @@ function SingleDie({ value, index }: { value: number; index: number }) {
 export function DiceRollDisplay({ values }: { values: number[] }) {
   return (
     <div>
-      <p className="text-xs text-yellow-500/70 tracking-wider mb-3 text-center">✦ サイコロが転がっています ✦</p>
+      <p className="text-sm text-yellow-500/70 tracking-wider mb-3 text-center">✦ サイコロが転がっています ✦</p>
       <div style={{ display: "flex", justifyContent: "center", gap: "14px" }}>
         {values.map((v, i) => (
           <SingleDie key={i} value={v} index={i} />
