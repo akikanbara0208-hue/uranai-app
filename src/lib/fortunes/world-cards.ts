@@ -144,7 +144,7 @@ export function getLenormandReading(question: string): FortuneResult {
       { label: "💗 恋愛・人間関係", content: `恋愛と人とのつながりにおいては、現在の「${present.name}（${kw(present)}）」が今の心の状態を映しています。そこから関係は「${future.name}（${kw(future)}）」の方向へと静かに動いていきます。過去の「${kw(past)}」を引きずりすぎず、目の前の相手や縁に丁寧に向き合うことで、絆はより確かなものになります。` },
       { label: "💼 仕事・金運", content: `仕事とお金の流れは、現在の「${present.name}」が示す「${kw(present)}」のテーマと深く結びついています。焦って大きく動くよりも、状況を見極めながら一手ずつ進めるのが得策です。導きのカード「${advice.name}」が促すように、${action}この姿勢が、やがて豊かさの流れを引き寄せます。` },
       { label: "🌱 今後の展開", content: `全体の流れは「${kw(past)}」から「${kw(present)}」、そして「${kw(future)}」へと一本の線を描いています。今は転換の途中にあり、未来の「${future.name}」がはっきり輪郭を帯びるのはこれからです。流れに逆らわず、しかし受け身になりすぎず、自分の意志を一滴ずつ加えていくことで、望む方向へ舵を切れます。` },
-      { label: `🌟 アドバイス：${advice.name}（${advice.num}番）`, content: `導きのカードは「${advice.name}」── ${advice.meaning}。\n\nあなたへの具体的な指針：\n${action}` },
+      { label: `🌟 アドバイス：${advice.name}（${advice.num}番）`, content: `導きのカードは「${advice.name}」── ${advice.meaning}。\n\nあなたへの具体的な指針：\n${action}\n\nこの一枚は、「${past.name}」から「${future.name}」へと向かう物語全体に橋を架ける存在です。判断に迷ったときほど、この指針の言葉に静かに立ち返ってください。` },
       { label: "⚠️ 心に留めておきたいこと", content: `このスプレッドが警告しているのは、流れを急ぎすぎることです。「${kw(present)}」の段階を飛ばして結果だけを求めると、せっかくの「${kw(future)}」がぼやけてしまいます。一枚一枚のカードが示す段階を、順番に丁寧に歩んでいってください。` },
     ],
     drawnCards: [
@@ -220,9 +220,9 @@ export function getGypsyReading(question: string): FortuneResult {
       { label: `第二のカード：${card2.name}（${card2.domain}）`, content: `${card2.meaning}。${card2.message}「${card2.domain}」というテーマが、いまのあなたの中心で揺れ動いています。物語のちょうど真ん中にある、最も力のこもった一枚です。` },
       { label: `第三のカード：${card3.name}（${card3.domain}）`, content: `${card3.meaning}。${card3.message}この「${card3.domain}」が、これから訪れる場面の鍵を握ります。三枚の流れが向かう先を指し示す一枚です。` },
       { label: "🔮 ロマの読み解き", content: pick([
-        `「${card1.name}」から「${card2.name}」を経て「${card3.name}」への流れは、変容の旅を示しています。あなたは今まさに重要な人生の章の境目に立っています。`,
-        `三枚のカードが示す共通のテーマは「${pick([card1.domain, card2.domain, card3.domain], rng(seed + 99))}」です。この領域に今のあなたの本質的な問いがあります。`,
-        `ロマの知恵によれば、この三枚の組み合わせは「転換期」を示しています。古い道を手放し、新しい道へと踏み出す勇気が今最も必要なものです。`,
+        `「${card1.name}」から「${card2.name}」を経て「${card3.name}」へ至る流れは、${card1.domain}を土台に${card3.domain}へと向かう変容の旅を示しています。特に中心の「${card2.name}」が持つ${card2.meaning}という性質が、今のあなたの立ち位置そのものです。三枚がひとつながりの物語として、あなたが今まさに人生の章の境目に立っていることを告げています。`,
+        `三枚のカードが示す共通のテーマは「${pick([card1.domain, card2.domain, card3.domain], rng(seed + 99))}」です。「${card1.name}」の${card1.meaning}が種を蒔き、「${card3.name}」の${card3.meaning}がその行方を照らしています。この領域にこそ、今のあなたが本当に向き合うべき問いが隠れています。`,
+        `ロマの知恵によれば、「${card1.name}」「${card2.name}」「${card3.name}」という三枚の組み合わせは、${card2.domain}を軸にした転換期を示しています。「${card1.domain}」で始まった流れが「${card3.domain}」へと形を変えていく過程で、古い道を手放し新しい道へ踏み出す勇気が今もっとも必要なものです。`,
       ], r)},
       { label: "💗 恋愛・パートナーシップ", content: `恋愛においては、中心の「${card2.name}」が今の感情の在り方を、「${card3.name}」がこれから訪れる展開を映し出します。「${card1.domain}」から始まった流れは、心を開くほどに豊かに育っていきます。相手の言葉だけでなく、その行動や間合いにも目を向けることで、関係の本当の姿が見えてきます。` },
       { label: "💼 仕事と金運", content: `仕事と金運の面では、最初の「${card1.name}（${card1.domain}）」が現状の土台を示しています。そこから「${card3.name}」が指し示す方向へと、状況は少しずつ動いていきます。目先の損得に振り回されず、誠実な積み重ねを続けることが、結果として豊かさを呼び込みます。` },

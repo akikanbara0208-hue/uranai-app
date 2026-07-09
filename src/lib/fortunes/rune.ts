@@ -381,8 +381,8 @@ export function getRuneReading(question: string): FortuneResult {
     { label: "🔮 3枚から読み解く総合鑑定", content: synthesis },
     { label: `❤️ 恋愛へのメッセージ（${r.name}）`, content: rev ? r.love_rev : r.love },
     { label: `💼 仕事へのメッセージ（${r.name}）`, content: rev ? r.work_rev : r.work },
-    { label: `✨ スピリチュアルメッセージ`, content: r.spirit },
-    { label: `⚡ 元素とルーンの守護神`, content: `元素：${r.element} ／ 守護神：${r.deity}。${r.name}は${r.deity}の加護を帯びたルーンであり、${r.element}のエネルギーがあなたの状況に流れ込んでいます。` },
+    { label: `✨ スピリチュアルメッセージ`, content: `${r.spirit}。この${rev ? "逆位置" : "正位置"}の${r.name}が伝える声に、静かに耳を澄ませてみましょう。「${future.rune.name}」へと向かう流れの中では、直感が示すサインを信じて動くことが次の一歩を照らします。` },
+    { label: `⚡ 元素とルーンの守護神`, content: `元素：${r.element} ／ 守護神：${r.deity}。${r.name}は${r.deity}の加護を帯びたルーンであり、${r.element}のエネルギーがあなたの状況に流れ込んでいます。${rev ? `今は逆位置のため${r.element}の流れが滞りがちですが、${r.deity}に静かに意識を向けることで本来の力を取り戻せるでしょう。` : `${r.element}の力強い後押しを受け、${r.deity}の加護のもとで迷いなく前進できる時期です。`}` },
     { label: `🍀 開運のヒント`, content: `ラッキーアイテムは「${r.lucky.item}」、ラッキーカラーは「${r.lucky.color}」です。これらを身近に置くと、${r.name}のエネルギーと響き合いやすくなります。迷ったときはこのルーンの象徴を思い浮かべ、心を落ち着けてみてください。` },
   );
 

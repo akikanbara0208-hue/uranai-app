@@ -460,7 +460,7 @@ export function getTarotReading(question: string): FortuneResult {
     { label: "💼 仕事への影響", content: main.isReversed ? mainCard.work_rev : mainCard.work_up },
     { label: "💰 金運への影響", content: main.isReversed ? mainCard.money_rev : mainCard.money_up },
     { label: "🌿 健康へのメッセージ", content: main.isReversed ? mainCard.health_rev : mainCard.health_up },
-    { label: "✨ スピリチュアルメッセージ", content: mainCard.spirit },
+    { label: "✨ スピリチュアルメッセージ", content: `${mainCard.spirit}。この${main.isReversed ? "逆位置" : "正位置"}の「${mainCard.name}」が語りかけるメッセージに、静かに心を澄ませてみましょう。「${outcomeCard.card.name}」へと向かうこの物語の結末を見据えながら、直感が示すサインを日々の選択に活かしていくことが大切です。` },
   );
 
   return {
