@@ -1,12 +1,12 @@
 @import "tailwindcss";
 
 :root {
-  --bg-dark: #0a0a1a;
-  --bg-card: #12122a;
-  --accent-gold: #c9a227;
+  --bg-dark: #ffffff;
+  --bg-card: #efe7fb;
+  --accent-gold: #b08a16;
   --accent-purple: #7c3aed;
-  --text-primary: #e8e0d0;
-  --text-muted: #9988aa;
+  --text-primary: #2e2742;
+  --text-muted: #6b6385;
 }
 
 body {
@@ -16,20 +16,20 @@ body {
 }
 
 .mystical-bg {
-  background: radial-gradient(ellipse at top, #1a0a3a 0%, #0a0a1a 60%);
+  background: radial-gradient(ellipse at top, #efe7fc 0%, #ffffff 55%);
   min-height: 100vh;
 }
 
 .card-mystical {
-  background: linear-gradient(135deg, rgba(124, 58, 237, 0.1) 0%, rgba(18, 18, 42, 0.9) 100%);
-  border: 1px solid rgba(201, 162, 39, 0.2);
+  background: linear-gradient(135deg, rgba(167, 139, 250, 0.18) 0%, rgba(250, 247, 255, 0.96) 100%);
+  border: 1px solid rgba(124, 58, 237, 0.25);
   backdrop-filter: blur(8px);
   transition: all 0.3s ease;
 }
 
 .card-mystical:hover {
-  border-color: rgba(201, 162, 39, 0.5);
-  box-shadow: 0 0 20px rgba(124, 58, 237, 0.2), 0 0 40px rgba(201, 162, 39, 0.1);
+  border-color: rgba(124, 58, 237, 0.5);
+  box-shadow: 0 6px 22px rgba(124, 58, 237, 0.18), 0 0 30px rgba(176, 138, 22, 0.08);
   transform: translateY(-2px);
 }
 
@@ -38,16 +38,16 @@ body {
 }
 
 .gold-gradient {
-  background: linear-gradient(90deg, #c9a227, #f0d070, #c9a227);
+  background: linear-gradient(90deg, #a87f1e, #c9a227, #a87f1e);
   -webkit-background-clip: text;
   -webkit-text-fill-color: transparent;
   background-clip: text;
 }
 
 .result-card {
-  background: linear-gradient(135deg, rgba(30, 10, 60, 0.95) 0%, rgba(10, 10, 26, 0.95) 100%);
-  border: 1px solid rgba(201, 162, 39, 0.4);
-  box-shadow: 0 0 30px rgba(124, 58, 237, 0.15);
+  background: linear-gradient(135deg, #efe7fc 0%, #f8f5ff 100%);
+  border: 1px solid rgba(124, 58, 237, 0.3);
+  box-shadow: 0 8px 30px rgba(124, 58, 237, 0.12);
 }
 
 @keyframes float {
@@ -60,8 +60,8 @@ body {
 }
 
 @keyframes glow-pulse {
-  0%, 100% { box-shadow: 0 0 5px rgba(201, 162, 39, 0.2); }
-  50% { box-shadow: 0 0 20px rgba(201, 162, 39, 0.5), 0 0 40px rgba(124, 58, 237, 0.2); }
+  0%, 100% { box-shadow: 0 0 5px rgba(176, 138, 22, 0.15); }
+  50% { box-shadow: 0 0 18px rgba(176, 138, 22, 0.35), 0 0 32px rgba(124, 58, 237, 0.15); }
 }
 
 .glow-pulse {
@@ -76,19 +76,19 @@ body {
   letter-spacing: 0.05em;
 }
 
-.category-purple { background: rgba(124, 58, 237, 0.3); color: #c4b5fd; border: 1px solid rgba(124, 58, 237, 0.4); }
-.category-blue { background: rgba(37, 99, 235, 0.3); color: #93c5fd; border: 1px solid rgba(37, 99, 235, 0.4); }
-.category-indigo { background: rgba(67, 56, 202, 0.3); color: #a5b4fc; border: 1px solid rgba(67, 56, 202, 0.4); }
-.category-green { background: rgba(5, 150, 105, 0.3); color: #6ee7b7; border: 1px solid rgba(5, 150, 105, 0.4); }
-.category-red { background: rgba(185, 28, 28, 0.3); color: #fca5a5; border: 1px solid rgba(185, 28, 28, 0.4); }
-.category-amber { background: rgba(180, 120, 10, 0.3); color: #fcd34d; border: 1px solid rgba(180, 120, 10, 0.4); }
-.category-violet { background: rgba(139, 92, 246, 0.3); color: #ddd6fe; border: 1px solid rgba(139, 92, 246, 0.4); }
-.category-teal { background: rgba(13, 148, 136, 0.3); color: #99f6e4; border: 1px solid rgba(13, 148, 136, 0.4); }
-.category-gold { background: rgba(201, 162, 39, 0.25); color: #f5d76e; border: 1px solid rgba(201, 162, 39, 0.5); }
+.category-purple { background: rgba(124, 58, 237, 0.14); color: #6d28d9; border: 1px solid rgba(124, 58, 237, 0.35); }
+.category-blue { background: rgba(37, 99, 235, 0.14); color: #1d4ed8; border: 1px solid rgba(37, 99, 235, 0.35); }
+.category-indigo { background: rgba(67, 56, 202, 0.14); color: #4338ca; border: 1px solid rgba(67, 56, 202, 0.35); }
+.category-green { background: rgba(5, 150, 105, 0.14); color: #047857; border: 1px solid rgba(5, 150, 105, 0.35); }
+.category-red { background: rgba(185, 28, 28, 0.14); color: #b91c1c; border: 1px solid rgba(185, 28, 28, 0.35); }
+.category-amber { background: rgba(180, 120, 10, 0.16); color: #92600a; border: 1px solid rgba(180, 120, 10, 0.4); }
+.category-violet { background: rgba(139, 92, 246, 0.14); color: #7c3aed; border: 1px solid rgba(139, 92, 246, 0.35); }
+.category-teal { background: rgba(13, 148, 136, 0.14); color: #0f766e; border: 1px solid rgba(13, 148, 136, 0.35); }
+.category-gold { background: rgba(176, 138, 22, 0.16); color: #8a6c14; border: 1px solid rgba(176, 138, 22, 0.45); }
 
-input[type="date"], input[type="text"], input[type="number"], select, textarea {
-  background: rgba(18, 18, 42, 0.8);
-  border: 1px solid rgba(201, 162, 39, 0.3);
+input[type="date"], input[type="text"], input[type="number"], input[type="time"], select, textarea {
+  background: #ffffff;
+  border: 1px solid rgba(124, 58, 237, 0.35);
   color: var(--text-primary);
   border-radius: 8px;
   padding: 10px 14px;
@@ -97,18 +97,16 @@ input[type="date"], input[type="text"], input[type="number"], select, textarea {
   transition: border-color 0.2s;
 }
 
-input:focus, select:focus, textarea:focus {
-  border-color: rgba(201, 162, 39, 0.7);
-  box-shadow: 0 0 0 2px rgba(201, 162, 39, 0.1);
-}
+input::placeholder, textarea::placeholder { color: #9b93ad; }
 
-input[type="date"]::-webkit-calendar-picker-indicator {
-  filter: invert(0.7) sepia(1) saturate(2) hue-rotate(10deg);
+input:focus, select:focus, textarea:focus {
+  border-color: rgba(124, 58, 237, 0.7);
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.12);
 }
 
 .btn-gold {
   background: linear-gradient(135deg, #c9a227, #f0d070);
-  color: #0a0a1a;
+  color: #2e2742;
   font-weight: 700;
   padding: 12px 32px;
   border-radius: 8px;
@@ -121,7 +119,7 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .btn-gold:hover {
   background: linear-gradient(135deg, #f0d070, #c9a227);
-  box-shadow: 0 0 20px rgba(201, 162, 39, 0.4);
+  box-shadow: 0 4px 18px rgba(176, 138, 22, 0.35);
   transform: translateY(-1px);
 }
 
@@ -133,6 +131,156 @@ input[type="date"]::-webkit-calendar-picker-indicator {
 
 .divider-gold {
   border: none;
-  border-top: 1px solid rgba(201, 162, 39, 0.2);
+  border-top: 1px solid rgba(124, 58, 237, 0.18);
   margin: 16px 0;
+}
+
+/* ── 明るいテーマ用：暗背景向けに薄かった文字色を読みやすい濃色へ補正 ── */
+.text-white, .text-gray-100 { color: #2e2742; }
+.text-gray-200 { color: #36304a; }
+.text-gray-300 { color: #463f5d; }
+.text-gray-400 { color: #5d5676; }
+.text-yellow-300, .text-yellow-400, .text-yellow-500,
+.text-yellow-300\/90, .text-yellow-400\/80,
+.text-yellow-500\/50, .text-yellow-500\/60, .text-yellow-500\/70,
+.text-yellow-500\/80, .text-yellow-500\/90 { color: #93720f; }
+.text-purple-300, .text-purple-300\/60, .text-purple-300\/70 { color: #6d28d9; }
+
+/* 暗背景向けの半透明白パネルを、白地で見える薄紫タイルへ */
+.bg-white\/5 { background-color: rgba(124, 58, 237, 0.07); }
+.bg-white\/10 { background-color: rgba(124, 58, 237, 0.11); }
+.border-white\/10 { border-color: rgba(124, 58, 237, 0.18); }
+
+/* ══════════════════════════════════════════════
+   カードめくり／サイコロアニメーション
+   ══════════════════════════════════════════════ */
+.card-flip-scene {
+  perspective: 1200px;
+  width: 100%;
+}
+
+.card-flip-inner {
+  position: relative;
+  width: 100%;
+  aspect-ratio: 3 / 4;
+  transform-style: preserve-3d;
+  transition: transform 0.7s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+.card-flip-inner.is-flipped {
+  transform: rotateY(180deg);
+}
+
+.card-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 10px 6px;
+  overflow: hidden;
+}
+
+.card-face-back {
+  background: linear-gradient(135deg, #6d28d9 0%, #7c3aed 45%, #4c1d95 100%);
+  border: 1px solid rgba(255, 255, 255, 0.25);
+  color: rgba(255, 255, 255, 0.85);
+}
+
+.card-face-back::before {
+  content: "";
+  position: absolute;
+  inset: 6px;
+  border: 1px solid rgba(255, 255, 255, 0.3);
+  border-radius: 8px;
+}
+
+.card-face-front {
+  background: linear-gradient(160deg, #fdfbff 0%, #efe7fc 100%);
+  border: 1px solid rgba(176, 138, 22, 0.5);
+  box-shadow: 0 4px 16px rgba(124, 58, 237, 0.18);
+  transform: rotateY(180deg);
+  color: var(--text-primary);
+}
+
+.card-face-front.is-reversed .card-symbol {
+  display: inline-block;
+  transform: rotate(180deg);
+}
+
+.card-symbol {
+  font-size: 2.1rem;
+  line-height: 1;
+  margin-bottom: 6px;
+}
+
+.card-name {
+  font-size: 0.72rem;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.3;
+}
+
+.card-position-label {
+  font-size: 0.62rem;
+  color: var(--text-muted);
+  margin-top: 4px;
+  letter-spacing: 0.03em;
+}
+
+.card-reversed-badge {
+  font-size: 0.6rem;
+  color: #b91c1c;
+  margin-top: 2px;
+  font-weight: 700;
+}
+
+@keyframes card-deal-in {
+  from { opacity: 0; transform: translateY(14px) scale(0.92); }
+  to   { opacity: 1; transform: translateY(0) scale(1); }
+}
+
+.card-deal-anim {
+  animation: card-deal-in 0.45s ease-out both;
+}
+
+/* ── サイコロ ── */
+.dice-face {
+  width: 56px;
+  height: 56px;
+  border-radius: 12px;
+  background: linear-gradient(160deg, #ffffff 0%, #efe7fc 100%);
+  border: 1px solid rgba(176, 138, 22, 0.5);
+  box-shadow: 0 4px 14px rgba(124, 58, 237, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 2rem;
+  color: var(--text-primary);
+}
+
+@keyframes dice-shake {
+  0%, 100% { transform: rotate(0deg) scale(1); }
+  20% { transform: rotate(-12deg) scale(1.05); }
+  40% { transform: rotate(10deg) scale(0.97); }
+  60% { transform: rotate(-8deg) scale(1.04); }
+  80% { transform: rotate(6deg) scale(0.98); }
+}
+
+.dice-rolling {
+  animation: dice-shake 0.25s ease-in-out infinite;
+}
+
+@keyframes dice-settle {
+  0% { transform: scale(1.3) rotate(0deg); }
+  60% { transform: scale(0.92) rotate(0deg); }
+  100% { transform: scale(1) rotate(0deg); }
+}
+
+.dice-settled {
+  animation: dice-settle 0.35s ease-out;
 }

@@ -1,6 +1,7 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
+import { getProfiles, saveProfileFromValues, deleteProfile, type Profile } from "@/lib/profiles";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { FORTUNES } from "@/lib/fortunes";
@@ -8,7 +9,7 @@ import { FortuneResult } from "@/lib/types";
 
 // ── 既存占い ──
 import { getTarotReading } from "@/lib/fortunes/tarot";
-import { getAstrologyReading } from "@/lib/fortunes/astrology";
+import { getAstrologyReading, PREFECTURES } from "@/lib/fortunes/astrology";
 import { getNumerologyReading } from "@/lib/fortunes/numerology";
 import { getOmikujiReading } from "@/lib/fortunes/omikuji";
 import { getRuneReading } from "@/lib/fortunes/rune";
@@ -30,8 +31,8 @@ import {
   getEtoReading,
   getRokuyoReading,
   getSanmeigakuReading,
-  getShibiReading,
 } from "@/lib/fortunes/world-eastern";
+import { getZiweiReading } from "@/lib/fortunes/ziwei";
 
 // ── 古代 ──
 import {
@@ -67,14 +68,11 @@ import {
 
 // ── 性格診断 ──
 import {
-  getMBTIReading,
   getHSPReading,
-  getEnneagramReading,
   getBigFiveReading,
   getTemperamentReading,
   getFourElementsReading,
   getAuraColorReading,
-  getJungArchetypeReading,
   getColorPersonalityReading,
   getFaceReading,
 } from "@/lib/fortunes/world-personality";
@@ -85,8 +83,24 @@ import { getDeityReading } from "@/lib/fortunes/world-deity";
 // ── 総合鑑定 ──
 import { getComprehensiveReading } from "@/lib/fortunes/world-comprehensive";
 
+// ── 追加占術 ──
+import { getSukuyoReading } from "@/lib/fortunes/sukuyo";
+import { getCompatibilityReading } from "@/lib/fortunes/compatibility";
+import { getGuardianBuddhaReading } from "@/lib/fortunes/guardian-buddha";
+import { getTibetanReading } from "@/lib/fortunes/tibetan";
+import { getTransitReading } from "@/lib/fortunes/transit";
+import { getShichijunikoReading } from "@/lib/fortunes/shichijuniko";
+import { getBirthCodeReading } from "@/lib/fortunes/birth-code";
+import { getJuniChokuReading } from "@/lib/fortunes/juni-choku";
+import { getPowerStoneReading } from "@/lib/fortunes/power-stone";
+import { getEtoCompatReading } from "@/lib/fortunes/eto-compat";
+import { getNumerologyCompatReading } from "@/lib/fortunes/numerology-compat";
+import { getKyuseiCompatReading } from "@/lib/fortunes/kyusei-compat";
+import { getCartomancyReading } from "@/lib/fortunes/cartomancy";
+
 import { GeomancyFigure } from "@/lib/types";
-import { detectTheme, getThemeLabel } from "@/lib/questionAnalyzer";
+import { detectTheme, getThemeLabel, buildTypedAnswer } from "@/lib/questionAnalyzer";
+import { CardRevealRow, DiceRollDisplay } from "@/components/CardReveal";
 
 // ──────────────────────────────────────────────────────────────
 const THEME_DETAIL_KEYWORDS: Record<string, string[]> = {
@@ -177,7 +191,7 @@ function DailyLuckMeter({ resultTitle }: { resultTitle: string }) {
   const rank = (v: number) => v >= 80 ? "★★★★★" : v >= 60 ? "★★★★☆" : v >= 40 ? "★★★☆☆" : v >= 20 ? "★★☆☆☆" : "★☆☆☆☆";
 
   return (
-    <div className="bg-gradient-to-b from-purple-950/30 to-black/20 border border-yellow-500/20 rounded-xl p-5">
+    <div className="bg-gradient-to-b from-purple-100 to-purple-50 border border-purple-200 rounded-xl p-5">
       <p className="text-xs text-yellow-500/70 tracking-wider mb-4">✦ 今日（{today.getMonth() + 1}/{today.getDate()}）の運勢</p>
       <div className="space-y-3 mb-4">
         {scores.map(({ label, value }) => (
@@ -237,13 +251,17 @@ function RelatedFortunes({ currentId }: { currentId: string }) {
 
 // ──────────────────────────────────────────────────────────────
 function ResultDisplay({ result, question, fortuneId }: { result: FortuneResult; question?: string; fortuneId: string }) {
-  const orderedDetails = question ? reorderDetails(result.details, question) : result.details;
+  const reordered = question ? reorderDetails(result.details, question) : result.details;
   const theme = question ? detectTheme(question) : "general";
+  // 質問の種類（いつ／すべきか／どちら 等）に応じた直接回答を先頭に追加
+  const answerSeed = question ? (question + result.title).split("").reduce((a, c) => (a * 31 + c.charCodeAt(0)) | 0, 0) : 0;
+  const typedAnswer = question ? buildTypedAnswer(question, answerSeed) : null;
+  const orderedDetails = typedAnswer ? [typedAnswer, ...reordered] : reordered;
 
   return (
     <div className="result-card rounded-2xl p-6 md:p-8 mt-8 space-y-6">
       {question && (
-        <div className="bg-purple-950/40 border border-purple-500/20 rounded-xl p-4">
+        <div className="bg-purple-100 border border-purple-200 rounded-xl p-4">
           <p className="text-xs text-purple-300/60 tracking-wider mb-1">あなたの質問</p>
           <p className="text-gray-200 text-sm leading-relaxed">「{question}」</p>
           {theme !== "general" && (
@@ -271,6 +289,20 @@ function ResultDisplay({ result, question, fortuneId }: { result: FortuneResult;
               ))}
             </div>
           </div>
+        </>
+      )}
+
+      {result.drawnCards && result.drawnCards.length > 0 && (
+        <>
+          <hr className="divider-gold" />
+          <CardRevealRow cards={result.drawnCards} />
+        </>
+      )}
+
+      {result.diceRoll && result.diceRoll.length > 0 && (
+        <>
+          <hr className="divider-gold" />
+          <DiceRollDisplay values={result.diceRoll} />
         </>
       )}
 
@@ -391,8 +423,8 @@ const SLIDER_STYLE: React.CSSProperties = {
 };
 
 const SELECT_STYLE: React.CSSProperties = {
-  background: "rgba(18, 18, 42, 0.8)",
-  border: "1px solid rgba(201, 162, 39, 0.3)",
+  background: "#ffffff",
+  border: "1px solid rgba(124, 58, 237, 0.35)",
   color: "var(--text-primary)",
   borderRadius: "8px",
   padding: "10px 14px",
@@ -418,8 +450,46 @@ function InputForm({
 
   const set = (key: string, val: string) => setValues((prev) => ({ ...prev, [key]: val }));
 
+  // ── 保存プロフィール（生年月日・名前を使う占いのみ） ──
+  const usesPersonalData =
+    inputType === "birthday" || inputType === "birthday_name" ||
+    inputType === "birthday_time" || inputType === "name" ||
+    fortuneId === "deity";
+  const [profiles, setProfiles] = useState<Profile[]>([]);
+  const [selectedProfile, setSelectedProfile] = useState<string>("");
+  useEffect(() => {
+    if (usesPersonalData) setProfiles(getProfiles());
+  }, [usesPersonalData]);
+
+  const applyProfile = (id: string) => {
+    setSelectedProfile(id);
+    if (!id) {
+      // 「新しい人を入力」→ 個人情報欄をクリア
+      setValues((prev) => ({ ...prev, birthday: "", birthTime: "", birthPlace: "", name: "" }));
+      return;
+    }
+    const p = profiles.find((x) => x.id === id);
+    if (!p) return;
+    setValues((prev) => ({
+      ...prev,
+      birthday: p.birthday || "",
+      birthTime: p.birthTime || "",
+      birthPlace: p.birthPlace || "",
+      name: p.name || "",
+    }));
+  };
+
+  const removeProfile = (id: string) => {
+    deleteProfile(id);
+    const next = getProfiles();
+    setProfiles(next);
+    if (selectedProfile === id) applyProfile("");
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // 入力した生年月日・名前を次回用に保存
+    if (usesPersonalData) saveProfileFromValues(values);
     // HSP: combine scores into hsp_answers for the reading function
     if (fortuneId === "hsp") {
       const answers = [0,1,2,3,4,5,6].map(i => values[`hsp_${i}`] || "5").join(",");
@@ -433,6 +503,7 @@ function InputForm({
     if (inputType === "birthday") return !!values.birthday;
     if (inputType === "birthday_name") return !!values.birthday;
     if (inputType === "birthday_time") return !!values.birthday;
+    if (inputType === "two_birthday") return !!values.birthday && !!values.birthday2;
     if (inputType === "blood_type") return !!values.blood_type;
     if (inputType === "question") return !!values.question?.trim();
     if (inputType === "name") return !!values.name?.trim();
@@ -442,10 +513,7 @@ function InputForm({
       return !!values.keyword?.trim();
     }
     if (inputType === "quiz") {
-      if (fortuneId === "mbti") return !!values.mbti_ei && !!values.mbti_sn && !!values.mbti_tf && !!values.mbti_jp;
-      if (fortuneId === "enneagram") return !!values.enneagram_type;
       if (fortuneId === "aura-color") return values.aura_color !== undefined && values.aura_color !== "";
-      if (fortuneId === "jung-archetype") return values.archetype !== undefined && values.archetype !== "";
       if (fortuneId === "color-personality") return values.fav_color !== undefined && values.fav_color !== "";
       if (fortuneId === "deity") return !!values.birthday && !!values.deity_q1 && !!values.deity_q2 && !!values.deity_q3;
       if (fortuneId === "face-reading") return !!values.face_shape && !!values.face_eye && !!values.face_nose && !!values.face_mouth && !!values.face_brow;
@@ -456,6 +524,33 @@ function InputForm({
 
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
+      {/* ── 保存した人を選ぶ ── */}
+      {usesPersonalData && profiles.length > 0 && (
+        <div>
+          <label className="block text-sm text-yellow-500/70 mb-2">占う人を選ぶ</label>
+          <select
+            value={selectedProfile}
+            onChange={(e) => applyProfile(e.target.value)}
+            style={SELECT_STYLE}
+          >
+            <option value="">＋ 新しい人を入力</option>
+            {profiles.map((p) => (
+              <option key={p.id} value={p.id}>{p.label}</option>
+            ))}
+          </select>
+          {selectedProfile && (
+            <button
+              type="button"
+              onClick={() => removeProfile(selectedProfile)}
+              className="text-xs text-gray-500 mt-1 underline"
+            >
+              この保存を削除
+            </button>
+          )}
+          <p className="text-xs text-gray-500 mt-1">過去に占った人は選ぶだけ。別の人を占うときは「新しい人を入力」を選んでください。</p>
+        </div>
+      )}
+
       {/* ── 生年月日 ── */}
       {(inputType === "birthday" || inputType === "birthday_name" || inputType === "birthday_time") && (
         <div>
@@ -467,6 +562,48 @@ function InputForm({
             max={new Date().toISOString().split("T")[0]}
             min="1900-01-01"
           />
+        </div>
+      )}
+
+      {/* ── 相性占い：2人の生年月日 ── */}
+      {inputType === "two_birthday" && (
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm text-yellow-500/70 mb-2">お一人目の生年月日</label>
+            <input
+              type="date"
+              value={values.birthday || ""}
+              onChange={(e) => set("birthday", e.target.value)}
+              max={new Date().toISOString().split("T")[0]}
+              min="1900-01-01"
+            />
+            <input
+              type="time"
+              value={values.birthTime || ""}
+              onChange={(e) => set("birthTime", e.target.value)}
+              style={SELECT_STYLE}
+              className="mt-2"
+            />
+            <p className="text-xs text-gray-500 mt-1">生まれた時間（わかる場合・任意）</p>
+          </div>
+          <div>
+            <label className="block text-sm text-yellow-500/70 mb-2">お二人目の生年月日</label>
+            <input
+              type="date"
+              value={values.birthday2 || ""}
+              onChange={(e) => set("birthday2", e.target.value)}
+              max={new Date().toISOString().split("T")[0]}
+              min="1900-01-01"
+            />
+            <input
+              type="time"
+              value={values.birthTime2 || ""}
+              onChange={(e) => set("birthTime2", e.target.value)}
+              style={SELECT_STYLE}
+              className="mt-2"
+            />
+            <p className="text-xs text-gray-500 mt-1">生まれた時間（わかる場合・任意）</p>
+          </div>
         </div>
       )}
 
@@ -482,7 +619,20 @@ function InputForm({
             onChange={(e) => set("birthTime", e.target.value)}
             style={SELECT_STYLE}
           />
-          <p className="text-xs text-gray-500 mt-1">入力しなくてもOK（太陽・月・惑星は算出されます）</p>
+          <p className="text-xs text-gray-500 mt-1">入力しなくてもOK（太陽・月・惑星は算出されます）。アセンダント・MCを正確に出すには時刻＋出生地が必要です。</p>
+
+          <label className="block text-sm text-yellow-500/70 mb-2 mt-4">出生地（都道府県）</label>
+          <select
+            value={values.birthPlace || ""}
+            onChange={(e) => set("birthPlace", e.target.value)}
+            style={SELECT_STYLE}
+          >
+            <option value="">選択しない（東京で計算）</option>
+            {PREFECTURES.map((p) => (
+              <option key={p.name} value={p.name}>{p.name}</option>
+            ))}
+          </select>
+          <p className="text-xs text-gray-500 mt-1">海外生まれの方は未選択（東京）のままで概算になります。</p>
         </div>
       )}
 
@@ -501,6 +651,12 @@ function InputForm({
           {inputType === "name" && fortuneId === "kabbalah" && (
             <p className="text-xs text-gray-500 mt-1">ローマ字・英語名・カタカナいずれも可</p>
           )}
+          {fortuneId === "seimei-handan" && (
+            <p className="text-xs text-gray-500 mt-1">姓と名の間にスペースを入れてください（例：山田 花子）。漢字・ひらがな・カタカナ可。実際の画数で五格を鑑定します。</p>
+          )}
+          {fortuneId === "numerology" && (
+            <p className="text-xs text-gray-500 mt-1">ローマ字またはカタカナ・ひらがなで入力すると、表現数・魂の数も鑑定できます。</p>
+          )}
         </div>
       )}
 
@@ -516,8 +672,8 @@ function InputForm({
             value={values.question || ""}
             onChange={(e) => set("question", e.target.value)}
             style={{
-              background: "rgba(18, 18, 42, 0.8)",
-              border: "1px solid rgba(201, 162, 39, 0.3)",
+              background: "#ffffff",
+              border: "1px solid rgba(124, 58, 237, 0.35)",
               color: "var(--text-primary)",
               borderRadius: "8px",
               padding: "10px 14px",
@@ -622,135 +778,6 @@ function InputForm({
           QUIZ 型フォーム
          ══════════════════════════════════════════════ */}
 
-      {/* ── MBTI ── */}
-      {inputType === "quiz" && fortuneId === "mbti" && (
-        <div className="space-y-6">
-          <p className="text-sm text-yellow-500/70">それぞれ当てはまる方を選んでください（全4問）</p>
-          {[
-            {
-              key: "mbti_ei",
-              question: "エネルギーの源泉はどちらに近い？",
-              options: [
-                { value: "E", label: "E（外向型）", desc: "人と関わることでエネルギーが充電される" },
-                { value: "I", label: "I（内向型）", desc: "一人の時間でエネルギーが充電される" },
-              ],
-            },
-            {
-              key: "mbti_sn",
-              question: "日常の中で自然に重視するのは？",
-              options: [
-                { value: "S", label: "S（感覚型）", desc: "具体的な事実・現実・細部を重視する" },
-                { value: "N", label: "N（直観型）", desc: "可能性・ひらめき・大きな全体像を重視する" },
-              ],
-            },
-            {
-              key: "mbti_tf",
-              question: "決断するとき優先するのは？",
-              options: [
-                { value: "T", label: "T（思考型）", desc: "論理・分析・客観的な基準で判断する" },
-                { value: "F", label: "F（感情型）", desc: "感情・価値観・人への影響で判断する" },
-              ],
-            },
-            {
-              key: "mbti_jp",
-              question: "生活スタイルはどちらに近い？",
-              options: [
-                { value: "J", label: "J（判断型）", desc: "計画的で整理された生活を好む" },
-                { value: "P", label: "P（知覚型）", desc: "柔軟で自発的な生活を好む" },
-              ],
-            },
-          ].map(({ key, question, options }) => (
-            <div key={key} className="bg-white/5 rounded-lg p-4">
-              <p className="text-sm text-gray-300 mb-3">{question}</p>
-              <div className="space-y-2">
-                {options.map((o) => (
-                  <label key={o.value} style={{ display: "flex", alignItems: "flex-start", gap: "10px", cursor: "pointer", padding: "8px", borderRadius: "6px", background: values[key] === o.value ? "rgba(201,162,39,0.15)" : "transparent", border: values[key] === o.value ? "1px solid rgba(201,162,39,0.4)" : "1px solid transparent" }}>
-                    <input
-                      type="radio"
-                      name={key}
-                      value={o.value}
-                      checked={values[key] === o.value}
-                      onChange={() => set(key, o.value)}
-                      style={{ accentColor: "var(--gold)", marginTop: "2px" }}
-                    />
-                    <span>
-                      <span style={{ color: "var(--gold)", fontWeight: 600 }}>{o.label}</span>
-                      <span className="text-gray-400 text-sm ml-2">{o.desc}</span>
-                    </span>
-                  </label>
-                ))}
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* ── HSP ── */}
-      {inputType === "quiz" && fortuneId === "hsp" && (
-        <div className="space-y-5">
-          <p className="text-sm text-yellow-500/70">各質問を0〜10で評価してください（0＝まったく当てはまらない　10＝非常に当てはまる）</p>
-          {[
-            "騒音・強い光・混雑などの外的刺激が気になりやすい",
-            "他人の気持ちや感情の変化に敏感に気づく",
-            "一度に多くのことを要求されると圧倒される",
-            "暴力的な映像やニュースがしばらく心に残る",
-            "繊細な音・味・匂い・感触の違いに気づきやすい",
-            "豊かな内面世界・空想・想像の世界がある",
-            "何かを決める前に深く考え込む傾向がある",
-          ].map((q, i) => (
-            <div key={i} className="bg-white/5 rounded-lg p-4">
-              <p className="text-sm text-gray-300 mb-2">{i + 1}. {q}</p>
-              <div className="flex items-center gap-3">
-                <span className="text-xs text-gray-500 w-6">0</span>
-                <input
-                  type="range"
-                  min={0}
-                  max={10}
-                  value={values[`hsp_${i}`] || "5"}
-                  onChange={(e) => set(`hsp_${i}`, e.target.value)}
-                  style={{ ...SLIDER_STYLE }}
-                />
-                <span className="text-xs text-gray-500 w-6 text-right">10</span>
-                <span className="text-sm font-semibold gold-text w-6 text-right">{values[`hsp_${i}`] || "5"}</span>
-              </div>
-            </div>
-          ))}
-        </div>
-      )}
-
-      {/* ── エニアグラム ── */}
-      {inputType === "quiz" && fortuneId === "enneagram" && (
-        <div className="space-y-4">
-          <p className="text-sm text-yellow-500/70">最も当てはまるタイプを選んでください</p>
-          <p className="text-xs text-gray-500">直感で「これが一番しっくりくる」と思う動機を選ぶのがポイントです</p>
-          <select
-            value={values.enneagram_type || ""}
-            onChange={(e) => set("enneagram_type", e.target.value)}
-            style={{ ...SELECT_STYLE }}
-          >
-            <option value="">タイプを選択してください</option>
-            {[
-              [1, "改革者",     "正しくありたい・完璧でありたい"],
-              [2, "助力者",     "愛されたい・必要とされたい"],
-              [3, "達成者",     "価値があると見られたい・成功したい"],
-              [4, "個人主義者", "本物の自分でありたい・独自でありたい"],
-              [5, "観察者",     "知識を持ちたい・理解したい"],
-              [6, "忠実者",     "安全でいたい・確かな支えが欲しい"],
-              [7, "熱狂者",     "楽しく満足していたい・痛みを避けたい"],
-              [8, "挑戦者",     "力強くいたい・コントロールを持ちたい"],
-              [9, "平和主義者", "平和でいたい・対立を避けたい"],
-            ].map(([num, name, motive]) => (
-              <option key={num} value={String(num)}>
-                タイプ{num}：{name}（{motive}）
-              </option>
-            ))}
-          </select>
-          <div className="bg-white/5 rounded-lg p-3">
-            <p className="text-xs text-gray-400">ヒント：「何が自分の一番根本的な動機か」に着目してください。行動の結果ではなく、なぜそうしたいのかという動機で選ぶと正確です。</p>
-          </div>
-        </div>
-      )}
-
       {/* ── ビッグファイブ ── */}
       {inputType === "quiz" && fortuneId === "big-five" && (
         <div className="space-y-5">
@@ -763,8 +790,8 @@ function InputForm({
             { key: "big5_N", label: "神経症傾向（N）", desc: "感情の波・ストレス反応・不安傾向" },
           ].map(({ key, label, desc }) => (
             <div key={key} className="bg-white/5 rounded-lg p-4">
-              <p className="text-sm text-gray-200 font-semibold mb-1">{label}</p>
-              <p className="text-xs text-gray-500 mb-2">{desc}</p>
+              <p className="text-base text-gray-100 font-bold mb-1">{label}</p>
+              <p className="text-sm text-gray-300 mb-3 leading-relaxed">{desc}</p>
               <div className="flex items-center gap-3">
                 <span className="text-xs text-gray-500 w-6">低</span>
                 <input
@@ -795,8 +822,8 @@ function InputForm({
             { key: "elem_air",   label: "💨 風（Air）",   desc: "知的・自由を愛する・コミュニケーション好き・好奇心旺盛" },
           ].map(({ key, label, desc }) => (
             <div key={key} className="bg-white/5 rounded-lg p-4">
-              <p className="text-sm text-gray-200 font-semibold mb-1">{label}</p>
-              <p className="text-xs text-gray-500 mb-2">{desc}</p>
+              <p className="text-base text-gray-100 font-bold mb-1">{label}</p>
+              <p className="text-sm text-gray-300 mb-3 leading-relaxed">{desc}</p>
               <div className="flex items-center gap-3">
                 <span className="text-xs text-gray-500 w-16">当てはまらない</span>
                 <input type="range" min={0} max={10} value={values[key] || "5"} onChange={(e) => set(key, e.target.value)} style={{ ...SLIDER_STYLE }} />
@@ -830,32 +857,6 @@ function InputForm({
               <span className="text-xs text-gray-500 pl-6">{desc as string}</span>
             </label>
           ))}
-        </div>
-      )}
-
-      {/* ── ユング元型診断 ── */}
-      {inputType === "quiz" && fortuneId === "jung-archetype" && (
-        <div className="space-y-3">
-          <p className="text-sm text-yellow-500/70">最も共鳴する元型を選んでください</p>
-          <select value={values.archetype || ""} onChange={(e) => set("archetype", e.target.value)} style={{ ...SELECT_STYLE }}>
-            <option value="">選択してください</option>
-            {[
-              [0,  "⚔️ 英雄（The Hero）",        "困難に挑み、限界を超えることに生きがいを感じる"],
-              [1,  "📚 賢者（The Sage）",          "真実と知恵を探求し、学び続けることに喜びを感じる"],
-              [2,  "🔮 魔術師（The Magician）",    "物事を変容させる力と深い洞察を持つ"],
-              [3,  "🧭 探求者（The Explorer）",    "自由と冒険を愛し、新しい可能性を探し続ける"],
-              [4,  "⚡ 反乱者（The Rebel）",       "現状を打ち破り、変革と革新を起こしたい"],
-              [5,  "❤️ 恋人（The Lover）",         "深い愛と美を求め、つながりに生きがいを感じる"],
-              [6,  "🃏 道化師（The Jester）",      "喜びとユーモアで世界を明るくすることが使命"],
-              [7,  "🤝 普通人（The Everyman）",    "人々とつながり、共に歩む誠実さを持つ"],
-              [8,  "👑 支配者（The Ruler）",       "秩序を守り、責任を持って組織を導く"],
-              [9,  "🎨 創造者（The Creator）",     "新しいものを生み出し、独自のビジョンを形にする"],
-              [10, "🌿 介護者（The Caregiver）",   "他者のために尽くし、支えることに喜びを感じる"],
-              [11, "🌟 無邪気者（The Innocent）",  "純粋な心と楽観的な信念で世界の善を信じる"],
-            ].map(([idx, label, desc]) => (
-              <option key={idx} value={String(idx)}>{label as string} — {desc as string}</option>
-            ))}
-          </select>
         </div>
       )}
 
@@ -897,8 +898,8 @@ function InputForm({
             { key: "temp_d", label: "黒胆汁質（地）", desc: "深く考える・完璧主義・芸術的感性・心配性・分析が得意" },
           ].map(({ key, label, desc }) => (
             <div key={key} className="bg-white/5 rounded-lg p-4">
-              <p className="text-sm text-gray-200 font-semibold mb-1">{label}</p>
-              <p className="text-xs text-gray-500 mb-2">{desc}</p>
+              <p className="text-base text-gray-100 font-bold mb-1">{label}</p>
+              <p className="text-sm text-gray-300 mb-3 leading-relaxed">{desc}</p>
               <div className="flex items-center gap-3">
                 <span className="text-xs text-gray-500 w-16">当てはまらない</span>
                 <input
@@ -1085,7 +1086,8 @@ function getReading(id: string, values: Record<string, string>): FortuneResult |
       if (!bd) return null;
       let h: number | undefined;
       if (values.birthTime) { const [hh, mm] = values.birthTime.split(":").map(Number); h = hh + mm / 60; }
-      return getAstrologyReading(bd, h);
+      const pref = PREFECTURES.find((p) => p.name === values.birthPlace);
+      return getAstrologyReading(bd, h, pref?.lat, pref?.lon);
     }
     case "numerology":  return bd ? getNumerologyReading(bd, nm) : null;
     case "omikuji":     return getOmikujiReading();
@@ -1112,11 +1114,42 @@ function getReading(id: string, values: Record<string, string>): FortuneResult |
     case "shibi": {
       if (!bd) return null;
       let sH: number | undefined;
-      if (values.birthTime) { const [hh] = values.birthTime.split(":").map(Number); sH = hh; }
-      return getShibiReading(bd, sH);
+      if (values.birthTime) { const [hh, mm] = values.birthTime.split(":").map(Number); sH = hh + mm / 60; }
+      return getZiweiReading(bd, sH);
     }
+    case "sukuyo": {
+      if (!bd) return null;
+      let skH: number | undefined;
+      if (values.birthTime) { const [hh, mm] = values.birthTime.split(":").map(Number); skH = hh + mm / 60; }
+      return getSukuyoReading(bd, skH);
+    }
+    case "compatibility": {
+      if (!values.birthday || !values.birthday2) return null;
+      const toH = (t?: string) => { if (!t) return undefined; const [hh, mm] = t.split(":").map(Number); return hh + mm / 60; };
+      return getCompatibilityReading(values.birthday, values.birthday2, toH(values.birthTime), toH(values.birthTime2));
+    }
+    case "guardian-buddha": return bd ? getGuardianBuddhaReading(bd) : null;
+    case "tibetan":        return bd ? getTibetanReading(bd) : null;
+    case "transit":        return bd ? getTransitReading(bd) : null;
+    case "shichijuniko":   return bd ? getShichijunikoReading(bd) : null;
+    case "birth-code":     return bd ? getBirthCodeReading(bd, nm) : null;
+    case "juni-choku":     return getJuniChokuReading();
+    case "power-stone":    return bd ? getPowerStoneReading(bd) : null;
+    case "eto-compat":
+      return (values.birthday && values.birthday2) ? getEtoCompatReading(values.birthday, values.birthday2) : null;
+    case "numerology-compat":
+      return (values.birthday && values.birthday2) ? getNumerologyCompatReading(values.birthday, values.birthday2) : null;
+    case "kyusei-compat":
+      return (values.birthday && values.birthday2) ? getKyuseiCompatReading(values.birthday, values.birthday2) : null;
+    case "cartomancy":     return getCartomancyReading(rq);
     // ── 古代 ──
-    case "vedic":       return bd ? getVedicReading(bd) : null;
+    case "vedic": {
+      if (!bd) return null;
+      let vH: number | undefined;
+      if (values.birthTime) { const [hh, mm] = values.birthTime.split(":").map(Number); vH = hh + mm / 60; }
+      const vPref = PREFECTURES.find((p) => p.name === values.birthPlace);
+      return getVedicReading(bd, vH, vPref?.lat, vPref?.lon);
+    }
     case "maya":        return bd ? getMayaReading(bd) : null;
     case "egypt":       return bd ? getEgyptReading(bd) : null;
     case "babylon":     return bd ? getBabylonReading(bd) : null;
@@ -1140,14 +1173,11 @@ function getReading(id: string, values: Record<string, string>): FortuneResult |
     case "biorhythm":   return bd ? getBiorhythmReading(bd) : null;
     case "face-reading":return getFaceReading(values);
     // ── 性格診断 ──
-    case "mbti":        return getMBTIReading(values);
     case "hsp":         return getHSPReading(values);
-    case "enneagram":   return getEnneagramReading(values);
     case "big-five":    return getBigFiveReading(values);
     case "temperament":      return getTemperamentReading(values);
     case "four-elements":    return getFourElementsReading(values);
     case "aura-color":       return getAuraColorReading(values);
-    case "jung-archetype":   return getJungArchetypeReading(values);
     case "color-personality":return getColorPersonalityReading(values);
     // ── 守護神 ──
     case "deity":        return values.birthday ? getDeityReading(values) : null;

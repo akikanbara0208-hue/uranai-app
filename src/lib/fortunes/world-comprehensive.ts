@@ -37,7 +37,8 @@ function getLifePathNumber(birthday: string): number {
 }
 
 function getWesternSign(m: number, d: number): string {
-  const signs = ["山羊座","水瓶座","魚座","牡羊座","牡牛座","双子座","蟹座","獅子座","乙女座","天秤座","蠍座","射手座"];
+  // signs[m-1] = 月mの分割日(cut)以降に始まる星座、cut未満は1つ前の星座
+  const signs = ["水瓶座","魚座","牡羊座","牡牛座","双子座","蟹座","獅子座","乙女座","天秤座","蠍座","射手座","山羊座"];
   const cuts   = [20, 19, 21, 20, 21, 21, 23, 23, 23, 23, 22, 22];
   return d < cuts[m - 1] ? signs[m - 2 < 0 ? 11 : m - 2] : signs[m - 1];
 }

@@ -1,8 +1,10 @@
 import { FortuneResult } from "@/lib/types";
+import { julianDay, getSunLongitude } from "@/lib/fortunes/astrology";
 
 // ═══════════════════════════════════════════════════════════
 //  オラクルカード
 // ═══════════════════════════════════════════════════════════
+const ORACLE_ELEMENT_SYMBOL: Record<string, string> = { 火: "🔥", 風: "🍃", 水: "💧", 地: "🌿" };
 const ORACLE_CARDS = [
   {
     name: "新しい始まり", element: "火",
@@ -106,27 +108,49 @@ export function getOracleReading(question: string): FortuneResult {
   const seed = question.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
   const now = new Date();
 
-  // 3枚引き
+  // 3枚引き（オラクルカードも実際の引き方と同じく、引いたカードは戻さない）
   const positions = ["過去のエネルギー", "現在のメッセージ", "未来の可能性"];
+  const usedIdx = new Set<number>();
   const cards = positions.map((_, i) => {
-    const idx = (seed + now.getDate() + i * 4 + Math.floor(Math.random() * 3)) % ORACLE_CARDS.length;
+    let idx = (seed + now.getDate() + i * 4 + Math.floor(Math.random() * 3)) % ORACLE_CARDS.length;
+    while (usedIdx.has(idx)) idx = (idx + 1) % ORACLE_CARDS.length;
+    usedIdx.add(idx);
     return { card: ORACLE_CARDS[idx], position: positions[i] };
   });
 
   const main = cards[1].card;
 
+  const positionNote = [
+    "これは、今のあなたを形づくってきた背景にあるエネルギーです。",
+    "これが、今この瞬間にあなたが最も受け取るべき中心のメッセージです。",
+    "これは、あなたが意識を向けることで開いていく可能性の扉です。",
+  ];
+
+  const elementAction: Record<string, string> = {
+    火: "キャンドルを灯す、朝日を浴びるなど火の温もりに触れる時間を持つと、一歩踏み出す勇気が湧いてきます。",
+    風: "窓を開けて深呼吸する、散歩に出るなど風を感じる習慣が、新しいひらめきを運んでくれます。",
+    水: "ゆっくり入浴する、水辺を訪れるなど水に親しむことで感情が整い、直感がいっそう冴えてきます。",
+    地: "土や植物に触れる、丁寧に食事をするなど地に足をつけた所作が、安心と豊かさを引き寄せます。",
+  };
+
   return {
     title: `✨ ${main.name}`,
-    summary: `天使と精霊から3つのメッセージが届きました`,
+    summary: `天使と精霊が、あなたの問いに3枚のカードで答えました。過去・現在・未来の流れの中で、今のあなたの中心となるメッセージは「${main.name}」（${main.element}のエネルギー）です。カードが示す導きに、静かに心を開いてみてください。`,
     details: [
-      ...cards.map(({ card, position }) => ({
+      ...cards.map(({ card, position }, i) => ({
         label: `${position}：${card.name}（${card.element}のエネルギー）`,
-        content: card.message,
+        content: `${card.message} ${positionNote[i]}`,
       })),
+      { label: "🌙 3枚が紡ぐ物語", content: `過去のエネルギー「${cards[0].card.name}」から、今の中心メッセージ「${main.name}」、そして未来の可能性「${cards[2].card.name}」へと、ひとつの流れが描かれています。${main.element}のエネルギーを核として、あなたの歩みは着実に前へと進んでいます。3枚を一続きの物語として受け取ることで、今やるべきことが自然と見えてきます。` },
       { label: "❤️ 恋愛へのメッセージ", content: main.love },
       { label: "💼 仕事へのメッセージ", content: main.work },
       { label: "✨ スピリチュアルメッセージ", content: main.spirit },
+      { label: "🕊️ 今、大切にしたいこと", content: `3つのメッセージに共通して流れているのは、自分の内側の声を信頼するという姿勢です。${main.element}のエネルギーが今のあなたを支えているので、迷ったときは頭で答えを探すより、心が軽くなるほうを選んでください。焦らず、自分のペースで一歩ずつ進むことが何よりの近道です。` },
+      { label: "🔮 開運アクション", content: `「${main.name}」が帯びる${main.element}のエネルギーを、日常にそっと取り入れてみましょう。${elementAction[main.element] ?? "自然の中で静かに過ごす時間が、カードのエネルギーをあなたに根付かせてくれます。"}` },
     ],
+    drawnCards: cards.map(({ card, position }) => ({
+      position, name: card.name, symbol: ORACLE_ELEMENT_SYMBOL[card.element] || "✨",
+    })),
     advice: main.advice,
   };
 }
@@ -933,26 +957,43 @@ export function getShichuReading(birthday: string, birthHour?: number): FortuneR
   const month = Number(monthStr);
   const day = Number(dayStr);
 
-  const stemIdx = (year - 4) % 10;
-  const branchIdx = (year - 4) % 12;
+  // 太陽黄経（節入り・立春の判定に使用）。出生時刻があれば反映、なければ正午JST
+  const hourForSun = birthHour !== undefined ? birthHour : 12;
+  const sunJd = julianDay(year, month, day) - 0.5 + (hourForSun - 9) / 24;
+  const sunLon = getSunLongitude(sunJd);
+
+  // ── 年柱：立春（太陽黄経315°）を境に年が替わる ──
+  let baziYear = year;
+  if (month === 1) baziYear = year - 1;
+  else if (month === 2 && sunLon < 315) baziYear = year - 1;
+  const stemIdx = ((baziYear - 4) % 10 + 10) % 10;
+  const branchIdx = ((baziYear - 4) % 12 + 12) % 12;
   const stem = HEAVENLY_STEMS[stemIdx];
   const branch = EARTHLY_BRANCHES[branchIdx];
   const animal = ZODIAC_ANIMALS[branchIdx];
   const element = STEM_ELEMENTS[stemIdx];
   const polarity = STEM_POLARITY[stemIdx];
 
-  const monthStemIdx = ((month - 1) * 2 + stemIdx) % 10;
-  const monthBranchIdx = (month + 1) % 12;
+  // ── 月柱：節入り（12の節気）で月支が替わる。寅月=立春315°起点 ──
+  const msi = Math.floor((((sunLon - 315) % 360) + 360) % 360 / 30); // 0=寅,1=卯,...,11=丑
+  const monthBranchIdx = (2 + msi) % 12;
+  // 月干：五虎遁（年干から寅月の干を決め、節気ごとに+1）
+  const monthStemIdx = ((stemIdx % 5) * 2 + 2 + msi) % 10;
   const monthStem = HEAVENLY_STEMS[monthStemIdx];
   const monthBranch = EARTHLY_BRANCHES[monthBranchIdx];
 
-  const dayStemIdx = ((day + year * 2 + Math.floor((year - 1) / 4)) % 10 + 10) % 10;
-  const dayBranchIdx = ((day + year + Math.floor(year / 4)) % 12 + 12) % 12;
+  // ── 日柱：ユリウス日による連続60干支（2000-01-01=戊午で校正） ──
+  const dayGZ = (julianDay(year, month, day) + 49) % 60;
+  const dayStemIdx = dayGZ % 10;
+  const dayBranchIdx = dayGZ % 12;
   const dayStem = HEAVENLY_STEMS[dayStemIdx];
   const dayBranch = EARTHLY_BRANCHES[dayBranchIdx];
 
-  const hourStemIdx = birthHour !== undefined ? (Math.floor(birthHour / 2) * 2 + stemIdx) % 10 : null;
+  // ── 時柱：時支は2時間刻み（子時=23〜1時）、時干は五鼠遁（日干から決定） ──
   const hourBranchIdx = birthHour !== undefined ? Math.floor((birthHour + 1) / 2) % 12 : null;
+  const hourStemIdx = (birthHour !== undefined && hourBranchIdx !== null)
+    ? ((dayStemIdx % 5) * 2 + hourBranchIdx) % 10
+    : null;
 
   const animalData = ANIMAL_MEANINGS[animal] || ANIMAL_MEANINGS["龍"];
 

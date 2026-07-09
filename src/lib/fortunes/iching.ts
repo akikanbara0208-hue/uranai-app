@@ -795,6 +795,7 @@ export function getIChingReading(question: string): FortuneResult {
       { label: "✨ スピリチュアルメッセージ", content: hex.spirit },
       { label: `🔄 之卦（変化後：第${changing.number}卦 ${changing.name}）`, content: `この状況が変化すると「${changing.meaning}」の卦へと移ります。${changing.advice}` },
     ],
+    drawnCards: [{ name: `${hex.name}（${hex.nameEn}）`, symbol: hex.symbol }],
     advice: hex.advice,
   };
 }

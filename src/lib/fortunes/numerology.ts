@@ -234,39 +234,78 @@ function getLifePathNumber(birthday: string): number {
   return reduceToSingleDigit(sum);
 }
 
-function getNameNumber(name: string): number {
-  const map: Record<string, number> = {
-    a: 1, b: 2, c: 3, d: 4, e: 5, f: 6, g: 7, h: 8, i: 9,
-    j: 1, k: 2, l: 3, m: 4, n: 5, o: 6, p: 7, q: 8, r: 9,
-    s: 1, t: 2, u: 3, v: 4, w: 5, x: 6, y: 7, z: 8,
-  };
-  const romanized = name.toLowerCase().replace(/[^a-z]/g, "");
-  if (!romanized) {
-    const sum = name.split("").reduce((acc, c) => acc + (c.charCodeAt(0) % 9 || 9), 0);
-    return reduceToSingleDigit(sum);
+// かな→ローマ字変換（日本語名にピタゴラス式数秘術を正しく適用するため）
+const KANA_ROMAJI: Record<string, string> = {
+  きゃ:"kya",きゅ:"kyu",きょ:"kyo",しゃ:"sha",しゅ:"shu",しょ:"sho",ちゃ:"cha",ちゅ:"chu",ちょ:"cho",
+  にゃ:"nya",にゅ:"nyu",にょ:"nyo",ひゃ:"hya",ひゅ:"hyu",ひょ:"hyo",みゃ:"mya",みゅ:"myu",みょ:"myo",
+  りゃ:"rya",りゅ:"ryu",りょ:"ryo",ぎゃ:"gya",ぎゅ:"gyu",ぎょ:"gyo",じゃ:"ja",じゅ:"ju",じょ:"jo",
+  びゃ:"bya",びゅ:"byu",びょ:"byo",ぴゃ:"pya",ぴゅ:"pyu",ぴょ:"pyo",
+  あ:"a",い:"i",う:"u",え:"e",お:"o",か:"ka",き:"ki",く:"ku",け:"ke",こ:"ko",
+  さ:"sa",し:"shi",す:"su",せ:"se",そ:"so",た:"ta",ち:"chi",つ:"tsu",て:"te",と:"to",
+  な:"na",に:"ni",ぬ:"nu",ね:"ne",の:"no",は:"ha",ひ:"hi",ふ:"fu",へ:"he",ほ:"ho",
+  ま:"ma",み:"mi",む:"mu",め:"me",も:"mo",や:"ya",ゆ:"yu",よ:"yo",
+  ら:"ra",り:"ri",る:"ru",れ:"re",ろ:"ro",わ:"wa",を:"wo",ん:"n",
+  が:"ga",ぎ:"gi",ぐ:"gu",げ:"ge",ご:"go",ざ:"za",じ:"ji",ず:"zu",ぜ:"ze",ぞ:"zo",
+  だ:"da",ぢ:"ji",づ:"zu",で:"de",ど:"do",ば:"ba",び:"bi",ぶ:"bu",べ:"be",ぼ:"bo",
+  ぱ:"pa",ぴ:"pi",ぷ:"pu",ぺ:"pe",ぽ:"po",
+  ぁ:"a",ぃ:"i",ぅ:"u",ぇ:"e",ぉ:"o",
+};
+
+// 文字列をローマ字(a-z)へ。ラテン文字はそのまま、カナは変換、漢字等は除去
+function romanizeName(name: string): string {
+  // カタカナ→ひらがな（コードポイントを0x60ずらす）
+  const hira = name.replace(/[ァ-ヶ]/g, (c) => String.fromCharCode(c.charCodeAt(0) - 0x60));
+  let out = "";
+  for (let i = 0; i < hira.length; i++) {
+    const two = hira.slice(i, i + 2);
+    if (KANA_ROMAJI[two]) { out += KANA_ROMAJI[two]; i++; continue; }
+    const one = hira[i];
+    if (KANA_ROMAJI[one]) { out += KANA_ROMAJI[one]; continue; }
+    if (/[a-zA-Z]/.test(one)) out += one.toLowerCase();
+    // 漢字・記号・長音などは数秘術に算入しない
   }
-  const sum = romanized.split("").reduce((acc, c) => acc + (map[c] || 0), 0);
-  return reduceToSingleDigit(sum || 9);
+  return out;
 }
 
-// 魂の数（母音のみ）
+const PYTHAGOREAN: Record<string, number> = {
+  a: 1, b: 2, c: 3, d: 4, e: 5, f: 6, g: 7, h: 8, i: 9,
+  j: 1, k: 2, l: 3, m: 4, n: 5, o: 6, p: 7, q: 8, r: 9,
+  s: 1, t: 2, u: 3, v: 4, w: 5, x: 6, y: 7, z: 8,
+};
+
+// 名前の数（表現数）。算出不能（漢字のみ等）は 0 を返す
+function getNameNumber(name: string): number {
+  const romanized = romanizeName(name);
+  if (!romanized) return 0;
+  const sum = romanized.split("").reduce((acc, c) => acc + (PYTHAGOREAN[c] || 0), 0);
+  return reduceToSingleDigit(sum);
+}
+
+// 魂の数（母音のみ）。算出不能は 0 を返す
 function getSoulNumber(name: string): number {
-  const vowels = "aeiouあいうえお";
-  const sum = name.toLowerCase().split("").filter(c => vowels.includes(c))
-    .reduce((acc, c) => {
-      const vowelMap: Record<string, number> = { a: 1, e: 5, i: 9, o: 6, u: 3 };
-      return acc + (vowelMap[c] || c.charCodeAt(0) % 9 || 9);
-    }, 0);
-  return reduceToSingleDigit(sum || 3);
+  const romanized = romanizeName(name);
+  const vowels = romanized.split("").filter((c) => "aeiou".includes(c));
+  if (vowels.length === 0) return 0;
+  const vowelMap: Record<string, number> = { a: 1, e: 5, i: 9, o: 6, u: 3 };
+  const sum = vowels.reduce((acc, c) => acc + (vowelMap[c] || 0), 0);
+  return reduceToSingleDigit(sum);
 }
 
 export function getNumerologyReading(birthday: string, name: string): FortuneResult {
   const lifePathNum = getLifePathNumber(birthday);
   const nameNum = getNameNumber(name);
-  const soulNum = getSoulNumber(name || "あ");
+  const soulNum = getSoulNumber(name);
   const personalYearNum = getPersonalYear(birthday, new Date().getFullYear());
 
   const lp = LIFE_PATH[lifePathNum] || LIFE_PATH[9];
+
+  // 名前の数（表現数・魂の数）はローマ字/かな入力時のみ正確に算出できる
+  const nameDetails = (nameNum > 0 || soulNum > 0)
+    ? [
+        ...(nameNum > 0 ? [{ label: "🔢 表現数（外側の自分）", content: `表現数 ${nameNum} ── ${EXPRESSION_MEANINGS[nameNum] || EXPRESSION_MEANINGS[9]}` }] : []),
+        ...(soulNum > 0 ? [{ label: "💫 魂の数（内なる欲求）", content: `魂の数 ${soulNum} ── ${SOUL_URGE_MEANINGS[soulNum] || SOUL_URGE_MEANINGS[9]}` }] : []),
+      ]
+    : [{ label: "🔢 表現数・魂の数について", content: "数秘術の名前の数はローマ字（A=1…）で計算します。お名前を「ローマ字」または「カタカナ／ひらがな」で入力すると、表現数と魂の数も鑑定できます。" }];
 
   return {
     title: `ライフパス ${lifePathNum}：${lp.title}（${lp.archetype}）`,
@@ -280,8 +319,7 @@ export function getNumerologyReading(birthday: string, name: string): FortuneRes
       { label: "💼 天職・キャリア", content: lp.career },
       { label: "💰 金銭・財運", content: lp.money },
       { label: "🌿 健康・体のメッセージ", content: lp.health },
-      { label: "🔢 表現数（外側の自分）", content: `表現数 ${nameNum} ── ${EXPRESSION_MEANINGS[nameNum] || EXPRESSION_MEANINGS[9]}` },
-      { label: "💫 魂の数（内なる欲求）", content: `魂の数 ${soulNum} ── ${SOUL_URGE_MEANINGS[soulNum] || SOUL_URGE_MEANINGS[9]}` },
+      ...nameDetails,
       { label: "📅 今年の個人年数", content: `個人年 ${personalYearNum} ── ${PERSONAL_YEAR_MEANINGS[personalYearNum] || ""}` },
       { label: "🌟 同じライフパスの偉人", content: lp.famous },
       { label: "💞 相性の良い数字", content: `ライフパス ${lp.compatible.join("・")} のパートナーと深い絆を結びやすい` },

@@ -1,4 +1,19 @@
 import { FortuneResult } from "@/lib/types";
+import { charStrokes } from "@/lib/fortunes/kanji-strokes";
+import { julianDay, getSunLongitude } from "@/lib/fortunes/astrology";
+import { toLunar } from "@/lib/fortunes/lunar";
+
+// 算命学・四柱系で使う十大主星の導出（日干 × 対象の十干 → 通変星）
+// MAIN_STARS順: 貫索(比肩)石門(劫財)鳳閣(食神)調舒(傷官)禄存(偏財)司禄(正財)車騎(偏官)牽牛(正官)龍高(偏印)玉堂(印綬)
+function tsuhenStarIdx(dayStemIdx: number, targetStemIdx: number): number {
+  const eD = Math.floor(dayStemIdx / 2), eT = Math.floor(targetStemIdx / 2); // 0木1火2土3金4水
+  const diff = ((eT - eD) % 5 + 5) % 5;
+  const base = diff === 0 ? 0 : diff === 1 ? 2 : diff === 2 ? 4 : diff === 3 ? 6 : 8;
+  const samePolarity = (dayStemIdx % 2) === (targetStemIdx % 2);
+  return base + (samePolarity ? 0 : 1);
+}
+// 十二支の蔵干（本気）の十干インデックス（0=甲…9=癸）
+const BRANCH_HIDDEN_STEM = [9, 5, 0, 1, 4, 2, 3, 5, 6, 7, 4, 8]; // 子癸 丑己 寅甲 卯乙 辰戊 巳丙 午丁 未己 申庚 酉辛 戌戊 亥壬
 
 function strSeed(s: string): number {
   let h = 5381;
@@ -59,16 +74,50 @@ const KAKU_DESC: Record<string, string> = {
 };
 
 export function getSeimeiReading(name: string): FortuneResult {
+  // 姓と名を分割（スペース区切り推奨。無い場合は字数で推定）
+  const norm = name.replace(/[　\s]+/g, " ").trim();
+  const parts = norm.split(" ").filter(Boolean);
+  let seiChars: string[], meiChars: string[];
+  if (parts.length >= 2) {
+    seiChars = Array.from(parts[0]);
+    meiChars = Array.from(parts.slice(1).join(""));
+  } else {
+    const chars = Array.from(parts[0] || "");
+    if (chars.length === 2)      { seiChars = [chars[0]]; meiChars = [chars[1]]; }
+    else if (chars.length === 3) { seiChars = [chars[0]]; meiChars = chars.slice(1); }
+    else if (chars.length === 4) { seiChars = chars.slice(0, 2); meiChars = chars.slice(2); }
+    else { const h = Math.ceil(chars.length / 2); seiChars = chars.slice(0, h); meiChars = chars.slice(h); }
+  }
+
+  const seiStrokes = seiChars.map(charStrokes);
+  const meiStrokes = meiChars.map(charStrokes);
+  const unknown = [...seiChars, ...meiChars].filter((c) => charStrokes(c) === 0);
+
+  // 画数が判定できない（漢字辞書に無い・記号等）／姓名が揃わない場合は正直に案内
+  if (seiChars.length === 0 || meiChars.length === 0 || unknown.length > 0) {
+    return {
+      title: `「${name || "お名前"}」の姓名判断`,
+      summary: "正確な五格を出すには、姓と名の画数が必要です。",
+      details: [
+        { label: "入力のヒント", content: "姓と名の間にスペースを入れて、漢字（または ひらがな・カタカナ）でフルネームをご入力ください。例：「山田 花子」" },
+        ...(unknown.length > 0 ? [{ label: "画数を判定できなかった文字", content: `「${unknown.join("、")}」は画数データに含まれていません。常用・人名用の漢字、またはかなでお試しください。` }] : []),
+      ],
+      advice: "姓名判断は一文字ずつの画数から五格を導きます。正しい画数で鑑定するため、フルネームを姓・名に分けてご入力ください。",
+    };
+  }
+
   const seed = strSeed(name);
   const r = rng(seed);
-  const cleaned = name.replace(/\s/g, "");
-  const len = cleaned.length || 1;
+  const sumS = seiStrokes.reduce((a, b) => a + b, 0);
+  const sumM = meiStrokes.reduce((a, b) => a + b, 0);
+  const p = seiChars.length, q = meiChars.length;
 
-  const tenK  = ((seed % 30) + 5);
-  const chiK  = ((seed * 7 % 35) + 3);
-  const jinK  = ((tenK + chiK) % 40) + 1;
-  const gaiK  = ((seed * 13 % 28) + 4);
-  const soK   = ((tenK + chiK + gaiK) % 62) + 2;
+  // 五格（霊数：姓または名が1字のとき天格・地格に1を補う）
+  const tenK = sumS + (p === 1 ? 1 : 0);
+  const chiK = sumM + (q === 1 ? 1 : 0);
+  const jinK = seiStrokes[p - 1] + meiStrokes[0];
+  const soK  = sumS + sumM;
+  const gaiK = tenK + chiK - jinK;
 
   const kakuDefs = [
     { n: tenK, key: "天", label: "天格（祖先・家系の運）" },
@@ -82,6 +131,11 @@ export function getSeimeiReading(name: string): FortuneResult {
     const rating = kakuRating(n);
     return { label: `${label}（${n}画・${rating}）`, content: KAKU_DESC[`${rating}_${key}`] };
   });
+
+  // 画数の内訳を先頭に追加
+  const seiBreak = seiChars.map((c, i) => `${c}${seiStrokes[i]}`).join("+");
+  const meiBreak = meiChars.map((c, i) => `${c}${meiStrokes[i]}`).join("+");
+  details.unshift({ label: "🖌 画数の内訳", content: `姓：${seiBreak}（計${sumS}画）／名：${meiBreak}（計${sumM}画）。この実画数から五格を算出しています。` });
 
   const goodCount = details.filter(d => d.label.includes("吉")).length;
   const colors = ["金色", "白", "ラベンダー", "空色", "深緑", "真珠色", "珊瑚色"];
@@ -219,16 +273,21 @@ export function getEtoReading(birthday: string): FortuneResult {
 
   return {
     title: `${eto.name}年生まれ ── ${eto.en}の星を持つ人`,
-    summary: `あなたは「${eto.name}」年の生まれです。${adjustedYear}年の十二支の力があなたの本質を形作っています。`,
+    summary: `あなたは「${eto.name}」年の生まれです。立春を境とする干支では${adjustedYear}年の十二支の力があなたの本質を形作っています。古来より十二支はその年の生命のエネルギーを宿すとされ、ここでは性格・強み・運気の流れから恋愛・仕事・金運までを読み解きます。`,
     details: [
       { label: "本質的な性格", content: eto.personality },
-      { label: "あなたの強み", content: eto.strength },
+      { label: "あなたの強み", content: `あなたが生まれ持つ才能は、${eto.strength}です。「${eto.name}」生まれは、これらの資質を発揮できる場面でこそ真価を見せます。自分の長所として自覚し、磨いていきましょう。` },
       { label: "成長の課題", content: eto.challenge },
       { label: "今年の運気の流れ", content: eto.thisYear },
       { label: "相性の良い干支", content: eto.match },
+      { label: "恋愛・パートナーシップ", content: `恋愛においても「${eto.name}」の本質がそのまま表れます。${eto.match}相手の長所を素直に認め、あなたの持ち味である${eto.strength.split("・")[0]}を関係づくりに活かすと、信頼が着実に深まります。` },
+      { label: "仕事・適性", content: `仕事の場では、あなたの${eto.strength}が大きな武器になります。「${eto.name}」生まれは、この資質が評価される環境でこそ本領を発揮します。周囲と役割を分け合うことで、強みがさらに輝きます。` },
+      { label: "金運の傾向", content: `金運は、あなたの${eto.strength}を社会の中でどう発揮するかと深く結びついています。「${eto.name}」生まれは、巡ってくる縁とチャンスを大切にすることで着実に豊かさを育てられるタイプです。目先の利益に飛びつくより、自分の強みが活きる分野に力を注ぐ姿勢が、長期的な金運を安定させます。` },
+      { label: "開運アクション", content: `「${eto.name}」のエネルギーを高めるには、あなたの強みである${eto.strength.split("・")[0]}を発揮できる場面を、自分から一つ選びにいくことです。相性の良い干支の人と過ごす時間も、運気を心地よく後押ししてくれます。ラッキーカラー・アイテム・方位を日常に取り入れると、十二支の加護がより強く働きます。` },
+      { label: "注意点", content: `気をつけたいのは次の点です。${eto.challenge}これは「${eto.name}」の本質が強く出すぎたときに現れる影の側面にすぎません。自覚しておくだけで、ほとんどの落とし穴は避けられます。` },
     ],
     lucky: { color: pick(colors, r), item: pick(items, r), direction: pick(dirs, r) },
-    advice: `「${eto.name}」が持つ生命力の本質はあなたの中に宿っています。強みを活かしながら課題と向き合うことで、干支が示す運命の花を最高の形で咲かせることができます。`,
+    advice: `十二支は十二年で一巡し、また巡ってきます。「${eto.name}」として生まれたあなたには、その巡りの中で果たすべき役割と、咲かせるべき花があります。今年その本質を信じて生きることが、次の干支へと続く幸運の流れをつくっていきます。`,
   };
 }
 
@@ -284,19 +343,27 @@ const ROKUYO = [
 export function getRokuyoReading(): FortuneResult {
   const today = new Date();
   const y = today.getFullYear(), m = today.getMonth() + 1, d = today.getDate();
-  // 簡易六曜算出（旧暦月日合計の6余り）
-  const approxLunar = Math.floor((y * 365.25 + m * 30.6 + d - 723944) / 29.5306);
-  const idx = ((approxLunar % 6) + 6) % 6;
+  // 六曜＝（旧暦月＋旧暦日）÷6 の余り。天文計算による正確な旧暦から算出
+  const lunar = toLunar(y, m, d);
+  // ROKUYO配列順[先勝,友引,先負,仏滅,大安,赤口] への対応（余り 0=大安…5=仏滅）
+  const ROKUYO_MAP = [4, 5, 0, 1, 2, 3];
+  const idx = ROKUYO_MAP[(lunar.month + lunar.day) % 6];
   const rk = ROKUYO[idx];
   const weekdays = ["日曜日", "月曜日", "火曜日", "水曜日", "木曜日", "金曜日", "土曜日"];
 
   return {
     title: `今日は${rk.name}`,
-    summary: `${y}年${m}月${d}日（${weekdays[today.getDay()]}）の六曜は「${rk.name}」です。今日一日をどう過ごすか、古来からの知恵が示します。`,
+    summary: `${y}年${m}月${d}日（${weekdays[today.getDay()]}）＝旧暦${lunar.isLeap ? "閏" : ""}${lunar.month}月${lunar.day}日。六曜は「${rk.name}」です。今日一日をどう過ごすか、古来からの知恵が示します。`,
     details: [
+      { label: "📅 旧暦", content: `${lunar.isLeap ? "閏" : ""}${lunar.month}月${lunar.day}日（天文計算による旧暦）。六曜は旧暦の月日から定まります。今日が「${rk.name}」となるのは、この旧暦の日付に基づいた巡り合わせです。` },
       { label: "六曜の意味", content: rk.meaning },
       { label: "吉となる行動・活動", content: rk.good },
       { label: "避けた方が良いこと", content: rk.bad },
+      { label: "恋愛・人間関係", content: `恋愛や人付き合いでは、「${rk.good}」の流れに乗るタイミングを選ぶと、気持ちが素直に伝わりやすくなります。逆に「${rk.bad}」にあたる場面では、感情的なやり取りや重い相談は持ち越したほうが無難です。今日の「${rk.name}」のリズムに合わせて人と接することで、無用なすれ違いを避けられます。` },
+      { label: "仕事・勝負ごと", content: `仕事や決断ごとも、六曜の時間感覚を味方につけるのが得策です。「${rk.good}」を意識して重要なタスクや交渉を配置し、「${rk.bad}」では確認・準備・調整にとどめると、一日全体の流れが整います。${rk.name}の日は、暦に逆らわない段取りこそが成果を左右します。` },
+      { label: "金運・買い物", content: `お金の動きにも、今日の吉凶のリズムが影響します。大きな買い物・申し込み・契約は「${rk.good}」のタイミングに寄せると後悔が少なく、「${rk.bad}」の時間帯は衝動的な出費を控えるのが賢明です。家計の見直しや支払いの整理は、心が落ち着いた時間に行いましょう。` },
+      { label: "一日の流れ（時間帯の使い方）", content: `${rk.name}は、一日の中で運気の波がはっきり分かれる六曜です。「${rk.good}」が今日のあなたの追い風となる場面、「${rk.bad}」が一歩引いて様子を見るべき場面です。この緩急を頭に入れて予定を組むだけで、一日の充実度が大きく変わります。` },
+      { label: "開運アクション", content: `今日の運気を後押しする習慣として、朝に「今日は${rk.name}」と意識し、一日の予定を吉の時間帯に合わせて並べ替えてみてください。暦を意識して過ごす一日は、何気なく過ごす一日よりもずっと巡りが良くなります。` },
     ],
     advice: rk.advice,
   };
@@ -324,15 +391,27 @@ const MAIN_STARS = [
 
 export function getSanmeigakuReading(birthday: string): FortuneResult {
   const { y, m, d } = parseDate(birthday);
-  const adjY = (m === 1 || (m === 2 && d < 4)) ? y - 1 : y;
-  const stemIdx   = ((adjY - 4) % 10 + 10) % 10;
-  const branchIdx = ((adjY - 4) % 12 + 12) % 12;
-  const mainStarIdx = stemIdx % 10;
+
+  // 日干（日主）＝ユリウス日の連続干支（四柱推命と同じ校正）
+  const dayStemIdx = (julianDay(y, m, d) + 49) % 60 % 10;
+  const dayStem = SANMEI_STEMS[dayStemIdx];
+  const dayElement = ["木", "木", "火", "火", "土", "土", "金", "金", "水", "水"][dayStemIdx];
+  const dayYin = dayStemIdx % 2 === 1 ? "陰" : "陽";
+
+  // 月支＝節入り（太陽黄経）で決定。寅月=立春315°起点
+  const sunLon = getSunLongitude(julianDay(y, m, d) - 0.5 + (12 - 9) / 24);
+  const msi = Math.floor((((sunLon - 315) % 360) + 360) % 360 / 30);
+  const monthBranchIdx = (2 + msi) % 12;
+  const monthBranch = SANMEI_BRANCHES[monthBranchIdx];
+
+  // 中心星（主星）＝ 日干 × 月支の蔵干本気 → 通変星
+  const mainStarIdx = tsuhenStarIdx(dayStemIdx, BRANCH_HIDDEN_STEM[monthBranchIdx]);
   const star = MAIN_STARS[mainStarIdx];
-  const stem   = SANMEI_STEMS[stemIdx];
-  const branch = SANMEI_BRANCHES[branchIdx];
-  const element = ["木", "木", "火", "火", "土", "土", "金", "金", "水", "水"][stemIdx];
-  const yin  = stemIdx % 2 === 1 ? "陰" : "陽";
+
+  // 年柱（六十干支・立春境界）も表示用に算出
+  const adjY = (m === 1 || (m === 2 && d < 4)) ? y - 1 : y;
+  const yStem = SANMEI_STEMS[((adjY - 4) % 10 + 10) % 10];
+  const yBranch = SANMEI_BRANCHES[((adjY - 4) % 12 + 12) % 12];
 
   const seed = dateSeed(birthday);
   const r = rng(seed + 3000);
@@ -340,67 +419,22 @@ export function getSanmeigakuReading(birthday: string): FortuneResult {
   const dirs   = ["東", "南", "中央", "西", "北"];
   const items  = ["勾玉", "算木", "水晶球", "朱砂", "碧玉"];
 
-  const decadeAge = Math.min(Math.floor((new Date().getFullYear() - y) / 10) * 10, 60);
   const phases = ["0〜20歳は自己形成期", "20〜40歳は社会進出期", "40〜60歳は充実成熟期", "60歳以降は円熟収穫期"];
-  const phaseIdx = Math.min(Math.floor((new Date().getFullYear() - y) / 20), 3);
+  const phaseIdx = Math.min(Math.max(Math.floor((new Date().getFullYear() - y) / 20), 0), 3);
 
   return {
-    title: `${stem}${branch}（${yin}${element}）── ${star.name}の命式`,
-    summary: `算命学における「${stem}${branch}」の命式。あなたの人生を貫く主星「${star.name}」が示す天賦の才能と使命を読み解きます。`,
+    title: `日干「${dayStem}（${dayYin}の${dayElement}）」── 主星は${star.name}`,
+    summary: `算命学では生まれた日の天干「日干（日主）」をあなたの本体とし、月支の蔵干との関係から中心となる主星を導きます。あなたの日干は「${dayStem}」、中心星（主星）は「${star.name}」です。`,
     details: [
-      { label: "天干・地支", content: `天干：${stem}（${yin}の${element}）／地支：${branch}。六十干支のサイクルの中で、あなたは特有のエネルギーの質を持って生まれました。` },
-      { label: `主星：${star.name}（テーマ：${star.theme}）`, content: star.desc },
+      { label: `日干（日主）：${dayStem}`, content: `あなたの本質を表す日干は「${dayStem}（${dayYin}の${dayElement}）」。算命学で最も重視する、あなたという存在の核です。` },
+      { label: `中心星（主星）：${star.name}（テーマ：${star.theme}）`, content: `${star.desc}\n（日干「${dayStem}」と月支「${monthBranch}」の蔵干との関係＝通変から導かれた、あなたの人格の中心星です。）` },
       { label: "あなたのエネルギーの質", content: `「${star.energy}」エネルギーを核に持ちます。このエネルギーを意識的に使うとき、あなたの人生は最も輝きます。` },
-      { label: "五行の属性", content: `「${element}」の気質を持つあなたは、${element === "木" ? "成長と向上心が強く、高みを目指す上昇志向の持ち主" : element === "火" ? "情熱と表現力に溢れ、人を照らす太陽のような存在" : element === "土" ? "安定と調和を重んじ、中心となって全体を支える力" : element === "金" ? "義理と決断力があり、物事の本質を見抜く鋭さを持つ" : "柔軟性と知恵があり、流れに乗りながら深く浸透する力"}です。` },
-      { label: "現在の大運の流れ", content: `${phases[phaseIdx]}。${phaseIdx === 0 ? "自分らしさを探しながら基盤を作る大切な時期" : phaseIdx === 1 ? "社会の中で主星の力を発揮し、本来の使命に近づく時期" : phaseIdx === 2 ? "これまでの積み重ねが最大の花を咲かせる充実期" : "人生の叡智を次世代に伝え、深い満足と豊かさを享受する時期"}です。` },
+      { label: "五行の属性（日干）", content: `日干「${dayElement}」の気質を持つあなたは、${dayElement === "木" ? "成長と向上心が強く、高みを目指す上昇志向の持ち主" : dayElement === "火" ? "情熱と表現力に溢れ、人を照らす太陽のような存在" : dayElement === "土" ? "安定と調和を重んじ、中心となって全体を支える力" : dayElement === "金" ? "義理と決断力があり、物事の本質を見抜く鋭さを持つ" : "柔軟性と知恵があり、流れに乗りながら深く浸透する力"}です。` },
+      { label: "年柱（生まれ年の干支）", content: `${yStem}${yBranch}。六十干支のサイクルにおける、あなたの生まれ年のエネルギーです。` },
+      { label: "人生のステージ（年齢の目安）", content: `${phases[phaseIdx]}。${phaseIdx === 0 ? "自分らしさを探しながら基盤を作る大切な時期" : phaseIdx === 1 ? "社会の中で主星の力を発揮し、本来の使命に近づく時期" : phaseIdx === 2 ? "これまでの積み重ねが最大の花を咲かせる充実期" : "人生の叡智を次世代に伝え、深い満足と豊かさを享受する時期"}です。` },
     ],
     lucky: { color: pick(colors, r), direction: pick(dirs, r), item: pick(items, r) },
     advice: `「${star.name}」の本質は「${star.theme}」です。あなたが最も輝くのは、このテーマに沿った生き方をしているとき。日々の選択をこの羅針盤に照らし合わせることで、算命学が示す運命の本流を生きることができます。`,
   };
 }
 
-// ══════════════════════════════════════════════
-// 5. 紫微斗数
-// ══════════════════════════════════════════════
-
-const ZIWEI_STARS = [
-  { name: "紫微星", palace: "命宮", quality: "帝王・尊厳", desc: "北極星を象徴する最高の星。高い志と品格を持ち、周囲を統率するカリスマ性があります。生まれながらにして人の上に立つ器を持ち、その存在だけで場を引き締めます。" },
-  { name: "天機星", palace: "兄弟宮", quality: "知恵・変化", desc: "知性と機転の星。変化の波を読む直感と論理的思考を持ち、時代の流れを先取りします。多才な能力と柔軟な発想で、どんな状況も切り抜ける知恵者です。" },
-  { name: "太陽星", palace: "夫妻宮", quality: "輝き・奉仕", desc: "太陽のように周囲を照らす星。明るく前向きなエネルギーで人々に活力を与えます。社会的な貢献と奉仕に強い使命感を感じ、公の場で活躍します。" },
-  { name: "武曲星", palace: "子女宮", quality: "財・決断", desc: "実力と財の星。強い意志と行動力で目標を達成し、経済的な豊かさを自ら作り出します。決断が速く、困難な状況でもぶれない強さが持ち味です。" },
-  { name: "天同星", palace: "財帛宮", quality: "福・享受", desc: "福徳と享受の星。人生の喜びや楽しみを大切にし、穏やかで安定した幸福を引き寄せます。争いを好まず、和やかな環境で最大の力を発揮します。" },
-  { name: "廉貞星", palace: "疾厄宮", quality: "情熱・厳格", desc: "情熱と厳格さの星。高い基準を持ち、妥協を許さない完璧主義的な一面があります。その情熱は周囲を巻き込む力となり、大きな事業を成し遂げます。" },
-  { name: "天府星", palace: "遷移宮", quality: "蓄積・保守", desc: "豊かさと保守の星。着実に財と信頼を蓄え、安定した基盤を築く力があります。伝統と格式を重んじ、長期的な視野で物事を判断します。" },
-  { name: "太陰星", palace: "奴僕宮", quality: "内省・感性", desc: "月の静けさと感性の星。内向きの豊かさと深い感受性を持ち、芸術や精神世界に深い親和性があります。心の声に従うことで最大の才能が開花します。" },
-  { name: "貪狼星", palace: "官禄宮", quality: "欲望・才能", desc: "多才と欲求の星。旺盛な向上心と多才な能力を持ち、様々な分野で才能を発揮します。人生の喜びを積極的に追求することで、大きな成功と充実を手にします。" },
-  { name: "巨門星", palace: "田宅宮", quality: "口才・疑惑", desc: "言葉の才と探求の星。話術に優れ、教育・弁論・交渉の場で輝きます。物事の真相を探ろうとする探求心が、深い知識と洞察力を育てます。" },
-  { name: "天相星", palace: "福徳宮", quality: "補佐・奉仕", desc: "補佐と奉仕の星。優れたサポート力と調整能力で、組織や人間関係の要となります。縁の下の力持ちとして周囲を支え、その存在の大切さが徐々に認められます。" },
-  { name: "天梁星", palace: "父母宮", quality: "長上・威厳", desc: "威厳と守護の星。目上の立場から人を守り、導くことに使命を感じます。経験から滲み出る重厚な存在感と、物事を大局から見渡す力が持ち味です。" },
-];
-
-export function getShibiReading(birthday: string, birthHour?: number): FortuneResult {
-  const { y, m, d } = parseDate(birthday);
-  const seed = dateSeed(birthday) + (birthHour ?? 12) * 100;
-  const r = rng(seed + 4000);
-  const starIdx = ((y + m + d) % 12);
-  const star = ZIWEI_STARS[starIdx];
-  const palaces = ["命宮","財帛宮","官禄宮","夫妻宮","子女宮","福徳宮","兄弟宮","父母宮","疾厄宮","遷移宮","奴僕宮","田宅宮"];
-  const mainPalace = palaces[starIdx % palaces.length];
-  const colors = ["紫", "金色", "深紅", "蒼", "白", "翠緑"];
-  const items  = ["帝王紫の石", "金の環", "七宝", "玉璧", "朱砂の印"];
-  const dirs   = ["北", "東北", "南", "西南", "中央"];
-
-  return {
-    title: `${star.name}が${mainPalace}に座す ── 帝王星盤の示す運命`,
-    summary: `紫微斗数による星盤解読。あなたの${mainPalace}に輝く「${star.name}」が示す、生まれ持った使命と才能の全貌です。`,
-    details: [
-      { label: `命宮の主星：${star.name}（${star.quality}）`, content: star.desc },
-      { label: "星盤が示すあなたの使命", content: `「${star.quality}」のエネルギーを核に持つあなたは、${star.palace}の領域で最も輝きます。この星が示す使命を意識して生きるとき、人生は大きな流れに乗ります。` },
-      { label: "財の流れ", content: `星盤の財帛宮は${birthHour !== undefined ? "生まれた時間からさらに精密に" : "生年月日から"}算出されます。${r(2) === 0 ? "財は労働と才能から生まれる命式です。専門性を磨くことで財運が安定します。" : "縁と人脈から財が流れ込む命式です。人との信頼関係が財の源となります。"}` },
-      { label: "対人・夫妻の縁", content: `夫妻宮の気質から、${r(2) === 0 ? "深い絆を一人の相手と育てることで最大の安定を得ます。縁は焦らず、必要なときに自然と訪れます。" : "多様な人間関係の中で磨かれ成長します。広い縁を持ちながら、核となる深い関係を大切に。"}` },
-      { label: "大運の方向性", content: `現在の大運の流れは${r(3) === 0 ? "上昇期" : r(3) === 1 ? "充実・安定期" : "準備・内省期"}にあります。${r(3) === 0 ? "積極的に動いた分だけ運が開く時期です。" : r(3) === 1 ? "これまでの努力が実り、安定した充実を享受できる時期です。" : "今は次の飛躍のために内側を整える大切な準備期間です。"}` },
-    ],
-    lucky: { color: pick(colors, r), item: pick(items, r), direction: pick(dirs, r) },
-    advice: `紫微斗数は「${star.name}」があなたの命宮に宿ることを示しています。「${star.quality}」という本質的な性質を日々の生き方に反映させることが、この星盤が指し示す最高の人生への道です。`,
-  };
-}

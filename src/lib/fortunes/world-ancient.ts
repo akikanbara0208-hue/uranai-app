@@ -1,4 +1,5 @@
 import { FortuneResult } from "@/lib/types";
+import { julianDay, getMoonLongitude, getAscendantLongitude } from "@/lib/fortunes/astrology";
 
 function dateSeed(bd: string): number {
   return (Math.abs(parseInt(bd.replace(/-/g, ""), 10)) || 1) >>> 0;
@@ -57,38 +58,170 @@ const NAKSHATRAS = [
   { name: "レーヴァティー", deity: "プーシャン（旅人の神）", symbol: "太鼓・魚", description: "旅と養育の星宿。豊かな感受性と養育の才能を持ち、人々を安全な目的地へと導く保護のエネルギーがあります。音楽と海への親和性が強い星宿です。" },
 ];
 
-export function getVedicReading(birthday: string): FortuneResult {
-  const { y, m, d } = parseDate(birthday);
-  const dayOfYear = Math.floor((new Date(y, m - 1, d).getTime() - new Date(y, 0, 0).getTime()) / 86400000);
-  const idx = Math.floor((dayOfYear / 365) * 27) % 27;
-  const nakshatra = NAKSHATRAS[idx];
-  const seed = dateSeed(birthday);
-  const r = rng(seed + 5000);
+// ── ラヒリ・アヤナムシャ（回帰黄道と恒星黄道のずれ）。J2000で約23.85°、歳差で年約50.29″増 ──
+function lahiriAyanamsa(jd: number): number {
+  const T = (jd - 2451545.0) / 36525.0;
+  return 23.85 + 1.39666 * T;
+}
 
-  // ラーシ（月宿星座）: ヴェーダ占星術はアヤナムシャで約23度戻る
-  const westernMonths = [3,4,5,6,7,8,9,10,11,12,1,2];
-  const rashiNames = ["牡羊座（メーシャ）","牡牛座（ヴリシャバ）","双子座（ミトゥナ）","蟹座（カルカ）","獅子座（シンハ）","乙女座（カンニャー）","天秤座（トゥラー）","蠍座（ヴリシュチカ）","射手座（ダヌ）","山羊座（マカラ）","水瓶座（クンバ）","魚座（ミーナ）"];
-  const rashiIdx = ((m - 1 + 11) % 12);
-  const rashi = rashiNames[rashiIdx];
+// ── ヴィムショッタリ・ダシャー：9惑星の支配年数（合計120年）と巡る順序 ──
+const DASHA_LORDS = ["ケートゥ", "金星", "太陽", "月", "火星", "ラーフ", "木星", "土星", "水星"];
+const DASHA_YEARS: Record<string, number> = {
+  "ケートゥ": 7, "金星": 20, "太陽": 6, "月": 10, "火星": 7,
+  "ラーフ": 18, "木星": 16, "土星": 19, "水星": 17,
+};
+const DASHA_THEME: Record<string, string> = {
+  "ケートゥ": "手放し・精神性・過去の清算。執着を解き内面を深める時期",
+  "金星": "愛・芸術・豊かさ・人間関係が花開く時期。喜びと美を享受せよ",
+  "太陽": "自己確立・権威・キャリアの中心化。自分の旗を立てる時期",
+  "月": "心・家庭・感受性が主役。情緒的な繋がりが運を運ぶ時期",
+  "火星": "行動・開拓・闘争。勇気を持って前へ出れば道が拓ける時期",
+  "ラーフ": "拡大・野心・未知への挑戦。常識を超える飛躍が起こる時期",
+  "木星": "成長・学び・幸運・恩恵。種をまけば大きく実る最も追い風の時期",
+  "土星": "試練・忍耐・基盤づくり。急がず積み上げれば確かな実りになる時期",
+  "水星": "知性・商才・伝達。学びと取引で結果が出る時期",
+};
+// 「今進めるべきか待つべきか」の判定（ダシャーの主星の性質）
+const DASHA_GO: Record<string, string> = {
+  "木星": "GO", "金星": "GO", "水星": "GO", "太陽": "GO", "月": "GO",
+  "火星": "GO_CAUTION", "ラーフ": "GO_CAUTION", "土星": "WAIT", "ケートゥ": "WAIT",
+};
+
+function addYears(base: Date, years: number): Date {
+  return new Date(base.getTime() + years * 365.2425 * 86400000);
+}
+
+// マハーダシャー内のアンタルダシャー（副期間）の主星を求める
+function currentAntardasha(mahaLord: string, elapsedInMaha: number): string {
+  const mahaLen = DASHA_YEARS[mahaLord];
+  const start = DASHA_LORDS.indexOf(mahaLord);
+  let acc = 0;
+  for (let i = 0; i < 9; i++) {
+    const sub = DASHA_LORDS[(start + i) % 9];
+    const subLen = (mahaLen * DASHA_YEARS[sub]) / 120;
+    if (elapsedInMaha < acc + subLen) return sub;
+    acc += subLen;
+  }
+  return mahaLord;
+}
+
+const RASHI_NAMES = ["牡羊座（メーシャ）","牡牛座（ヴリシャバ）","双子座（ミトゥナ）","蟹座（カルカ）","獅子座（シンハ）","乙女座（カンニャー）","天秤座（トゥラー）","蠍座（ヴリシュチカ）","射手座（ダヌ）","山羊座（マカラ）","水瓶座（クンバ）","魚座（ミーナ）"];
+const MOON_RASHI_TEXT = [
+  "感情が湧き上がるとすぐ行動に出る、正直で情熱的な心の持ち主。怒りも喜びも瞬発的で、引きずらないのが強みです。",
+  "安心と安定を強く求める心。慣れ親しんだ環境や食、心地よい感触に触れることで深く癒されます。変化にはゆっくり慣れていくタイプ。",
+  "感情を言葉にして整理する心。気分の切り替えが早く、誰かと話すことで気持ちが軽くなります。刺激と会話が心の栄養です。",
+  "感受性が非常に豊かで、身近な人や場所に強い愛着を持つ心。守りたい・包み込みたいという母性的な情が深く働きます。",
+  "感情表現がドラマチックで温かい心。認められ、称賛されることで心が満たされます。誇りを大切にする素直な心の持ち主。",
+  "感情を整理・分析することで安定を得る心。秩序や清潔さが心の拠り所となり、誰かの役に立つことで満たされます。",
+  "感情のバランスを常に取ろうとする心。一人でいるより誰かと共にいることを好み、不調和を最も苦手とします。",
+  "感情が深く強烈で、簡単には表に出さない心。信頼した相手には全てを注ぐ一途さと、秘めた情熱を併せ持ちます。",
+  "感情を前向きに捉える楽観的な心。自由が心の栄養で、束縛されると途端に落ち着きを失います。冒険心が心を満たします。",
+  "感情を実用的にコントロールする心。弱さを見せることに慎重で、着実な積み重ねの中に安心を見出します。",
+  "感情を一歩引いて客観的に見つめる心。個人的な感傷より、理想や仲間とのつながりに心が動きます。独自の感じ方を大切に。",
+  "感情が海のように広くやわらかい心。他者の痛みを自分のことのように感じ取る、深い共感力の持ち主です。",
+];
+const LAGNA_RASHI_TEXT = [
+  "初対面では活発でエネルギッシュな印象を与える。行動が早く、竹を割ったような性格が第一印象からにじみ出ます。",
+  "初対面では穏やかで落ち着いた印象を与える。ゆったりとした物腰と美的センスが、安心感のある第一印象を作ります。",
+  "初対面では軽やかで話し上手な印象を与える。好奇心旺盛な雰囲気があり、会話が弾みやすい人と見られます。",
+  "初対面では柔らかく親しみやすい印象を与える。世話好きで、はじめて会う人にも自然と気を配る優しさが伝わります。",
+  "初対面では堂々として華やかな印象を与える。存在感があり、自然と場の中心になりやすい第一印象を持ちます。",
+  "初対面では清潔で几帳面な印象を与える。丁寧な物腰と控えめな態度から、有能さと誠実さが伝わります。",
+  "初対面では魅力的で洗練された印象を与える。バランスの取れた立ち居振る舞いが、誰からも好かれやすい印象を作ります。",
+  "初対面では神秘的で強い眼差しの印象を与える。近寄りがたさの奥に、人を引きつける独特の存在感があります。",
+  "初対面では明るく開放的な印象を与える。率直な物言いと冒険好きな雰囲気が、飾らない印象を残します。",
+  "初対面では落ち着いて信頼できる印象を与える。年齢より大人びて見られやすく、堅実さが伝わる佇まいです。",
+  "初対面ではユニークで親しみやすい印象を与える。型にはまらない個性が、記憶に残る第一印象を作ります。",
+  "初対面では柔らかく夢見がちな印象を与える。詩的で神秘的な雰囲気があり、優しく繊細な人柄が伝わります。",
+];
+
+export function getVedicReading(birthday: string, birthHour?: number, lat?: number, lon?: number): FortuneResult {
+  const { y, m, d } = parseDate(birthday);
+  const hasTime = typeof birthHour === "number";
+  const hour = hasTime ? birthHour! : 12; // 時刻不明なら正午JSTで近似
+  const noonJD = julianDay(y, m, d);
+  // 出生時刻(JST=UT+9)を反映したユリウス日
+  const jd = noonJD - 0.5 + (hour - 9) / 24;
+  const ayan = lahiriAyanamsa(jd);
+
+  // 恒星黄道での月の黄経 → ナクシャトラ／パダ／ラーシ
+  const moonSid = ((getMoonLongitude(jd) - ayan) % 360 + 360) % 360;
+  const NAK_SIZE = 360 / 27; // 13°20′
+  const nakIndex = Math.floor(moonSid / NAK_SIZE) % 27;
+  const posInNak = moonSid - nakIndex * NAK_SIZE;
+  const pada = Math.floor(posInNak / (NAK_SIZE / 4)) + 1;
+  const nakshatra = NAKSHATRAS[nakIndex];
+  const desc = (nakshatra as any).desc || (nakshatra as any).description || "";
+  const rashi = RASHI_NAMES[Math.floor(moonSid / 30) % 12];
+  const janmaLord = DASHA_LORDS[nakIndex % 9];
+
+  // ラグナ（上昇宮）— 時刻＋出生地があるときのみ恒星黄道で算出
+  let lagna: string | null = null;
+  if (hasTime && typeof lat === "number" && typeof lon === "number") {
+    const ascSid = ((getAscendantLongitude(noonJD, hour, lat, lon) - ayan) % 360 + 360) % 360;
+    lagna = RASHI_NAMES[Math.floor(ascSid / 30) % 12];
+  }
+
+  // ── ヴィムショッタリ・ダシャー（運気の季節）──
+  const startIdx = nakIndex % 9;
+  const fracTraversed = posInNak / NAK_SIZE;          // 出生時のナクシャトラ進行率
+  const elapsedBeforeBirth = fracTraversed * DASHA_YEARS[janmaLord];
+  const birthDate = new Date(y, m - 1, d);
+  const ageYears = (Date.now() - birthDate.getTime()) / (365.2425 * 86400000);
+
+  // 出生からの累積でいまのマハーダシャーを特定
+  let cumEnd = (1 - fracTraversed) * DASHA_YEARS[janmaLord]; // 開始ダシャーの残り
+  let k = 0;
+  while (ageYears >= cumEnd) {
+    k++;
+    cumEnd += DASHA_YEARS[DASHA_LORDS[(startIdx + k) % 9]];
+  }
+  const mahaLord = DASHA_LORDS[(startIdx + k) % 9];
+  const mahaEndDate = addYears(birthDate, cumEnd);
+  const elapsedInMaha = k === 0
+    ? elapsedBeforeBirth + ageYears
+    : ageYears - (cumEnd - DASHA_YEARS[mahaLord]);
+  const antarLord = currentAntardasha(mahaLord, elapsedInMaha);
+
+  // 「今進めるべきか／待つべきか」の総合判定（マハー×アンタル）
+  const go = (lord: string) => DASHA_GO[lord];
+  const mg = go(mahaLord), ag = go(antarLord);
+  let timing: string;
+  if (mg === "GO" && (ag === "GO" || ag === "GO_CAUTION")) {
+    timing = "✅ 今は『進めるべき』追い風の時期です。長期の流れ（マハーダシャー）が味方しており、新しい挑戦・契約・前進に適しています。";
+  } else if (mg === "WAIT" && ag === "WAIT") {
+    timing = "⏳ 今は『待ち・基盤づくり』の時期です。急いで広げるより、足場を固め、種をまき、内面を整えることが後の大きな実りに繋がります。";
+  } else if (mg === "WAIT") {
+    timing = "🌱 長期的には『土台を固める』時期ですが、短期（アンタルダシャー）では動ける窓があります。大勝負は控えめに、着実な一歩を。";
+  } else {
+    timing = "⚖️ 進むエネルギーはありますが、勢い任せは禁物の時期です。方向性を見極めてから動けば成果に繋がります。";
+  }
 
   const colors = ["黄金", "白", "赤", "緑", "空色", "紫", "珊瑚"];
-  const items  = ["サンスクリットのお守り", "ルドラクシャ", "翡翠", "赤珊瑚", "青サファイア"];
+  const items  = ["ルドラクシャ", "翡翠", "赤珊瑚", "青サファイア", "黄サファイア"];
   const dirs   = ["東", "南東", "南", "南西", "西", "北西", "北", "北東"];
+  const r = rng(dateSeed(birthday) + nakIndex * 31);
 
-  const desc = (nakshatra as any).desc || (nakshatra as any).description || "";
+  const precisionNote = hasTime
+    ? ""
+    : "（出生時刻が未入力のため正午で算出。月は1日に約1宿動くため、正確なナクシャトラ判定には出生時刻の入力を推奨します）";
 
   return {
-    title: `ナクシャトラ：${nakshatra.name} ── ${nakshatra.quality}の魂`,
-    summary: `ヴェーダ占星術（ジョーティッシュ）によれば、あなたは「${nakshatra.name}」のナクシャトラ（月宿）に生まれました。月の光が照らす生命の本質をご覧ください。`,
+    title: `ナクシャトラ：${nakshatra.name}（第${pada}パダ）── ${nakshatra.quality}の魂`,
+    summary: `ジョーティッシュ（インド占星術）の実計算により、生まれた瞬間の月は恒星黄道で${moonSid.toFixed(1)}°、ナクシャトラ「${nakshatra.name}」第${pada}パダ、月星座（ジャンマ・ラーシ）は「${rashi}」でした。${precisionNote}`,
     details: [
-      { label: `ナクシャトラ：${nakshatra.name}`, content: desc },
-      { label: "守護神", content: `${nakshatra.deity}があなたを守護します。この神のエネルギーがあなたの直感と魂の方向性を導いています。` },
-      { label: `ラーシ（月星座）：${rashi}`, content: `ヴェーダ占星術では西洋占星術より約23度（アヤナムシャ）ずれた位置で星座を読みます。${rashi}のエネルギーがあなたの感情と反応パターンを形作っています。` },
-      { label: "カルマと魂の課題", content: `「${nakshatra.quality}」を本質に持つあなたのカルマは、この力を意識的に社会に活かすことです。過去生から持ち越した種が、今生の使命として芽吹いています。` },
-      { label: "ダシャー（時の支配）", content: `ヴェーダ占星術のダシャーシステムに基づく人生の時期の流れから、あなたは現在${pick(["成長と学びの時期","実践と成果を出す時期","深化と内省の時期","豊かさを受け取る時期"], r)}にあります。` },
+      { label: `ナクシャトラ：${nakshatra.name}（第${pada}パダ）`, content: `${desc}\n月の支配星（出生ダシャー主）は「${janmaLord}」です。` },
+      { label: "守護神", content: `${nakshatra.deity}があなたを守護します。このエネルギーが直感と魂の方向性を導いています。象徴は「${nakshatra.symbol}」。` },
+      { label: `月星座（ジャンマ・ラーシ）：${rashi}`, content: `${MOON_RASHI_TEXT[Math.floor(moonSid / 30) % 12]} インド占星術ではこの月星座をあなたの「本命星座」として最重視します。` },
+      ...(lagna
+        ? [{ label: `ラグナ（上昇宮）：${lagna}`, content: `${LAGNA_RASHI_TEXT[RASHI_NAMES.indexOf(lagna!)]} 人生の器・体質を象徴し、出生時刻と出生地から算出した東の地平の星座です。` }]
+        : [{ label: "ラグナ（上昇宮）", content: "出生時刻と出生地（都道府県）を入力すると、人生の器を示す上昇宮を恒星黄道で算出します。" }]),
+      { label: `現在の運気の季節：${mahaLord}のマハーダシャー`, content: `${DASHA_THEME[mahaLord]}。\nこの大運は${mahaEndDate.getFullYear()}年頃まで続きます。さらに細かな副期間（アンタルダシャー）は今「${antarLord}」が巡っており、${DASHA_THEME[antarLord]}。` },
+      { label: "🧭 今は進めるべきか、待つべきか", content: timing },
+      { label: "カルマと魂の課題", content: `「${nakshatra.quality}」を本質に持つあなたのカルマは、この力を意識的に世界へ活かすこと。出生ダシャー主「${janmaLord}」が、過去生から持ち越した魂の主題を示しています。` },
     ],
     lucky: { color: pick(colors, r), item: pick(items, r), direction: pick(dirs, r) },
-    advice: `「${nakshatra.name}」の魂を持つあなたへ。${nakshatra.symbol}が示すシンボルをお守りとし、守護神のエネルギーと繋がる静かな時間を日々の生活に取り入れることで、ヴェーダの叡智があなたの人生を深く彩ります。`,
+    advice: `「${nakshatra.name}」の魂を持つあなたへ。今は${mahaLord}の大運──${DASHA_THEME[mahaLord].split("。")[0]}。${nakshatra.symbol}を象徴のお守りとし、その流れに沿って動くとき、ヴェーダの叡智が人生を深く後押しします。`,
   };
 }
 
@@ -159,13 +292,19 @@ export function getMayaReading(birthday: string): FortuneResult {
 
   return {
     title: `${tone.num}・${sign.name}（${sign.ja}）── マヤの魂のサイン`,
-    summary: `マヤ暦ツォルキンによれば、あなたは「${tone.num}${sign.name}（Kin ${signIdx + 1}）」の日に生まれました。260日周期の神聖暦が示す、あなたの魂の使命です。`,
+    summary: `マヤ暦ツォルキンによれば、あなたは「${tone.num}・${sign.name}（${sign.ja}・Kin ${signIdx + 1}）」の日に生まれました。デイサインは「${sign.quality}」、銀河の音は「${tone.name}」のエネルギーを帯びています。260日周期の神聖暦が、あなたの魂が今回の人生で果たすべき使命を指し示します。`,
     details: [
       { label: `デイサイン：${sign.name}（${sign.ja}）`, content: sign.desc },
       { label: `銀河の音：${tone.num}（${tone.name}）`, content: tone.desc },
       { label: "四方位の属性", content: `あなたのデイサインは「${sign.element}」の方位に属します。${sign.element === "水" ? "感情と浄化の力を持ち、流れに乗ることで本来の使命に近づきます。" : sign.element === "風" ? "精神とコミュニケーションの力を持ち、言葉と呼吸に力が宿ります。" : sign.element === "闇" ? "内省と変容の力を持ち、闇の中に光を見出すことが使命です。" : "情熱と意志の力を持ち、内なる炎を燃やし続けることで道が開けます。"}` },
       { label: "マヤが示す使命", content: `「${sign.quality}」を持って生まれたあなたの魂は、このエネルギーを通じて世界に貢献するために来ています。日々の生活の中でこの質を意識して表現することが、マヤが示す最高の道です。` },
       { label: "銀河サイクルにおける位置", content: `260日ツォルキンの${tzolkinCount % 260 === 0 ? "節目の日" : `${((tzolkinCount % 260) + 260) % 260}日目`}のエネルギーを持っています。このサイクルが示す時の流れに乗ることで、努力が最大の実りをもたらします。` },
+      { label: "恋愛運", content: `「${sign.ja}」のサインを持つあなたの愛には、「${sign.quality}」の質がそのまま表れます。銀河の音「${tone.name}」のリズムに乗るとき、相手との呼吸が自然と合っていきます。${sign.element === "水" ? "感情を素直に流すことで深い絆が育ちます。" : sign.element === "風" ? "言葉でこまめに想いを伝えることが関係を温めます。" : sign.element === "闇" ? "二人だけの静かな時間が信頼を深めます。" : "情熱をまっすぐ示すことが愛を燃え上がらせます。"}` },
+      { label: "仕事運", content: `デイサイン「${sign.name}」の「${sign.quality}」は、仕事における天賦の才です。銀河の音${tone.num}「${tone.name}」が示すリズムで取り組むと、努力が無理なく形になっていきます。マヤの暦が教えるのは、宇宙の流れに逆らわず、自分の周期に合ったペースで進むことの大切さです。` },
+      { label: "金運", content: `豊かさもまた「${sign.quality}」のエネルギーを通じてあなたに巡ってきます。お金を奪い合うものではなく循環させるものと捉えるとき、ツォルキンの調和が金運を整えます。「${tone.name}」の音に従い、与えることと受け取ることのバランスを保つことが繁栄を呼びます。` },
+      { label: "対人運", content: `「${sign.ja}」のサインは、人との縁において独特の魅力を放ちます。あなたの「${sign.quality}」は周囲を惹きつけ、自然と人が集まる中心になりやすいでしょう。銀河の音「${tone.name}」を意識して接すると、グループ全体のエネルギーを高める存在になれます。` },
+      { label: "今後の流れ", content: `260日のツォルキンは絶えず巡り、あなたの運気も螺旋を描いて上昇しています。今は「${sign.quality}」のテーマを深める時期にあり、ここで蒔いた種が次のサイクルで花開きます。マヤの暦を信じ、自分の時の流れに乗ることが、最大の実りへの近道です。` },
+      { label: "開運アクション", content: `毎朝、自分のデイサイン「${sign.name}」と銀河の音「${tone.name}」を心の中で唱えることが、マヤのエネルギーとの結びつきを強めます。${sign.element === "水" ? "水辺で過ごす時間" : sign.element === "風" ? "深呼吸や瞑想の時間" : sign.element === "闇" ? "夜の静かな内省の時間" : "朝日を浴びる時間"}を意識的に取り入れると、本来の力が目覚めていきます。` },
     ],
     lucky: { color: pick(colors, r), item: pick(items, r) },
     advice: `「${tone.num}・${sign.name}」の使命を持って生まれたあなたへ。マヤの叡智は「あなたはすでに完全だ」と伝えています。内なる${sign.ja}のエネルギーを解放し、${tone.name}の音に従って生きるとき、人生は最も美しい旋律を奏でます。`,
@@ -215,13 +354,19 @@ export function getEgyptReading(birthday: string): FortuneResult {
 
   return {
     title: `守護神：${god.name} ── エジプトの星が示す使命`,
-    summary: `古代エジプト占星術によれば、あなたの守護神は「${god.name}」です。四千年の歴史を持つナイルの知恵が、あなたの本質と使命を照らし出します。`,
+    summary: `古代エジプト占星術によれば、あなたの守護神は「${god.name}」、その聖なるシンボルは「${god.symbol}」、魂の色は「${god.color}」です。ピラミッドの時代から四千年受け継がれてきたナイルの知恵が、あなたの本質と、神々から託された使命を照らし出します。`,
     details: [
       { label: `守護神：${god.name}`, content: god.desc },
       { label: "聖なるシンボル", content: `「${god.symbol}」があなたの力の象徴です。このシンボルを思い描くとき、守護神のエネルギーと深くつながることができます。` },
       { label: "魂の属性カラー", content: `「${god.color}」があなたの魂の色です。この色を生活に取り入れることで、守護神との共鳴が強まります。` },
       { label: "人生の使命", content: `${god.name}が守護するあなたには、${r(2) === 0 ? "この世界に深い変容と再生をもたらす" : "人々に光と知恵を分け与える"}という魂レベルの使命があります。日々の生き方の中にその使命の断片が現れています。` },
       { label: "エジプト暦の現在の時期", content: `現在あなたは${pick(["ペレト（成長の季節）", "シェムウ（収穫の季節）", "アケト（洪水と再生の季節）"], r)}のエネルギーの中にいます。この季節のリズムに従って行動することが、最大の恵みをもたらします。` },
+      { label: "恋愛運", content: `「${god.name}」の守護を受けるあなたの愛は、神話に描かれる神々のように一途で深いものです。「${god.symbol}」が象徴する力が、惹かれ合う相手との間に強い縁を結びます。駆け引きに走るより誠実さを大切にすることで、ナイルの恵みのように豊かな関係が育っていきます。` },
+      { label: "仕事運", content: `あなたは${god.name}から授かった資質を、仕事の場でこそ存分に発揮できます。神殿が長い年月をかけて完成したように、目先の成果より大きな構想を描いて取り組むと評価が定まります。「${god.color}」を仕事道具やデスク周りに取り入れると、集中力と直感が高まるでしょう。` },
+      { label: "金運", content: `ナイルの氾濫が肥沃な土をもたらしたように、あなたの金運も巡りの中で豊かさを増していきます。一度の大きな利益より、流れを絶やさず循環させることが繁栄の鍵です。「${god.symbol}」を心に思い描きながら使い道を決めると、無駄な出費が自然と減っていきます。` },
+      { label: "対人運", content: `${god.name}の威光は、人々を惹きつけ信頼を集める力となります。あなたは集団の中で守護者や調整役を任されやすく、その公正さが周囲の安心の拠り所になります。「${god.color}」をまとった装いは、初対面の相手にも好印象と信頼感を与えるでしょう。` },
+      { label: "今後の流れ", content: `エジプトの暦が季節を正確に巡らせたように、あなたの運気も着実な周期で上向いていきます。いま「${god.symbol}」が示す方向に小さな一歩を踏み出せば、それが再生と成長の大きな波へとつながります。焦らず神々のリズムに身を委ねることが、最良の結果を引き寄せます。` },
+      { label: "注意点", content: `${god.name}の強い加護は、ときに頑固さや独善として表れることがあります。自分の正しさに固執しすぎると、せっかくの守護を活かしきれません。「${god.symbol}」が教える本来の役割に立ち返り、周囲の声に静かに耳を傾ける余白を持ってください。` },
     ],
     lucky: { color: god.color, item: pick(items, r), direction: pick(dirs, r) },
     advice: `古代エジプト人は、守護神との関係を日々の礼拝と誠実な生き方を通じて培いました。「${god.name}」のエネルギーを呼び覚ますには、${r(2) === 0 ? "朝の静かな時間に意図を設定する習慣" : "夜に今日の出来事を振り返り感謝を捧げる習慣"}が最も効果的です。`,
@@ -253,7 +398,7 @@ export function getBabylonReading(birthday: string): FortuneResult {
 
   return {
     title: `守護遊星：${planet.name} ── バビロニアの星表が示す運命`,
-    summary: `メソポタミアの天文学者たちが三千年かけて解読した星表。あなたを守護する星「${planet.name}」が示す、宇宙からの使命を読み解きます。`,
+    summary: `メソポタミアの神官・天文学者たちが三千年かけて粘土板に刻んだ星表。その叡智によれば、あなたを守護する遊星は「${planet.name}」、対応する宮は「${planet.sign}」です。「${planet.quality}」のエネルギーが、あなたの本質と、星々が指し示す使命を照らし出します。`,
     details: [
       { label: `守護遊星：${planet.name}（${planet.quality}）`, content: planet.desc },
       { label: "聖なる金属と色", content: `${planet.name}に対応する金属は「${planet.metal}」、色は「${planet.color}」です。バビロニア人はこれらを身につけることで守護神のエネルギーを受け取ると信じていました。` },
@@ -264,6 +409,13 @@ export function getBabylonReading(birthday: string): FortuneResult {
         "コンジャンクション（惑星の合）のエネルギーが高まる今、新しい縁と機会が動き始めています。",
         "天体が示す方位に向かって行動するとき、バビロニアの神々の加護が最も強く働きます。",
       ], r)},
+      { label: "恋愛・人間関係", content: `愛の場面でも「${planet.name}」が司る「${planet.quality}」の質がそのまま表れます。守護宮「${planet.sign}」の性質を帯びるあなたは、距離を一気に詰めるより、相手の歩みに星のリズムを合わせることで深い信頼を築けます。一度心を許した相手には、${planet.metal}のように変わらぬ誠実さを注ぎ続けるでしょう。` },
+      { label: "仕事・キャリア", content: `「${planet.quality}」はあなたの仕事における最大の武器です。バビロニアの神官が星の運行から国の方針を定めたように、あなたも目先の損得ではなく大局を読んで動くとき真価を発揮します。焦って結果を急ぐより、${planet.name}が示す長い周期を信じて着実に積み上げることが、確かな地位と評価につながります。` },
+      { label: "金運", content: `富もまた星の周期に沿って巡ってきます。「${planet.color}」や「${planet.metal}」にまつわるものを丁寧に扱うと、金運の流れが整いやすくなります。一攫千金を狙うより、価値あるものを見極めて長く保有する姿勢こそが、${planet.name}の加護を受けたあなたに豊かさをもたらします。` },
+      { label: "対人・社会運", content: `「${planet.quality}」の輝きは、人を引き寄せる磁力にもなります。あなたの周りには自然と人が集まり、その中心で調整役や導き手を担う場面が多いでしょう。守護宮「${planet.sign}」の度量を意識して接すれば、対立すら実りある協力関係へと変えていけます。` },
+      { label: "今後の流れ", content: `星表はあなたの運気が緩やかな上昇カーブにあることを告げています。「${planet.quality}」のテーマに沿った種をいま蒔けば、数ヶ月から一年ほどの周期で形になって返ってきます。天体の運行と同じく、あなたの努力も一定のリズムで巡り、必ず実を結ぶ時が訪れます。` },
+      { label: "開運アクション", content: `夜空を見上げて星の位置を確かめる時間を持つことが、${planet.name}との結びつきを強めます。「${planet.color}」の小物や「${planet.metal}」の装飾を身につけ、一日の始まりに今日の意図を一つだけ星に告げてみてください。古代の神官がそうしたように、星と対話する習慣があなたの運気を底上げします。` },
+      { label: "注意点", content: `「${planet.quality}」は強い力ゆえに、過剰になると裏目に出ます。${planet.name}のエネルギーに飲まれて独断や勢い任せに走ると、せっかくの追い風を逃しかねません。星は告げるが選ぶのは人であることを忘れず、立ち止まって全体を見渡す冷静さを保ってください。` },
     ],
     lucky: { color: planet.color, item: pick(items, r), direction: pick(dirs, r) },
     advice: `バビロニアの星読みたちは「星は運命を告げるが、それを活かすのは人間の意志だ」と教えました。「${planet.name}」の守護を受けるあなたは、${planet.quality}のエネルギーを意識的に使うことで、星が示す最高の運命を手にすることができます。`,
@@ -316,13 +468,19 @@ export function getCelticReading(birthday: string): FortuneResult {
 
   return {
     title: `${tree.name} ── ケルト樹木占星術が示すあなたの本質`,
-    summary: `ドルイドの伝承に基づくケルト樹木占星術。あなたの誕生月日に対応する聖樹「${tree.name}」があなたの魂の本質と人生の道を示します。`,
+    summary: `古代ケルトのドルイド僧が遺した樹木暦に基づく占い。あなたの誕生月日に対応する聖樹は「${tree.name}」、その聖なる色は「${tree.color}」です。森の叡智を宿すこの木が、あなたの魂の本質と、これから歩むべき人生の道を照らし出します。`,
     details: [
       { label: `聖樹：${tree.name}`, content: tree.desc },
       { label: "ドルイドが読む才能", content: `「${tree.name}」の周期に生まれたあなたは、${pick(["自然との深いつながりと、癒しの力を持っています。","創造的な表現と芸術的才能に恵まれています。","人をまとめるリーダーシップと大きな視野があります。","深い知恵と洞察力で道を照らす力があります。"], r)}` },
       { label: "対応する色と元素", content: `「${tree.color}」の色と、${pick(["火", "水", "大地", "風"], r)}の元素があなたのエネルギーを表しています。` },
       { label: "ケルトのサバト（季節の祭り）との関係", content: `あなたの誕生日は${pick(["サウィン（冬の始まり・先祖の祭り）","インボルク（春の訪れ・浄化）","ベルタネ（夏の始まり・生命力）","ルーナサ（収穫の祭り・豊かさ）"], r)}に近いエネルギーを持ちます。` },
       { label: "オーガム文字の示す道", content: `ケルトの神聖文字オーガムが示すあなたへのメッセージ：「${pick(["自分の根を信頼し、嵐の中でも幹として立ち続けよ","葉が芽吹くように、可能性は今この瞬間に宿っている","古い枝を剪定することで、新しい成長のための空間が生まれる","森の全ての木が繋がるように、あなたも万物とつながっている"], r)}」` },
+      { label: "恋愛運", content: `聖樹「${tree.name}」を宿すあなたの愛は、木が根を張るようにゆっくりと、しかし深く育ちます。表面的な華やかさより、時間をかけて信頼を重ねる関係にこそ幸せを見出します。「${tree.color}」を身近に置くと、心が落ち着き、相手への自然な優しさが引き出されます。` },
+      { label: "仕事運", content: `「${tree.name}」の持つ生命力は、仕事の場で粘り強さとなって表れます。一本の木が年輪を重ねるように、地道な積み重ねがやがて揺るぎない実力と信頼に変わります。焦らず自分の根を深く張ることが、ケルトの森が教える成功の秘訣です。` },
+      { label: "金運", content: `森が四季を巡って実りを生むように、あなたの金運も自然なリズムで巡ってきます。無理に刈り取ろうとせず、必要なものを必要なだけ受け取る姿勢が豊かさを保ちます。「${tree.color}」にまつわるものを大切に扱うと、金運の流れが穏やかに整います。` },
+      { label: "対人運", content: `「${tree.name}」が森の中で他の木々と支え合うように、あなたも人との縁を何より大切にします。見返りを求めずに人を支えるその姿勢が、いざというとき頼れる仲間を周りに集めます。自然体で接することが、長く続く信頼関係を育てる鍵です。` },
+      { label: "今後の流れ", content: `ケルトの暦は生と再生の循環を説きます。あなたの運気もまた、種から芽、花、実へと向かう成長の途上にあります。いま「${tree.name}」のエネルギーに沿って動けば、季節が巡るように着実に望む実りへと近づいていきます。` },
+      { label: "注意点", content: `「${tree.name}」の強さは、ときに頑固さや抱え込みとして表れることがあります。一人で背負いすぎず、古い枝を手放すように不要なものを潔く整理してください。森が枯れ枝を落として新芽を育てるように、手放しが次の成長の余白を生みます。` },
     ],
     lucky: { color: tree.color, item: pick(items, r), direction: pick(dirs, r) },
     advice: `ドルイドは「${tree.name}」を神聖視し、その力を日々の生活に取り入れていました。あなたも自然の中で「${tree.name}」を見つけ、その前で静かに内なる声を聞くことで、ケルトの叡智がより深くあなたの中に根付きます。`,
@@ -376,6 +534,13 @@ export function getGeomancyReading(question: string): FortuneResult {
         "図形は慎重さと準備の必要性を示しています。急がず、基盤を固めてから動くことが大地の意志です。",
         "変容のエネルギーが強く働いています。古いものを手放し、新しい流れに身を任せることが鍵です。",
       ], r)},
+      { label: "現状 ── 第一の図が映すあなた", content: `今のあなたの状況を映す第一の図「${fig1.name}」は「${fig1.quality}」のエネルギーを帯びています。${fig1.desc} この図があなたの問いの出発点であり、続く二つの図がその展開を語ります。` },
+      { label: "恋愛・人間関係", content: `人との縁においては、第一の図「${fig1.name}」が示す「${fig1.quality}」の質が関係性の土台となります。${pick(["相手の出方を待つより、あなたから一歩歩み寄ることで流れが生まれます。", "今ある関係を丁寧に育てることが、何より大きな実りにつながります。", "距離感を見直すことで、こじれていた関係にも新しい風が通り始めます。"], r)} 第二の図「${fig2.name}」が示す課題を心に留めれば、無用なすれ違いを防げます。` },
+      { label: "仕事・進路", content: `仕事の場面では「${fig1.quality}」の力が追い風にも試練にもなり得ます。${pick(["一つの分野に腰を据えて取り組むことで、評価が確かに固まっていきます。", "新しい役割や場所への移動が、停滞していた状況を動かします。", "周囲との協力体制を整えることが、成果への最短ルートになります。"], r)} 焦って結論を急ぐより、第三の図が示す方向を信じて準備を重ねてください。` },
+      { label: "金運", content: `お金の流れも大地の図形に沿って動いています。${pick(["今は大きく広げるより、足元の収支を固める時期です。", "正当な対価を受け取ることに遠慮は要りません。あなたの価値は正しく報われます。", "不要な出費や執着を手放すことで、かえって新しい豊かさが入ってきます。"], r)} 地に足のついた金銭感覚が、この時期の安定を支えてくれます。` },
+      { label: "今後の流れ ── 第三の図が示す結末", content: `最終的な方向を示す第三の図「${fig3.name}」は「${fig3.quality}」へと向かう流れを告げています。${fig3.desc} この結末は固定されたものではなく、今のあなたの選択が育てていく未来です。` },
+      { label: "注意点 ── 第二の図が告げる課題", content: `途中で立ちはだかる第二の図「${fig2.name}」は「${fig2.quality}」という課題を映しています。${pick(["この壁は力で乗り越えるより、向き合って理解すべきものです。", "ここでつまずきやすいので、急がず一呼吸おいて進んでください。", "他者の力を借りることで、この課題は驚くほど軽くなります。"], r)}` },
+      { label: "開運アクション", content: `${pick(["静かな場所で土や石に触れ、足の裏で大地を感じる時間を持ってください。", "紙に問いと三つの図形を書き出し、毎朝眺めることで意識が定まっていきます。", "裸足で地面を歩く、植物の世話をするなど、大地とつながる習慣が運を整えます。"], r)} ジオマンシーの力は、地に根ざした日常の所作の中でこそ最も強く働きます。` },
     ],
     geomancyFigures: [
       { name: fig1.name, role: "第一の図（現在の状況）", dots: fig1.dots, meaning: fig1.quality, description: fig1.desc },
@@ -383,6 +548,6 @@ export function getGeomancyReading(question: string): FortuneResult {
       { name: fig3.name, role: "第三の図（結果と方向性）", dots: fig3.dots, meaning: fig3.quality, description: `最終的な流れとして「${fig3.quality}」が示されています。${fig3.desc}` },
     ],
     lucky: { color: pick(colors, r), item: pick(items, r) },
-    advice: `ジオマンシーの伝統では「大地は嘘をつかない」と言われます。第三の図「${fig3.name}」が示す${fig3.quality}のエネルギーを意識しながら、地に足をつけた行動をすることで、大地の守護を最大限に受けることができます。`,
+    advice: `ジオマンシーの伝統では「大地は嘘をつかない」と言われます。三つの図形が描く物語を一枚の地図として受け取り、結果を恐れるのではなく、地に足をつけて一歩ずつ歩むこと——それこそが、大地の守護を最大限に引き出す唯一の道です。`,
   };
 }

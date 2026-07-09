@@ -357,14 +357,26 @@ const MAJOR_ARCANA = [
 
 const SPREAD_NAMES = ["現在の状況", "障害・課題", "隠された影響", "アドバイス", "結果・可能性"];
 
+// 大アルカナ22枚の象徴絵文字（カードめくりアニメーションのカード面に表示）
+const TAROT_EMOJI: Record<string, string> = {
+  "愚者": "🃏", "魔術師": "🎩", "女教皇": "🌙", "女帝": "👑", "皇帝": "🪑",
+  "法王": "⛪", "恋人たち": "💑", "戦車": "🏎️", "力": "🦁", "隠者": "🏮",
+  "運命の輪": "🎡", "正義": "⚖️", "吊るされた男": "🙃", "死神": "💀", "節制": "🍷",
+  "悪魔": "😈", "塔": "🏛️", "星": "⭐", "月": "🌕", "太陽": "☀️",
+  "審判": "📯", "世界": "🌍",
+};
+
 export function getTarotReading(question: string): FortuneResult {
   const seed = question.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
   const now = new Date();
   const dateSeed = now.getDate() + now.getMonth() * 31 + now.getFullYear();
 
-  // 5枚スプレッド
+  // 5枚スプレッド（実際のタロットと同じく、引いたカードは戻さず重複なしで選ぶ）
+  const usedIdx = new Set<number>();
   const cards = SPREAD_NAMES.map((_, i) => {
-    const idx = (seed + dateSeed + i * 17 + Math.floor(Math.random() * 3)) % MAJOR_ARCANA.length;
+    let idx = (seed + dateSeed + i * 17 + Math.floor(Math.random() * 3)) % MAJOR_ARCANA.length;
+    while (usedIdx.has(idx)) idx = (idx + 1) % MAJOR_ARCANA.length;
+    usedIdx.add(idx);
     const isReversed = (seed + dateSeed + i) % 4 === 0;
     return { card: MAJOR_ARCANA[idx], isReversed, position: SPREAD_NAMES[i] };
   });
@@ -391,6 +403,9 @@ export function getTarotReading(question: string): FortuneResult {
     title: `5枚スプレッド — ${mainCard.name}${main.isReversed ? "（逆）" : ""}が中心`,
     summary: `「${question}」への答えを5枚のカードが示します`,
     details,
+    drawnCards: cards.map(({ card, isReversed, position }) => ({
+      position, name: card.name, symbol: TAROT_EMOJI[card.name] || "🃏", reversed: isReversed,
+    })),
     lucky: mainCard.lucky,
     advice: `${advice.card.name}がアドバイスを示しています ── ${advice.isReversed ? advice.card.reversed : advice.card.upright}。${mainCard.advice}`,
   };

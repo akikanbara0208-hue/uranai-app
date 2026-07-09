@@ -17,12 +17,20 @@ export const FORTUNES: Fortune[] = [
   // ══ 星と天体 ══
   { id: "astrology",   name: "西洋占星術",        nameEn: "Western Astrology",description: "生まれた日の星の配置があなたの性格と運命を示します",            origin: "バビロニア・ギリシャ", icon: "♈", category: "astrology",     inputType: "birthday_time"},
   { id: "birth-day",   name: "誕生曜日占い",      nameEn: "Birth Weekday",   description: "生まれた曜日の支配惑星があなたの本質的なエネルギーを示します",   origin: "西洋占星術",           icon: "📆", category: "astrology",     inputType: "birthday"     },
+  { id: "transit",     name: "今日の運勢（占星術）",nameEn: "Daily Transit",  description: "今日の天体の位置とあなたの出生の星を実計算し、今日一日の運勢を読みます",   origin: "西洋占星術",           icon: "🔭", category: "astrology",     inputType: "birthday"     },
+  { id: "compatibility",name: "相性占い",         nameEn: "Synastry",        description: "二人の出生図の太陽・月・金星・火星を実際に計算し、星のエレメントから相性を読み解きます", origin: "西洋占星術", icon: "💞", category: "astrology",     inputType: "two_birthday" },
+  { id: "eto-compat",  name: "干支相性占い",      nameEn: "Zodiac Compatibility", description: "二人の生まれ年の十二支を、三合・六合・冲という伝統理論で相性判定します", origin: "中国", icon: "🐲", category: "eastern",       inputType: "two_birthday" },
+  { id: "numerology-compat", name: "数秘術相性占い", nameEn: "Numerology Compatibility", description: "二人のライフパス数から相性とつき合い方の鍵を読み解きます", origin: "ピタゴラス数秘術", icon: "💑", category: "numbers",       inputType: "two_birthday" },
+  { id: "kyusei-compat", name: "九星気学相性占い", nameEn: "Nine Star Compatibility", description: "二人の本命星を実算出し、五行の相生・相剋で相性を判定します", origin: "中国・日本", icon: "🌗", category: "eastern",       inputType: "two_birthday" },
+  { id: "cartomancy",  name: "トランプ占い",      nameEn: "Cartomancy",      description: "52枚のトランプの伝統的な意味で、あなたの問いを占います。引くたびに結果が変わります", origin: "ヨーロッパ", icon: "🂡", category: "cards",         inputType: "question"     },
   // ══ 自然と身体 ══
   { id: "blood-type",  name: "血液型占い",        nameEn: "Blood Type",      description: "血液型から性格・相性・今日の運勢を読み解きます",                 origin: "日本",                 icon: "🩸", category: "nature",        inputType: "blood_type"   },
   { id: "dream",       name: "夢占い",            nameEn: "Dream Interpretation", description: "夢に現れたシンボルからあなたの深層心理を探ります",          origin: "世界共通",             icon: "💭", category: "nature",        inputType: "keyword"      },
   { id: "birthstone",  name: "誕生石占い",        nameEn: "Birthstone",      description: "誕生月の石が持つ力があなたへのメッセージを示します",             origin: "世界共通",             icon: "💎", category: "nature",        inputType: "birthday"     },
   { id: "birth-flower",name: "誕生花占い",        nameEn: "Birth Flower",    description: "誕生月の花が語る花言葉があなたの魂の本質と人生テーマを示します", origin: "世界共通",             icon: "🌸", category: "nature",        inputType: "birthday"     },
   { id: "moon-phase",  name: "ムーン占い",        nameEn: "Moon Phase",      description: "あなたが生まれた日の月相が示す魂の本質的なリズムと特性",         origin: "世界共通",             icon: "🌕", category: "nature",        inputType: "birthday"     },
+  { id: "shichijuniko",name: "七十二候占い",      nameEn: "72 Microseasons", description: "一年を72に分けた微小季節。生まれた日の太陽の位置から本命の候を実算出します", origin: "中国・日本",         icon: "🍃", category: "nature",        inputType: "birthday"     },
+  { id: "power-stone", name: "パワーストーン占い",  nameEn: "Power Stone",     description: "生まれた日の太陽星座に対応する守護のパワーストーンとその力を導きます", origin: "西洋・鉱物伝承",       icon: "💎", category: "nature",        inputType: "birthday"     },
   // ══ 東洋の叡智 ══
   { id: "shichu-suimei",name:"四柱推命",          nameEn: "Bazi (Four Pillars)",description:"生年月日時から四本の柱を立て、運命の流れを読みます",           origin: "中国",                 icon: "🀄", category: "eastern",       inputType: "birthday_time"},
   { id: "kyusei-kigaku",name:"九星気学",          nameEn: "Nine Star Ki",    description: "生まれた年の星が示す今年の運気と方位を読みます",                 origin: "中国・日本",           icon: "⭐", category: "eastern",       inputType: "birthday"     },
@@ -30,14 +38,17 @@ export const FORTUNES: Fortune[] = [
   { id: "seimei-handan",name:"姓名判断",          nameEn: "Japanese Name Reading", description: "名前の画数の五格から運命・才能・人間関係を読み解きます",  origin: "中国・日本",           icon: "✍️", category: "eastern",       inputType: "name"         },
   { id: "eto",         name: "干支占い",          nameEn: "Chinese Zodiac",  description: "12の干支と五行が示す性格・運勢・人生のサイクルを解読します",     origin: "中国",                 icon: "🐉", category: "eastern",       inputType: "birthday"     },
   { id: "rokuyo",      name: "六曜占い",          nameEn: "Rokuyo",          description: "今日の六曜（大安・仏滅など）が示すエネルギーと行動の指針",       origin: "中国・日本",           icon: "📅", category: "eastern",       inputType: "draw"         },
+  { id: "juni-choku",  name: "十二直占い",        nameEn: "Junichoku",       description: "暦注の十二直（建・除・満…）が示す今日の吉凶と行動の指針",         origin: "中国・日本",           icon: "🗓️", category: "eastern",       inputType: "draw"         },
   { id: "sanmeigaku",  name: "算命学",            nameEn: "Sanmeigaku",      description: "生年月日から10の主星を割り出す中国伝来の運命鑑定術",             origin: "中国",                 icon: "⚖️", category: "eastern",       inputType: "birthday"     },
   { id: "shibi",       name: "紫微斗数",          nameEn: "Zi Wei Dou Shu", description: "紫微星を中心とした12宮の星配置で人生の全体像を鑑定します",       origin: "中国",                 icon: "🌟", category: "eastern",       inputType: "birthday_time"},
+  { id: "sukuyo",      name: "宿曜占星術",        nameEn: "Sukuyo Astrology",description: "空海が伝えた仏教占星術。生まれた瞬間の月の位置から二十七宿の本命宿を実計算します", origin: "インド・中国・日本", icon: "🌙", category: "eastern",       inputType: "birthday_time"},
   // ══ 古代の叡智 ══
-  { id: "vedic",       name: "ヴェーダ占星術",    nameEn: "Jyotish",         description: "5000年の歴史を持つインドのナクシャトラで魂の使命を読みます",     origin: "インド",               icon: "🕉️", category: "ancient",       inputType: "birthday"     },
+  { id: "vedic",       name: "ヴェーダ占星術",    nameEn: "Jyotish",         description: "生まれた瞬間の月の位置からナクシャトラ・ダシャー（運気の季節）を実計算で読み解きます",     origin: "インド",               icon: "🕉️", category: "ancient",       inputType: "birthday_time"},
   { id: "maya",        name: "マヤ暦",            nameEn: "Maya Tzolkin",    description: "260日周期のツォルキン暦があなたの魂のエネルギーと使命を示します", origin: "メキシコ・マヤ文明",   icon: "🌞", category: "ancient",       inputType: "birthday"     },
   { id: "egypt",       name: "エジプト占星術",    nameEn: "Egyptian Astrology",description:"古代エジプトの神々が誕生日から守護神と本質を告げます",           origin: "古代エジプト",         icon: "🏺", category: "ancient",       inputType: "birthday"     },
   { id: "babylon",     name: "バビロニア占星術",  nameEn: "Babylonian Astrology",description:"人類最古の占星術。7つの惑星神が示す運命のエッセンス",         origin: "古代バビロニア",       icon: "🌙", category: "ancient",       inputType: "birthday"     },
   { id: "celtic-tree", name: "ケルト樹木占い",   nameEn: "Celtic Tree Oracle",description:"古代ケルトの神聖な樹木があなたの本質と人生の季節を告げます",     origin: "古代ケルト",           icon: "🌳", category: "ancient",       inputType: "birthday"     },
+  { id: "tibetan",     name: "チベット占星術",    nameEn: "Tibetan Astrology",description:"干支と五行の組み合わせ（元素-動物）であなたの本命サインを読み解きます",   origin: "チベット",             icon: "🏔️", category: "ancient",       inputType: "birthday"     },
   { id: "geomancy",    name: "ゲオマンシー",      nameEn: "Geomancy",        description: "中世に伝わる16の図形が問いへの答えを与えます",                   origin: "アラビア・中世ヨーロッパ",icon:"🔮",category: "ancient",       inputType: "question"     },
   // ══ スピリチュアル ══
   { id: "past-life",   name: "前世占い",          nameEn: "Past Life Reading",description:"魂の記憶が生年月日に刻んだ前世のテーマと今世への影響を読みます",  origin: "スピリチュアル",       icon: "👁️", category: "spiritual",     inputType: "birthday"     },
@@ -45,15 +56,13 @@ export const FORTUNES: Fortune[] = [
   { id: "chakra",      name: "チャクラ占い",      nameEn: "Chakra Reading",  description: "7つのチャクラの中で今最も活性化・浄化が必要なエネルギーを示します", origin: "インド・ヨガ",         icon: "⚡", category: "spiritual",     inputType: "question"     },
   { id: "akashic",     name: "アカシックレコード",nameEn: "Akashic Records", description: "宇宙の記録から魂の本質と今世のメッセージを読みます",             origin: "スピリチュアル",       icon: "🌌", category: "spiritual",     inputType: "question"     },
   { id: "spirit-animal",name:"スピリットアニマル",nameEn: "Spirit Animal",   description: "守護動物が今のあなたに必要な知恵とパワーを伝えます",             origin: "アメリカ先住民・シャーマニズム",icon:"🦅",category:"spiritual",inputType:"question"},
+  { id: "guardian-buddha",name:"十二支守り本尊",  nameEn: "Guardian Buddha", description: "生まれ年の干支ごとに定まる守り本尊（八体仏）とそのご利益を伝えます", origin: "日本・仏教", icon: "🪷", category: "spiritual",     inputType: "birthday"     },
   // ══ 性格診断 ══
-  { id: "mbti",        name: "16タイプ性格診断",  nameEn: "16 Type Personality", description: "4つの心理的選好から16タイプで性格と才能の本質を明らかにします", origin: "ユング心理学",          icon: "🧠", category: "personality",  inputType: "quiz"         },
   { id: "hsp",         name: "高感受性セルフチェック", nameEn: "High Sensitivity Check", description: "感受性の強さを測り、繊細さという才能との付き合い方を示します", origin: "感受性心理学",          icon: "💫", category: "personality",  inputType: "quiz"         },
-  { id: "enneagram",   name: "エニアグラム",      nameEn: "Enneagram",       description: "9つのタイプで核心的な動機と成長の道を深く理解する性格分類",       origin: "スーフィズム・現代心理学",icon:"⭕",category: "personality",  inputType: "quiz"         },
   { id: "big-five",    name: "ビッグファイブ",    nameEn: "Big Five (OCEAN)", description: "5つの性格因子で科学的にあなたのパーソナリティを分析します",      origin: "現代心理学",           icon: "📊", category: "personality",  inputType: "quiz"         },
   { id: "temperament",   name: "四気質診断",        nameEn: "Four Temperaments",   description: "ヒポクラテスが紀元前460年に提唱した多血質・胆汁質・粘液質・黒胆汁質で本質を読む", origin: "古代ギリシャ",     icon: "🜁", category: "personality",  inputType: "quiz"         },
   { id: "four-elements", name: "四元素タイプ診断",  nameEn: "Four Elements",       description: "紀元前450年エンペドクレス提唱。火・水・地・風の4元素があなたの本質を示します",  origin: "古代ギリシャ",     icon: "🔥", category: "personality",  inputType: "quiz"         },
   { id: "aura-color",    name: "オーラカラー診断",  nameEn: "Aura Color Reading",  description: "19世紀神智学が体系化した7色のオーラエネルギーから魂の状態と本質を読み解きます",  origin: "神智学（19世紀）", icon: "🌈", category: "spiritual",    inputType: "quiz"         },
-  { id: "jung-archetype",name: "ユング元型診断",    nameEn: "Jungian Archetypes",  description: "精神科医ユングが提唱した12の元型（アーキタイプ）であなたの魂の深層パターンを探ります", origin: "ユング心理学",    icon: "🧿", category: "personality",  inputType: "quiz"         },
   { id: "color-personality",name:"色彩性格診断",   nameEn: "Color Personality",   description: "好きな色はあなたの無意識と本質を映す鏡。色彩心理学であなたの性格を読み解きます",  origin: "色彩心理学",      icon: "🎨", category: "personality",  inputType: "quiz"         },
   // ══ バイオリズム・人相学 ══
   { id: "biorhythm",   name: "バイオリズム",    nameEn: "Biorhythm",          description: "生年月日から身体・感情・知性の3サイクルで今日の状態と明日の予報を示します",     origin: "生理学（1900年代）",   icon: "📊", category: "nature",        inputType: "birthday"     },
@@ -61,6 +70,7 @@ export const FORTUNES: Fortune[] = [
   // ══ 守護神 ══
   { id: "deity",         name: "守護神占い",        nameEn: "Guardian Deity",      description: "生年月日と価値観から日本・ギリシャ・北欧・エジプト・ヒンドゥー・ケルトの守護神を導きます", origin: "世界神話・数秘術",    icon: "⚡", category: "spiritual",    inputType: "quiz"         },
   // ══ 総合鑑定 ══
+  { id: "birth-code",  name: "誕生コード診断",    nameEn: "Birth Code",      description: "数秘・干支・月相・七十二候の実データを統合した、当アプリ独自のあなただけのコード", origin: "当アプリ独自（実データ統合）", icon: "🧬", category: "comprehensive", inputType: "birthday_name"},
   { id: "comprehensive",name:"総合鑑定",          nameEn: "Comprehensive Reading", description: "東洋・西洋・古代・スピリチュアルを横断した過去・現在・未来の総合分析", origin: "世界の叡智統合", icon: "🔯", category: "comprehensive", inputType: "birthday_name"},
 ];
 

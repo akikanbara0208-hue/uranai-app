@@ -296,10 +296,13 @@ export function getRuneReading(question: string): FortuneResult {
   const now = new Date();
   const dateSeed = now.getDate() + now.getMonth() * 31;
 
-  // 3つのルーンを引く（過去・現在・未来）
+  // 3つのルーンを引く（過去・現在・未来。実際のルーン占いと同じく引いた石は戻さない）
   const positions = ["過去（背景・原因）", "現在（状況）", "未来（可能性・アドバイス）"];
+  const usedIdx = new Set<number>();
   const runes = positions.map((_, i) => {
-    const idx = (seed + dateSeed + i * 7 + Math.floor(Math.random() * 3)) % RUNES.length;
+    let idx = (seed + dateSeed + i * 7 + Math.floor(Math.random() * 3)) % RUNES.length;
+    while (usedIdx.has(idx)) idx = (idx + 1) % RUNES.length;
+    usedIdx.add(idx);
     const isReversed = (seed + dateSeed + i * 3) % 5 === 0;
     return { rune: RUNES[idx], isReversed, position: positions[i] };
   });
@@ -317,14 +320,22 @@ export function getRuneReading(question: string): FortuneResult {
     { label: `❤️ 恋愛へのメッセージ（${r.name}）`, content: rev ? r.love_rev : r.love },
     { label: `💼 仕事へのメッセージ（${r.name}）`, content: rev ? r.work_rev : r.work },
     { label: `✨ スピリチュアルメッセージ`, content: r.spirit },
-    { label: `⚡ 元素とルーンの守護神`, content: `元素：${r.element} ／ 守護神：${r.deity}` },
+    { label: `⚡ 元素とルーンの守護神`, content: `元素：${r.element} ／ 守護神：${r.deity}。${r.name}は${r.deity}の加護を帯びたルーンであり、${r.element}のエネルギーがあなたの状況に流れ込んでいます。` },
+    { label: `🌗 過去から未来への流れ`, content: `${runes[0].rune.symbol} ${runes[0].rune.name}（過去）から、${runes[1].rune.symbol} ${runes[1].rune.name}（現在）を経て、${runes[2].rune.symbol} ${runes[2].rune.name}（未来）へと運命の糸が伸びています。背景にあった原因が今の状況を形づくり、その先に新たな可能性が開けています。流れ全体を俯瞰すると、いま進むべき方向が見えてきます。` },
+    rev
+      ? { label: `⚠️ 逆位置からの注意点`, content: `現在のルーンは逆位置で現れています。${r.reversed} この時期は焦りや無理を避け、内側を整えることが好転の鍵となります。立ち止まる時間も、次の一歩のための大切な準備です。` }
+      : { label: `🔮 正位置が示す追い風`, content: `現在のルーンは正位置で現れています。${r.upright} この追い風を信じ、素直に行動を起こすことで良い結果へつながりやすい時です。ためらいよりも一歩前へ。` },
+    { label: `🍀 開運のヒント`, content: `ラッキーアイテムは「${r.lucky.item}」、ラッキーカラーは「${r.lucky.color}」です。これらを身近に置くと、${r.name}のエネルギーと響き合いやすくなります。迷ったときはこのルーンの象徴を思い浮かべ、心を落ち着けてみてください。` },
   );
 
   return {
     title: `3ルーン・スプレッド ── ${r.symbol} ${r.name}が現在を示す`,
-    summary: `「${question}」への古代北欧の答え`,
+    summary: `「${question}」という問いに、古代北欧の知恵が3つのルーンで答えます。運命の中心に立つのは ${r.symbol} ${r.name}（${rev ? "逆位置" : "正位置"}）。${rev ? "いまは流れに逆らわず、静かに力を蓄える時かもしれません。" : "追い風が吹いています。自信を持って進むべき時です。"}`,
     details,
+    drawnCards: runes.map(({ rune, isReversed, position }) => ({
+      position, name: rune.name, symbol: rune.symbol, reversed: isReversed,
+    })),
     lucky: r.lucky,
-    advice: r.advice,
+    advice: `${r.advice} ルーンが映し出すのは、あくまで今この瞬間に流れるエネルギーです。最後に道を選ぶのはあなた自身。この導きを参考にしながら、自分の意志でしっかりと一歩を踏み出してください。`,
   };
 }

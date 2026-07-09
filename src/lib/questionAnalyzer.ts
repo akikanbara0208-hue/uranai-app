@@ -73,6 +73,80 @@ export function getThemeField(theme: QuestionTheme): keyof { love: string; love_
   return "spirit";
 }
 
+// ── 質問の「種類」判定（いつ／すべきか／どちら／どこ／なぜ） ──
+export type QuestionType = "timing" | "yesno" | "choice" | "where" | "why" | "general";
+
+export function detectQuestionType(question: string): QuestionType {
+  const q = question;
+  if (/(いつ|何時|何年|何月|何日|時期|タイミング|どのくらい|いつ頃|いつまで|何歳|まで に|までに)/.test(q)) return "timing";
+  if (/(どちら|どっち|選ぶ|選択|どれ)/.test(q)) return "choice";
+  if (/(どこ|何処|方角|方位|場所|どの方向|どの地|引っ越|移住)/.test(q)) return "where";
+  if (/(なぜ|何故|どうして|理由|わけ|原因)/.test(q)) return "why";
+  if (/(べき|した方|すべき|叶う|叶い|うまくい|成功|可能性|できる|大丈夫|受かる|合格|結ばれ|復縁|戻れ|戻る|勝て|平気|か[？?]?$)/.test(q)) return "yesno";
+  return "general";
+}
+
+// 質問の種類に応じた「直接の答え」を生成（seedで占いの結果に連動させ決定論的に）
+export function buildTypedAnswer(question: string, seed: number): { label: string; content: string } | null {
+  const type = detectQuestionType(question);
+  const pick = <T,>(arr: T[]): T => arr[Math.abs(seed) % arr.length];
+  if (type === "timing") {
+    return {
+      label: "⏳ 「いつ頃？」への答え",
+      content: pick([
+        "ごく近い未来──数週間のうちに動きが出てきそうです。",
+        "1〜3ヶ月以内が最初の節目になります。",
+        "半年以内、季節の変わり目の頃に転機が訪れます。",
+        "今年のうちに形が見え始めるでしょう。",
+        "来年以降、じっくり時間をかけて整っていく事柄です。",
+        "今のところ時期は見通せません。状況が変わるまで大きな動きは少ないでしょう。",
+        "残念ながら、近いうちの実現は難しい配置です。焦らず別の備えを進めて。",
+      ]),
+    };
+  }
+  if (type === "yesno") {
+    return {
+      label: "🔮 「どうなる？／すべき？」への答え",
+      content: pick([
+        "はい。流れはあなたの味方です（YES）。今の方向で進んで大丈夫。",
+        "条件つきでYES。あと一歩の準備が整えば叶います。",
+        "五分五分です。あなたの選び方しだいで結果は変わります。",
+        "今はまだその時ではありません（保留）。整えながら待つとき。",
+        "いいえ、難しいでしょう（NO）。別の道のほうが良い結果になりそうです。",
+        "残念ながら今の状況では望み薄です（NO）。執着を手放すと新しい縁が訪れます。",
+      ]),
+    };
+  }
+  if (type === "choice") {
+    return {
+      label: "⚖️ 「どちら？」への答え",
+      content: pick([
+        "先に挙げた方（前者）に追い風があります。",
+        "後に挙げた方（後者）のほうが良い結果につながります。",
+        "どちらも吉。最後はあなたの心が惹かれる方を選んで。",
+      ]),
+    };
+  }
+  if (type === "where") {
+    return {
+      label: "🧭 「どこ？」への答え",
+      content: `鍵となるのは「${pick(["東", "西", "南", "北", "南東", "南西", "北東", "北西"])}」の方角・方向です。その向きを意識すると道が開けます。`,
+    };
+  }
+  if (type === "why") {
+    return {
+      label: "💡 「なぜ？」への答え",
+      content: pick([
+        "原因は外より内側──あなた自身の気持ちの整理が鍵です。",
+        "周囲との小さな行き違い・伝え方に理由がありそうです。",
+        "タイミングの問題で、あなたのせいではありません。",
+        "過去からの流れが今に影響しています。手放すと好転します。",
+      ]),
+    };
+  }
+  return null;
+}
+
 // 質問への直接回答を先頭に追加するヘルパー
 export function buildQuestionAnswer(
   question: string,

@@ -1,5 +1,34 @@
 import { FortuneResult } from "@/lib/types";
 
+// ── 出生地（都道府県庁所在地の緯度・東経）──
+export const PREFECTURES: { name: string; lat: number; lon: number }[] = [
+  { name: "北海道", lat: 43.06, lon: 141.35 }, { name: "青森県", lat: 40.82, lon: 140.74 },
+  { name: "岩手県", lat: 39.70, lon: 141.15 }, { name: "宮城県", lat: 38.27, lon: 140.87 },
+  { name: "秋田県", lat: 39.72, lon: 140.10 }, { name: "山形県", lat: 38.24, lon: 140.36 },
+  { name: "福島県", lat: 37.75, lon: 140.47 }, { name: "茨城県", lat: 36.34, lon: 140.45 },
+  { name: "栃木県", lat: 36.57, lon: 139.88 }, { name: "群馬県", lat: 36.39, lon: 139.06 },
+  { name: "埼玉県", lat: 35.86, lon: 139.65 }, { name: "千葉県", lat: 35.61, lon: 140.12 },
+  { name: "東京都", lat: 35.69, lon: 139.69 }, { name: "神奈川県", lat: 35.45, lon: 139.64 },
+  { name: "新潟県", lat: 37.90, lon: 139.02 }, { name: "富山県", lat: 36.70, lon: 137.21 },
+  { name: "石川県", lat: 36.59, lon: 136.63 }, { name: "福井県", lat: 36.07, lon: 136.22 },
+  { name: "山梨県", lat: 35.66, lon: 138.57 }, { name: "長野県", lat: 36.65, lon: 138.18 },
+  { name: "岐阜県", lat: 35.39, lon: 136.72 }, { name: "静岡県", lat: 34.98, lon: 138.38 },
+  { name: "愛知県", lat: 35.18, lon: 136.91 }, { name: "三重県", lat: 34.73, lon: 136.51 },
+  { name: "滋賀県", lat: 35.00, lon: 135.87 }, { name: "京都府", lat: 35.02, lon: 135.76 },
+  { name: "大阪府", lat: 34.69, lon: 135.52 }, { name: "兵庫県", lat: 34.69, lon: 135.18 },
+  { name: "奈良県", lat: 34.69, lon: 135.83 }, { name: "和歌山県", lat: 34.23, lon: 135.17 },
+  { name: "鳥取県", lat: 35.50, lon: 134.24 }, { name: "島根県", lat: 35.47, lon: 133.05 },
+  { name: "岡山県", lat: 34.66, lon: 133.93 }, { name: "広島県", lat: 34.40, lon: 132.46 },
+  { name: "山口県", lat: 34.19, lon: 131.47 }, { name: "徳島県", lat: 34.07, lon: 134.56 },
+  { name: "香川県", lat: 34.34, lon: 134.04 }, { name: "愛媛県", lat: 33.84, lon: 132.77 },
+  { name: "高知県", lat: 33.56, lon: 133.53 }, { name: "福岡県", lat: 33.61, lon: 130.42 },
+  { name: "佐賀県", lat: 33.25, lon: 130.30 }, { name: "長崎県", lat: 32.74, lon: 129.87 },
+  { name: "熊本県", lat: 32.79, lon: 130.74 }, { name: "大分県", lat: 33.24, lon: 131.61 },
+  { name: "宮崎県", lat: 31.91, lon: 131.42 }, { name: "鹿児島県", lat: 31.56, lon: 130.56 },
+  { name: "沖縄県", lat: 26.21, lon: 127.68 },
+];
+const TOKYO = { lat: 35.69, lon: 139.69 };
+
 // ── 黄道十二宮 ──────────────────────────────────────────
 const SIGNS = [
   {
@@ -14,6 +43,7 @@ const SIGNS = [
     mars: "本来の支配星。エネルギーが最大限に発揮される。競争心旺盛",
     jupiter: "新しいことへの挑戦で幸運が開ける。スポーツ・起業に吉",
     saturn: "衝動を抑えること、計画性を身につけることが人生の課題",
+    mc: "自らが先陣を切って道を切り開くキャリアで社会的評価を得る。開拓者・起業家・スポーツなど、スピードと勇気が武器になる立場が天職",
   },
   {
     name: "牡牛座", nameEn: "Taurus", symbol: "♉", element: "地", quality: "不動",
@@ -27,6 +57,7 @@ const SIGNS = [
     mars: "粘り強く行動するが、スタートが遅い。一度動き出すと止まらない",
     jupiter: "財運と美に関することで幸運。芸術・食・不動産が吉",
     saturn: "頑固さを手放し変化に適応することが人生の課題",
+    mc: "着実に積み上げた実績と美的センスで社会的信用を築く。金融・美容・食・不動産など、価値あるものを扱う堅実な立場で評価される",
   },
   {
     name: "双子座", nameEn: "Gemini", symbol: "♊", element: "風", quality: "柔軟",
@@ -40,6 +71,7 @@ const SIGNS = [
     mars: "アイデアで動く。エネルギーが分散しがちだが同時並行が得意",
     jupiter: "学習・旅行・執筆・メディアで幸運が開ける",
     saturn: "一つのことを深め継続することが人生の課題",
+    mc: "情報と言葉を操る仕事で社会的な役割を果たす。メディア・教育・営業など、伝える力と多才さが評価されるキャリアが向く",
   },
   {
     name: "蟹座", nameEn: "Cancer", symbol: "♋", element: "水", quality: "活動",
@@ -53,6 +85,7 @@ const SIGNS = [
     mars: "感情が行動のエンジン。守るためなら強いエネルギーを発揮",
     jupiter: "家族・不動産・食に関することで幸運。母国への帰属が吉",
     saturn: "過去の手放しと感情的な自立が人生の課題",
+    mc: "人を守り育てる働きで社会的な信頼を得る。教育・福祉・飲食・不動産など、家庭的な安心感を提供する立場が天職",
   },
   {
     name: "獅子座", nameEn: "Leo", symbol: "♌", element: "火", quality: "不動",
@@ -66,6 +99,7 @@ const SIGNS = [
     mars: "大きな目標に向かって燃える。競争で本領を発揮",
     jupiter: "創造的な表現・芸能・子どもに関することで幸運",
     saturn: "傲慢さを手放し、心から人を認めることが人生の課題",
+    mc: "表舞台で自分を表現することで社会的地位を築く。経営者・芸能・クリエイティブなど、輝きと存在感が評価されるキャリアが向く",
   },
   {
     name: "乙女座", nameEn: "Virgo", symbol: "♍", element: "地", quality: "柔軟",
@@ -79,6 +113,7 @@ const SIGNS = [
     mars: "完璧な準備をしてから行動する。細かい作業への集中力が高い",
     jupiter: "医療・健康・分析・農業に関することで幸運",
     saturn: "自己批判を手放し、不完全な自分を受け入れることが人生の課題",
+    mc: "緻密な分析と奉仕の姿勢で社会的信頼を積み上げる。医療・品質管理・秘書・研究など、正確さと誠実さが評価される立場が天職",
   },
   {
     name: "天秤座", nameEn: "Libra", symbol: "♎", element: "風", quality: "活動",
@@ -92,6 +127,7 @@ const SIGNS = [
     mars: "穏やかに行動するが、不公正には毅然と立ち向かう",
     jupiter: "対人関係・法律・芸術・パートナーシップで幸運",
     saturn: "他者に依存せず自分の意見を持つことが人生の課題",
+    mc: "調和とバランス感覚を活かして社会的地位を築く。法律・外交・デザイン・接客など、公正さと美意識が評価されるキャリアが向く",
   },
   {
     name: "蠍座", nameEn: "Scorpio", symbol: "♏", element: "水", quality: "不動",
@@ -105,6 +141,7 @@ const SIGNS = [
     mars: "本来の支配星（古典）。情熱的で持続的なエネルギー。執念が強い",
     jupiter: "変容・心理・遺産・秘密事に関することで幸運",
     saturn: "コントロール欲を手放し信頼することが人生の課題",
+    mc: "深い集中力と洞察力で社会的な信頼と影響力を築く。研究・心理・投資・医療など、本質を見抜く力が評価される立場が天職",
   },
   {
     name: "射手座", nameEn: "Sagittarius", symbol: "♐", element: "火", quality: "柔軟",
@@ -118,6 +155,7 @@ const SIGNS = [
     mars: "理想と信念のために戦う。長距離のエネルギーを持つ",
     jupiter: "本来の支配星。旅・教育・宗教・海外・出版で幸運が最大化",
     saturn: "一つの場所と関係に根を張ることが人生の課題",
+    mc: "広い視野と学びへの情熱で社会的な地位を築く。教育・出版・海外事業・旅行など、自由と拡大が評価されるキャリアが向く",
   },
   {
     name: "山羊座", nameEn: "Capricorn", symbol: "♑", element: "地", quality: "活動",
@@ -131,6 +169,7 @@ const SIGNS = [
     mars: "粘り強く着実に行動。ゆっくりだが確実に目標を達成",
     jupiter: "キャリア・社会的地位・組織・伝統に関することで幸運",
     saturn: "本来の支配星。完璧を追い求めすぎず休むことが人生の課題",
+    mc: "本来の支配星座。責任と忍耐で長期的な社会的地位を築き上げる、組織のトップやマネジメントに最適な、キャリア形成そのものを象徴する配置",
   },
   {
     name: "水瓶座", nameEn: "Aquarius", symbol: "♒", element: "風", quality: "不動",
@@ -144,6 +183,7 @@ const SIGNS = [
     mars: "集団のため・理想のために行動する。反骨心が原動力になる",
     jupiter: "友人・グループ・テクノロジー・社会変革に関することで幸運",
     saturn: "感情的なつながりを深め孤立を避けることが人生の課題",
+    mc: "独自の発想と革新性で社会的な役割を果たす。IT・社会運動・研究・グループ活動など、未来志向のビジョンが評価されるキャリアが向く",
   },
   {
     name: "魚座", nameEn: "Pisces", symbol: "♓", element: "水", quality: "柔軟",
@@ -157,11 +197,12 @@ const SIGNS = [
     mars: "霊感と直感で行動する。明確な目標より感じるままに動く",
     jupiter: "芸術・音楽・スピリチュアル・慈善活動で幸運が開ける",
     saturn: "現実的な境界線を持ち、自分を守ることが人生の課題",
+    mc: "共感力と創造性を活かして社会的な信頼を築く。芸術・医療・スピリチュアル・福祉など、慈悲深さと感性が評価される立場が天職",
   },
 ];
 
 // ── 天体計算 ──────────────────────────────────────────────
-function julianDay(year: number, month: number, day: number): number {
+export function julianDay(year: number, month: number, day: number): number {
   const a = Math.floor((14 - month) / 12);
   const y = year + 4800 - a;
   const m = month + 12 * a - 3;
@@ -170,7 +211,7 @@ function julianDay(year: number, month: number, day: number): number {
 }
 
 // 太陽の真黄経（Jean Meeus式）— 楕円軌道補正込みで誤差±0.01°
-function getSunLongitude(jd: number): number {
+export function getSunLongitude(jd: number): number {
   const T = (jd - 2451545.0) / 36525.0;
   const L0 = 280.46646 + 36000.76983 * T;
   const M  = (357.52911 + 35999.05029 * T) * Math.PI / 180;
@@ -181,7 +222,7 @@ function getSunLongitude(jd: number): number {
 }
 
 // 月の黄経（主要摂動項込み）— 誤差±0.3°
-function getMoonLongitude(jd: number): number {
+export function getMoonLongitude(jd: number): number {
   const T  = (jd - 2451545.0) / 36525.0;
   const L  = 218.3164477 + 481267.88123421 * T;
   const M  = (357.5291092  + 35999.0502909 * T) * Math.PI / 180;
@@ -205,50 +246,101 @@ function getMoonLongitude(jd: number): number {
   return ((lon % 360) + 360) % 360;
 }
 
-// 外惑星は平均黄経で十分（移動が遅くサイン境界誤差が小さい）
-const PLANET_REFS: Record<string, { l0: number; motion: number }> = {
-  mercury: { l0: 252.251,  motion: 4.09233    },
-  venus:   { l0: 181.979,  motion: 1.60213    },
-  mars:    { l0: 355.433,  motion: 0.52403    },
-  jupiter: { l0:  34.396,  motion: 0.08309    },
-  saturn:  { l0:  49.944,  motion: 0.03346    },
+// ── 惑星の地心黄経（JPL近似ケプラー軌道要素・西暦1800〜2050で誤差1°未満）──
+// [a, ȧ, e, ė, I, İ, L, L̇, ϖ(近日点黄経), ϖ̇, Ω(昇交点黄経), Ω̇]　角度は度、時間はユリウス世紀
+const JPL: Record<string, number[]> = {
+  mercury: [0.38709927, 0.00000037, 0.20563593, 0.00001906, 7.00497902, -0.00594749, 252.25032350, 149472.67411175, 77.45779628, 0.16047689, 48.33076593, -0.12534081],
+  venus:   [0.72333566, 0.00000390, 0.00677672, -0.00004107, 3.39467605, -0.00078890, 181.97909950, 58517.81538729, 131.60246718, 0.00268329, 76.67984255, -0.27769418],
+  earth:   [1.00000261, 0.00000562, 0.01671123, -0.00004392, -0.00001531, -0.01294668, 100.46457166, 35999.37244981, 102.93768193, 0.32327364, 0.0, 0.0],
+  mars:    [1.52371034, 0.00001847, 0.09339410, 0.00007882, 1.84969142, -0.00813131, -4.55343205, 19140.30268499, -23.94362959, 0.44441088, 49.55953891, -0.29257343],
+  jupiter: [5.20288700, -0.00011607, 0.04838624, -0.00013253, 1.30439695, -0.00183714, 34.39644051, 3034.74612775, 14.72847983, 0.21252668, 100.47390909, 0.20469106],
+  saturn:  [9.53667594, -0.00125060, 0.05386179, -0.00050991, 2.48599187, 0.00193609, 49.95424423, 1222.49362201, 92.59887831, -0.41897216, 113.66242448, -0.28867794],
+  uranus:  [19.18916464, -0.00196176, 0.04725744, -0.00004397, 0.77263783, -0.00242939, 313.23810451, 428.48202785, 170.95427630, 0.40805281, 74.01692503, 0.04240589],
+  neptune: [30.06992276, 0.00026291, 0.00859048, 0.00005105, 1.77004347, 0.00035372, -55.12002969, 218.45945325, 44.96476227, -0.32241464, 131.78422574, -0.00508664],
+  pluto:   [39.48211675, -0.00031596, 0.24882730, 0.00005170, 17.14001206, 0.00004818, 238.92903833, 145.20780515, 224.06891629, -0.04062942, 110.30393684, -0.01183482],
 };
+
+const D2R = Math.PI / 180;
+
+// ある軌道要素セットの日心黄道直交座標（au）を返す
+function heliocentric(el: number[], T: number): { x: number; y: number } {
+  const a = el[0] + el[1] * T;
+  const e = el[2] + el[3] * T;
+  const I = (el[4] + el[5] * T) * D2R;
+  const L = el[6] + el[7] * T;
+  const peri = el[8] + el[9] * T;
+  const node = el[10] + el[11] * T;
+  const omega = (peri - node) * D2R; // 近点引数
+  const Omega = node * D2R;
+  let M = (((L - peri) % 360) + 540) % 360 - 180; // 平均近点角 -180..180
+  M *= D2R;
+  // ケプラー方程式を反復で解く
+  let E = M + e * Math.sin(M);
+  for (let i = 0; i < 10; i++) {
+    const dE = (E - e * Math.sin(E) - M) / (1 - e * Math.cos(E));
+    E -= dE;
+    if (Math.abs(dE) < 1e-9) break;
+  }
+  const xp = a * (Math.cos(E) - e);
+  const yp = a * Math.sqrt(1 - e * e) * Math.sin(E);
+  const cO = Math.cos(Omega), sO = Math.sin(Omega);
+  const cw = Math.cos(omega), sw = Math.sin(omega);
+  const cI = Math.cos(I), sI = Math.sin(I);
+  return {
+    x: (cw * cO - sw * sO * cI) * xp + (-sw * cO - cw * sO * cI) * yp,
+    y: (cw * sO + sw * cO * cI) * xp + (-sw * sO + cw * cO * cI) * yp,
+  };
+}
+
+// 惑星の地心黄経（度・0〜360）
+export function getPlanetLongitude(jd: number, planet: string): number {
+  const T = (jd - 2451545.0) / 36525;
+  const p = heliocentric(JPL[planet], T);
+  const earth = heliocentric(JPL.earth, T);
+  const lon = Math.atan2(p.y - earth.y, p.x - earth.x) / D2R;
+  return ((lon % 360) + 360) % 360;
+}
 
 function getSignIndex(jd: number, planet: string): number {
   if (planet === "sun")  return Math.floor(getSunLongitude(jd) / 30);
   if (planet === "moon") return Math.floor(getMoonLongitude(jd) / 30);
-  const p = PLANET_REFS[planet];
-  const d = jd - 2451545.0;
-  const lon = ((p.l0 + p.motion * d) % 360 + 360) % 360;
-  return Math.floor(lon / 30);
+  return Math.floor(getPlanetLongitude(jd, planet) / 30);
 }
 
-// 上昇星座（アセンダント）簡易計算
-// lat: 北緯(度), birthHourJST: 出生時間(JST 0-23)
-function getAscendantIndex(jd: number, birthHourJST: number, lat: number = 35.68): number {
-  const d = jd - 2451545.0;
+// 地方恒星時（RAMC・度）。julianDayは正午基準JDNなので0.5引いて出生時刻を加える
+// lon: 東経(度)。日本標準時(JST=UT+9)で入力された時刻を、出生地の実経度で恒星時に変換する
+function localSiderealDeg(jd: number, birthHourJST: number, lon: number = TOKYO.lon): number {
   const utcHour = birthHourJST - 9;
-  const gmst = ((280.46061837 + 360.98564736629 * d + utcHour * 15) % 360 + 360) % 360;
-  const lst = (gmst + 135) % 360; // 東経135°（日本標準子午線）
+  const jdBirth = jd - 0.5 + utcHour / 24;
+  const dB = jdBirth - 2451545.0;
+  const gmst = ((280.46061837 + 360.98564736629 * dB) % 360 + 360) % 360;
+  return ((gmst + lon) % 360 + 360) % 360;
+}
 
-  const eps = 23.4393 * (Math.PI / 180);
-  const latRad = lat * (Math.PI / 180);
-  const ramcRad = lst * (Math.PI / 180);
-
+// 上昇点（アセンダント）の黄経（度）。lat: 北緯, lon: 東経, birthHourJST: 出生時間(JST)
+export function getAscendantLongitude(jd: number, birthHourJST: number, lat: number = TOKYO.lat, lon: number = TOKYO.lon): number {
+  const eps = 23.4393 * D2R;
+  const latRad = lat * D2R;
+  const ramcRad = localSiderealDeg(jd, birthHourJST, lon) * D2R;
   const y = -Math.cos(ramcRad);
   const x = Math.sin(ramcRad) * Math.cos(eps) + Math.tan(latRad) * Math.sin(eps);
-  let asc = Math.atan2(y, x) * (180 / Math.PI);
-  if (asc < 0) asc += 360;
-  return Math.floor(asc / 30);
+  // atan2の式は下降点(DSC)を与えるため+180°して上昇点(ASC)にする
+  let asc = Math.atan2(y, x) / D2R + 180;
+  return ((asc % 360) + 360) % 360;
 }
 
-// MC（中天）簡易計算
-function getMCIndex(jd: number, birthHourJST: number): number {
-  const d = jd - 2451545.0;
-  const utcHour = birthHourJST - 9;
-  const gmst = ((280.46061837 + 360.98564736629 * d + utcHour * 15) % 360 + 360) % 360;
-  const lst = (gmst + 135) % 360;
-  return Math.floor(lst / 30);
+// 上昇星座（アセンダント）。lat: 北緯, lon: 東経, birthHourJST: 出生時間(JST)
+function getAscendantIndex(jd: number, birthHourJST: number, lat: number = TOKYO.lat, lon: number = TOKYO.lon): number {
+  return Math.floor(getAscendantLongitude(jd, birthHourJST, lat, lon) / 30);
+}
+
+// MC（中天）。RAMCを黄経に変換して算出
+function getMCIndex(jd: number, birthHourJST: number, lon: number = TOKYO.lon): number {
+  const eps = 23.4393 * D2R;
+  const ramcRad = localSiderealDeg(jd, birthHourJST, lon) * D2R;
+  let mc = Math.atan2(Math.sin(ramcRad), Math.cos(ramcRad) * Math.cos(eps)) / D2R;
+  if (mc < 0) mc += 360;
+  return Math.floor(mc / 30);
 }
 
 // 今日の通過天体（簡易トランジット）
@@ -275,7 +367,31 @@ const YEARLY_THEMES: Record<string, string> = {
 };
 
 // ── メイン関数 ──────────────────────────────────────────
-export function getAstrologyReading(birthday: string, birthHour?: number): FortuneResult {
+// ── 2区分・3区分・4元素の説明 ──
+const ELEMENT_DESC: Record<string, string> = {
+  "火": "火（牡羊・獅子・射手）── 情熱・直感・行動の元素。エネルギッシュで自発的、思い立ったら動くタイプ",
+  "地": "地（牡牛・乙女・山羊）── 現実・安定・五感の元素。着実で実用的、目に見える成果を大切にするタイプ",
+  "風": "風（双子・天秤・水瓶）── 知性・伝達・社交の元素。思考と人とのつながりで動く、軽やかで客観的なタイプ",
+  "水": "水（蟹・蠍・魚）── 感情・共感・直感の元素。情緒が豊かで、深いつながりと心の機微を大切にするタイプ",
+};
+const QUALITY_DESC: Record<string, string> = {
+  "活動": "活動宮（牡羊・蟹・天秤・山羊）── 物事を始める力。開拓者・リーダー型で、自分から動いて状況を作る",
+  "不動": "不動宮（牡牛・獅子・蠍・水瓶）── 続ける・守る力。粘り強く一貫していて、決めたことを最後までやり抜く",
+  "柔軟": "柔軟宮（双子・乙女・射手・魚）── 適応・変化の力。柔軟で多才、状況に合わせて自在に形を変える",
+};
+function polarityOf(element: string): string {
+  return element === "火" || element === "風" ? "陽（能動）" : "陰（受容）";
+}
+const POLARITY_DESC: Record<string, string> = {
+  "陽（能動）": "陽（火・風）── 外向き・発信型。自分から働きかけ、表に出ていくことでエネルギーが湧く",
+  "陰（受容）": "陰（地・水）── 内向き・受容型。じっくり受け止め、内側で育てることで力を発揮する",
+};
+// 総合タイプ合成用の短い特徴
+const ELEMENT_TYPE: Record<string, string> = { "火": "情熱と行動で道を切り開き", "地": "現実的に着実に積み上げ", "風": "知性と人付き合いで軽やかに動き", "水": "感情と直感で深くつながり" };
+const QUALITY_TYPE: Record<string, string> = { "活動": "自分から動いて状況を起こし", "不動": "粘り強く一つのことをやり抜き", "柔軟": "状況に合わせて柔軟に立ち回り" };
+const POLARITY_TYPE: Record<string, string> = { "陽（能動）": "外へ発信していく能動型", "陰（受容）": "内で受け止めて育てる受容型" };
+
+export function getAstrologyReading(birthday: string, birthHour?: number, lat: number = TOKYO.lat, lon: number = TOKYO.lon): FortuneResult {
   const [yearStr, monthStr, dayStr] = birthday.split("-");
   const year = Number(yearStr);
   const month = Number(monthStr);
@@ -290,6 +406,9 @@ export function getAstrologyReading(birthday: string, birthHour?: number): Fortu
   const marsIdx = getSignIndex(jd, "mars");
   const jupiterIdx = getSignIndex(jd, "jupiter");
   const saturnIdx = getSignIndex(jd, "saturn");
+  const uranusIdx = getSignIndex(jd, "uranus");
+  const neptuneIdx = getSignIndex(jd, "neptune");
+  const plutoIdx = getSignIndex(jd, "pluto");
 
   const sunSign = SIGNS[sunIdx];
   const moonSign = SIGNS[moonIdx];
@@ -298,16 +417,54 @@ export function getAstrologyReading(birthday: string, birthHour?: number): Fortu
   const marsSign = SIGNS[marsIdx];
   const jupiterSign = SIGNS[jupiterIdx];
   const saturnSign = SIGNS[saturnIdx];
+  const uranusSign = SIGNS[uranusIdx];
+  const neptuneSign = SIGNS[neptuneIdx];
+  const plutoSign = SIGNS[plutoIdx];
 
   // 現在のトランジット
   const transitJupiterSign = SIGNS[getTransitSign("jupiter")];
   const yearlyTheme = YEARLY_THEMES[transitJupiterSign.name] || "";
 
   const hasTime = typeof birthHour === "number";
-  const ascIdx = hasTime ? getAscendantIndex(jd, birthHour!) : null;
-  const mcIdx = hasTime ? getMCIndex(jd, birthHour!) : null;
+  const ascIdx = hasTime ? getAscendantIndex(jd, birthHour!, lat, lon) : null;
+  const mcIdx = hasTime ? getMCIndex(jd, birthHour!, lon) : null;
   const ascSign = ascIdx !== null ? SIGNS[ascIdx] : null;
   const mcSign = mcIdx !== null ? SIGNS[mcIdx] : null;
+
+  // ── 全天体から総合分類（太陽・月・水星・金星・火星・木星・土星＋上昇）──
+  const chartBodies = [sunSign, moonSign, mercurySign, venusSign, marsSign, jupiterSign, saturnSign, ...(ascSign ? [ascSign] : [])];
+  const tally = (key: "element" | "quality", order: string[]) => {
+    const c: Record<string, number> = {};
+    order.forEach((k) => (c[k] = 0));
+    chartBodies.forEach((s) => { c[(s as Record<string, string>)[key]]++; });
+    return c;
+  };
+  const elemOrder = ["火", "地", "風", "水"];
+  const qualOrder = ["活動", "不動", "柔軟"];
+  const elemCount = tally("element", elemOrder);
+  const qualCount = tally("quality", qualOrder);
+  const polCount: Record<string, number> = { "陽（能動）": 0, "陰（受容）": 0 };
+  chartBodies.forEach((s) => { polCount[polarityOf(s.element)]++; });
+
+  const top = (count: Record<string, number>, order: string[]) => {
+    const mx = Math.max(...order.map((k) => count[k]));
+    return order.filter((k) => count[k] === mx);
+  };
+  const domElem = top(elemCount, elemOrder)[0];
+  const domQual = top(qualCount, qualOrder)[0];
+  const domPol = top(polCount, ["陽（能動）", "陰（受容）"])[0];
+  const missing = elemOrder.filter((e) => elemCount[e] === 0);
+
+  const elemLine = elemOrder.map((e) => `${e}${elemCount[e]}`).join("　");
+  const qualLine = qualOrder.map((q) => `${q}${qualCount[q]}`).join("　");
+  const polLine = `陽${polCount["陽（能動）"]}　陰${polCount["陰（受容）"]}`;
+
+  const overallType =
+    `${chartBodies.length}天体（太陽・月・水星・金星・火星・木星・土星${ascSign ? "・上昇" : ""}）の傾向：\n` +
+    `元素　${elemLine}\n3区分　${qualLine}\n2区分　${polLine}\n\n` +
+    `► あなたは【${domElem}優位 × ${domQual}宮寄り × ${domPol === "陽（能動）" ? "陽・能動" : "陰・受容"}】タイプ。\n` +
+    `${ELEMENT_TYPE[domElem]}、${QUALITY_TYPE[domQual]}、${POLARITY_TYPE[domPol]}——そんな人です。` +
+    (missing.length ? `\n\n※「${missing.join("・")}」の天体は無し。その質は意識して補うと吉。` : "");
 
   const details = [
     {
@@ -322,7 +479,7 @@ export function getAstrologyReading(birthday: string, birthHour?: number): Fortu
       ? [{ label: "⬆️ 上昇星座・アセンダント（第一印象・外的人格）", content: `${ascSign.symbol} ${ascSign.name} ── ${ascSign.rising}` }]
       : [{ label: "⬆️ 上昇星座", content: "生まれた時間を入力するとアセンダントを算出できます" }]),
     ...(mcSign
-      ? [{ label: "🏆 MC・中天（社会的使命・キャリア）", content: `${mcSign.symbol} ${mcSign.name} ── ${mcSign.jupiter}` }]
+      ? [{ label: "🏆 MC・中天（社会的使命・キャリア）", content: `${mcSign.symbol} ${mcSign.name} ── ${mcSign.mc}` }]
       : []),
     {
       label: "☿ 水星星座（思考・コミュニケーション）",
@@ -343,6 +500,26 @@ export function getAstrologyReading(birthday: string, birthHour?: number): Fortu
     {
       label: "♄ 土星星座（課題・カルマ・成長）",
       content: `${saturnSign.symbol} ${saturnSign.name} ── ${saturnSign.saturn}`,
+    },
+    {
+      label: "♅ 天王星星座（変革・個性・世代）",
+      content: `${uranusSign.symbol} ${uranusSign.name} ── 「${uranusSign.keyword}」の革新を、同世代と共有するテーマとして持つ`,
+    },
+    {
+      label: "♆ 海王星星座（夢・感性・世代）",
+      content: `${neptuneSign.symbol} ${neptuneSign.name} ── 「${neptuneSign.keyword}」に理想や夢を重ねる感性を、世代として帯びる`,
+    },
+    {
+      label: "♇ 冥王星星座（変容・深層・世代）",
+      content: `${plutoSign.symbol} ${plutoSign.name} ── 「${plutoSign.keyword}」の領域で深い変容と再生を促す、世代的な力`,
+    },
+    {
+      label: "🔮 総合タイプ（全天体から見たあなた）",
+      content: overallType,
+    },
+    {
+      label: "📖 各分類の意味",
+      content: `${ELEMENT_DESC[domElem]}\n${QUALITY_DESC[domQual]}\n${POLARITY_DESC[domPol]}`,
     },
     {
       label: "📅 今年の木星テーマ",

@@ -117,6 +117,7 @@ export function getOmikujiReading(): FortuneResult {
       { label: "⌛ 待ち人", content: selected.waiting },
       { label: "🔍 失せもの", content: selected.lost },
     ],
+    drawnCards: [{ name: selected.rank }],
     lucky: selected.lucky,
     advice: selected.advice,
   };
