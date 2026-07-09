@@ -465,10 +465,16 @@ function InputForm({
   const nameHistory = [...new Set(profiles.map((p) => p.name).filter(Boolean))] as string[];
   const timeHistory = [...new Set(profiles.map((p) => p.birthTime).filter(Boolean))] as string[];
 
-  // 「1990/01/15」「1990.1.15」なども受け付け、内部的には "YYYY-MM-DD" に統一する
+  // 「1990/01/15」「1990.1.15」「19900115」なども受け付け、内部的には "YYYY-MM-DD" に統一する
   const normalizeDate = (v?: string): string | null => {
     if (!v) return null;
-    const m = v.trim().replace(/[./]/g, "-").match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+    const trimmed = v.trim();
+    const digitsOnly = trimmed.match(/^(\d{4})(\d{2})(\d{2})$/);
+    if (digitsOnly) {
+      const [, y, mo, d] = digitsOnly;
+      return `${y}-${mo}-${d}`;
+    }
+    const m = trimmed.replace(/[./]/g, "-").match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
     if (!m) return null;
     const [, y, mo, d] = m;
     return `${y}-${mo.padStart(2, "0")}-${d.padStart(2, "0")}`;
