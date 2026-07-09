@@ -5,8 +5,12 @@ import { DrawnCard } from "@/lib/types";
 
 const DICE_FACES = ["⚀", "⚁", "⚂", "⚃", "⚄", "⚅"];
 
+// トランプのハート・ダイヤは伝統的に赤で表示する
+const RED_SUITS = ["♥", "♦"];
+
 function SingleCard({ card, index }: { card: DrawnCard; index: number }) {
   const [flipped, setFlipped] = useState(false);
+  const isRedSuit = card.symbol ? RED_SUITS.includes(card.symbol) : false;
 
   useEffect(() => {
     const t = setTimeout(() => setFlipped(true), 250 + index * 350);
@@ -23,8 +27,8 @@ function SingleCard({ card, index }: { card: DrawnCard; index: number }) {
           <span style={{ fontSize: "1.8rem" }}>✦</span>
         </div>
         <div className={`card-face card-face-front ${card.reversed ? "is-reversed" : ""}`}>
-          <span className="card-symbol">{card.symbol || "🃏"}</span>
-          <span className="card-name">{card.name}</span>
+          <span className="card-symbol" style={isRedSuit ? { color: "#c0392b" } : undefined}>{card.symbol || "🃏"}</span>
+          <span className="card-name" style={isRedSuit ? { color: "#c0392b" } : undefined}>{card.name}</span>
           {card.reversed && <span className="card-reversed-badge">逆位置</span>}
         </div>
       </div>
