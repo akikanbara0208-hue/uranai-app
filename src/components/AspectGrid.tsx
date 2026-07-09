@@ -26,16 +26,6 @@ export function AspectGrid({ data }: { data: ChartWheelData }) {
     <div>
       <div style={{ overflowX: "auto" }}>
         <table style={{ borderCollapse: "collapse", margin: "0 auto", fontSize: "0.85rem" }}>
-          <thead>
-            <tr>
-              <th></th>
-              {colPlanets.map((p) => (
-                <th key={p.key} style={{ padding: "4px 6px", color: "#e8c874" }}>
-                  <span title={p.label}>{p.symbol}</span>
-                </th>
-              ))}
-            </tr>
-          </thead>
           <tbody>
             {rowPlanets.map((rowPlanet, i) => {
               const rowIdx = i + 1;
