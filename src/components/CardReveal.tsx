@@ -23,7 +23,7 @@ function SingleCard({ card, index }: { card: DrawnCard; index: number }) {
           <span style={{ fontSize: "1.8rem" }}>✦</span>
         </div>
         <div className={`card-face card-face-front ${card.reversed ? "is-reversed" : ""}`}>
-          <span className="card-symbol">{card.symbol || "🎴"}</span>
+          <span className="card-symbol">{card.symbol || "🃏"}</span>
           <span className="card-name">{card.name}</span>
           {card.reversed && <span className="card-reversed-badge">逆位置</span>}
         </div>
