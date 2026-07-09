@@ -1,5 +1,9 @@
 import { FortuneResult } from "@/lib/types";
 
+const RANK_SYMBOL: Record<string, string> = {
+  "大吉": "🌟", "中吉": "✨", "小吉": "🍀", "吉": "🌱", "末吉": "🌤️", "凶": "⛈️",
+};
+
 const RESULTS = [
   {
     rank: "大吉", rankEn: "Dai-kichi", probability: 10,
@@ -117,7 +121,7 @@ export function getOmikujiReading(): FortuneResult {
       { label: "⌛ 待ち人", content: selected.waiting },
       { label: "🔍 失せもの", content: selected.lost },
     ],
-    drawnCards: [{ name: selected.rank }],
+    drawnCards: [{ name: selected.rank, symbol: RANK_SYMBOL[selected.rank] }],
     lucky: selected.lucky,
     advice: selected.advice,
   };
