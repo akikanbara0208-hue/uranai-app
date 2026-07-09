@@ -439,8 +439,9 @@ const ASPECTS = [
 ];
 
 interface PlanetPos { key: string; longitude: number }
-function computeAspects(planets: PlanetPos[]): { label: string; content: string }[] {
-  const found: { label: string; content: string }[] = [];
+interface AspectResult { aKey: string; bKey: string; symbol: string; name: string; label: string; content: string }
+function computeAspects(planets: PlanetPos[]): AspectResult[] {
+  const found: AspectResult[] = [];
   for (let i = 0; i < planets.length; i++) {
     for (let j = i + 1; j < planets.length; j++) {
       const a = planets[i], b = planets[j];
@@ -450,6 +451,7 @@ function computeAspects(planets: PlanetPos[]): { label: string; content: string 
         const delta = Math.abs(sep - asp.angle);
         if (delta <= asp.orb) {
           found.push({
+            aKey: a.key, bKey: b.key, symbol: asp.symbol, name: asp.name,
             label: `${PLANET_GLYPH[a.key]}${PLANET_LABEL[a.key]} ${asp.symbol} ${PLANET_GLYPH[b.key]}${PLANET_LABEL[b.key]}（${asp.name}・誤差${delta.toFixed(1)}°）`,
             content: `${PLANET_MEANING[a.key]}と${PLANET_MEANING[b.key]}が「${asp.nature}」の関係。${asp.desc}。`,
           });
@@ -663,6 +665,7 @@ export function getAstrologyReading(birthday: string, birthHour?: number, lat: n
     ],
     ascendant: ascLonExact !== null ? ascLonExact : undefined,
     mc: hasTime ? getMCLongitude(jd, birthHour!, lon) : undefined,
+    aspects: aspects.map((a) => ({ a: a.aKey, b: a.bKey, symbol: a.symbol, name: a.name })),
   };
 
   return {

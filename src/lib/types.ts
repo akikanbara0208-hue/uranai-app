@@ -45,10 +45,18 @@ export interface ChartWheelPlanet {
   symbol: string;      // 天体記号（☉ ☽ ☿ 等）
   longitude: number;   // 黄経（度・0〜360）
 }
+// 天体同士のアスペクト（相互作用）。アスペクト表（グリッド）の描画にも使う
+export interface ChartAspect {
+  a: string;      // 天体キー（例："sun"）
+  b: string;      // 天体キー（例："moon"）
+  symbol: string;  // ☌ ⚹ □ △ ☍
+  name: string;    // アスペクト名（例："トライン（120度）"）
+}
 export interface ChartWheelData {
   planets: ChartWheelPlanet[];
   ascendant?: number; // アセンダントの黄経（出生時刻がある場合のみ）
   mc?: number;        // MC（中天）の黄経（出生時刻がある場合のみ）
+  aspects?: ChartAspect[];
 }
 
 export interface FortuneResult {

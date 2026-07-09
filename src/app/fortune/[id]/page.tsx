@@ -102,6 +102,7 @@ import { GeomancyFigure } from "@/lib/types";
 import { detectTheme, getThemeLabel, buildTypedAnswer } from "@/lib/questionAnalyzer";
 import { CardRevealRow, DiceRollDisplay } from "@/components/CardReveal";
 import { HoroscopeWheel } from "@/components/HoroscopeWheel";
+import { AspectGrid } from "@/components/AspectGrid";
 
 // ──────────────────────────────────────────────────────────────
 const THEME_DETAIL_KEYWORDS: Record<string, string[]> = {
@@ -285,6 +286,16 @@ function ResultDisplay({ result, question, fortuneId }: { result: FortuneResult;
           <div>
             <p className="text-sm text-yellow-500/70 tracking-wider mb-3 text-center">✦ ホロスコープ円盤 ✦</p>
             <HoroscopeWheel data={result.chartWheel} />
+          </div>
+        </>
+      )}
+
+      {result.chartWheel && result.chartWheel.aspects && result.chartWheel.aspects.length > 0 && (
+        <>
+          <hr className="divider-gold" />
+          <div>
+            <p className="text-sm text-yellow-500/70 tracking-wider mb-3 text-center">✦ アスペクト表 ✦</p>
+            <AspectGrid data={result.chartWheel} />
           </div>
         </>
       )}
