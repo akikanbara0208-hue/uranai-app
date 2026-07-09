@@ -292,6 +292,7 @@ const RUNES = [
 ];
 
 export function getRuneReading(question: string): FortuneResult {
+  const q = question.split("|")[0]; // 表示用（呼び出し側が付けたタイムスタンプ部分は除く）
   const seed = question.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
   const now = new Date();
   const dateSeed = now.getDate() + now.getMonth() * 31;
@@ -330,7 +331,7 @@ export function getRuneReading(question: string): FortuneResult {
 
   return {
     title: `3ルーン・スプレッド ── ${r.symbol} ${r.name}が現在を示す`,
-    summary: `「${question}」という問いに、古代北欧の知恵が3つのルーンで答えます。運命の中心に立つのは ${r.symbol} ${r.name}（${rev ? "逆位置" : "正位置"}）。${rev ? "いまは流れに逆らわず、静かに力を蓄える時かもしれません。" : "追い風が吹いています。自信を持って進むべき時です。"}`,
+    summary: `「${q}」という問いに、古代北欧の知恵が3つのルーンで答えます。運命の中心に立つのは ${r.symbol} ${r.name}（${rev ? "逆位置" : "正位置"}）。${rev ? "いまは流れに逆らわず、静かに力を蓄える時かもしれません。" : "追い風が吹いています。自信を持って進むべき時です。"}`,
     details,
     drawnCards: runes.map(({ rune, isReversed, position }) => ({
       position, name: rune.name, symbol: rune.symbol, reversed: isReversed,

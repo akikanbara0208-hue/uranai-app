@@ -367,6 +367,7 @@ const TAROT_EMOJI: Record<string, string> = {
 };
 
 export function getTarotReading(question: string): FortuneResult {
+  const q = question.split("|")[0]; // 表示用（呼び出し側が付けたタイムスタンプ部分は除く）
   const seed = question.split("").reduce((acc, c) => acc + c.charCodeAt(0), 0);
   const now = new Date();
   const dateSeed = now.getDate() + now.getMonth() * 31 + now.getFullYear();
@@ -401,7 +402,7 @@ export function getTarotReading(question: string): FortuneResult {
 
   return {
     title: `5枚スプレッド — ${mainCard.name}${main.isReversed ? "（逆）" : ""}が中心`,
-    summary: `「${question}」への答えを5枚のカードが示します`,
+    summary: `「${q}」への答えを5枚のカードが示します`,
     details,
     drawnCards: cards.map(({ card, isReversed, position }) => ({
       position, name: card.name, symbol: TAROT_EMOJI[card.name] || "🃏", reversed: isReversed,
