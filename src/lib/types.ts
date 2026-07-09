@@ -38,6 +38,19 @@ export interface DrawnCard {
   imageUrl?: string;    // 将来イラスト画像を追加する際に使用（現時点では未使用）
 }
 
+// ホロスコープ円盤（天体配置図）を描画するための構造化データ
+export interface ChartWheelPlanet {
+  key: string;       // "sun" | "moon" | "mercury" 等
+  label: string;      // 表示名（太陽・月 等）
+  symbol: string;      // 天体記号（☉ ☽ ☿ 等）
+  longitude: number;   // 黄経（度・0〜360）
+}
+export interface ChartWheelData {
+  planets: ChartWheelPlanet[];
+  ascendant?: number; // アセンダントの黄経（出生時刻がある場合のみ）
+  mc?: number;        // MC（中天）の黄経（出生時刻がある場合のみ）
+}
+
 export interface FortuneResult {
   title: string;
   summary: string;
@@ -54,5 +67,6 @@ export interface FortuneResult {
   geomancyFigures?: GeomancyFigure[];
   drawnCards?: DrawnCard[];
   diceRoll?: number[];
+  chartWheel?: ChartWheelData;
   advice: string;
 }

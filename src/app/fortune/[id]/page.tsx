@@ -101,6 +101,7 @@ import { getCartomancyReading } from "@/lib/fortunes/cartomancy";
 import { GeomancyFigure } from "@/lib/types";
 import { detectTheme, getThemeLabel, buildTypedAnswer } from "@/lib/questionAnalyzer";
 import { CardRevealRow, DiceRollDisplay } from "@/components/CardReveal";
+import { HoroscopeWheel } from "@/components/HoroscopeWheel";
 
 // ──────────────────────────────────────────────────────────────
 const THEME_DETAIL_KEYWORDS: Record<string, string[]> = {
@@ -277,6 +278,16 @@ function ResultDisplay({ result, question, fortuneId }: { result: FortuneResult;
         <h2 className="text-2xl md:text-3xl font-bold gold-gradient mb-2">{result.title}</h2>
         <p className="text-gray-300 text-base leading-relaxed">{result.summary}</p>
       </div>
+
+      {result.chartWheel && (
+        <>
+          <hr className="divider-gold" />
+          <div>
+            <p className="text-sm text-yellow-500/70 tracking-wider mb-3 text-center">✦ ホロスコープ円盤 ✦</p>
+            <HoroscopeWheel data={result.chartWheel} />
+          </div>
+        </>
+      )}
 
       {result.geomancyFigures && result.geomancyFigures.length > 0 && (
         <>
