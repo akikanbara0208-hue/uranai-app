@@ -70,6 +70,16 @@ export function AspectGrid({ data }: { data: ChartWheelData }) {
               );
             })}
           </tbody>
+          <tfoot>
+            <tr>
+              <th></th>
+              {colPlanets.map((p) => (
+                <th key={p.key} style={{ padding: "4px 6px", color: "#e8c874" }}>
+                  <span title={p.label}>{p.symbol}</span>
+                </th>
+              ))}
+            </tr>
+          </tfoot>
         </table>
       </div>
       <div style={{ display: "flex", justifyContent: "center", gap: "12px", flexWrap: "wrap", marginTop: "10px" }} className="text-xs text-gray-400">
