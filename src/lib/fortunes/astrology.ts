@@ -615,15 +615,15 @@ export function getAstrologyReading(birthday: string, birthHour?: number, lat: n
     },
     {
       label: "♅ 天王星星座（変革・個性・世代）",
-      content: `${uranusSign.symbol} ${uranusSign.name}${houseTag(uranusHouse)} ── 「${uranusSign.keyword}」の革新を、同世代と共有するテーマとして持つ`,
+      content: `${uranusSign.symbol} ${uranusSign.name}${houseTag(uranusHouse)} ── 「${uranusSign.keyword}」の革新を、同世代と共有するテーマとして持つ。天王星は同じ星座に約7年とどまるため、これはあなた個人というより同世代全体が共有する変革の方向性を示しています。`,
     },
     {
       label: "♆ 海王星星座（夢・感性・世代）",
-      content: `${neptuneSign.symbol} ${neptuneSign.name}${houseTag(neptuneHouse)} ── 「${neptuneSign.keyword}」に理想や夢を重ねる感性を、世代として帯びる`,
+      content: `${neptuneSign.symbol} ${neptuneSign.name}${houseTag(neptuneHouse)} ── 「${neptuneSign.keyword}」に理想や夢を重ねる感性を、世代として帯びる。海王星は約14年かけて一つの星座を通過するため、同じ夢や幻想を共有する世代のカラーを映し出しています。`,
     },
     {
       label: "♇ 冥王星星座（変容・深層・世代）",
-      content: `${plutoSign.symbol} ${plutoSign.name}${houseTag(plutoHouse)} ── 「${plutoSign.keyword}」の領域で深い変容と再生を促す、世代的な力`,
+      content: `${plutoSign.symbol} ${plutoSign.name}${houseTag(plutoHouse)} ── 「${plutoSign.keyword}」の領域で深い変容と再生を促す、世代的な力。冥王星は一つの星座に12〜31年もとどまるため、社会全体が同じテーマで根本から作り変えられていく大きな流れを示しています。`,
     },
     {
       label: "🔗 天体同士のアスペクト（相互作用）",
