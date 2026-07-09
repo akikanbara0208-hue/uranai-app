@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { getProfiles, saveProfileFromValues, deleteProfile, type Profile } from "@/lib/profiles";
+import { getProfiles, saveProfileFromValues, type Profile } from "@/lib/profiles";
 import { useParams } from "next/navigation";
 import Link from "next/link";
 import { FORTUNES } from "@/lib/fortunes";
@@ -450,41 +450,19 @@ function InputForm({
 
   const set = (key: string, val: string) => setValues((prev) => ({ ...prev, [key]: val }));
 
-  // ── 保存プロフィール（生年月日・名前を使う占いのみ） ──
+  // ── 過去の入力履歴（生年月日・名前を使う占いのみ） ──
+  // ブラウザ標準のdatalist機能で、入力欄をクリックすると過去の履歴が候補として出る。
+  // 独立したUIを別に出さず、input要素自体に履歴を持たせるだけ。
   const usesPersonalData =
     inputType === "birthday" || inputType === "birthday_name" ||
     inputType === "birthday_time" || inputType === "name" ||
     fortuneId === "deity";
   const [profiles, setProfiles] = useState<Profile[]>([]);
-  const [selectedProfile, setSelectedProfile] = useState<string>("");
   useEffect(() => {
     if (usesPersonalData) setProfiles(getProfiles());
   }, [usesPersonalData]);
-
-  const applyProfile = (id: string) => {
-    setSelectedProfile(id);
-    if (!id) {
-      // 「新しい人を入力」→ 個人情報欄をクリア
-      setValues((prev) => ({ ...prev, birthday: "", birthTime: "", birthPlace: "", name: "" }));
-      return;
-    }
-    const p = profiles.find((x) => x.id === id);
-    if (!p) return;
-    setValues((prev) => ({
-      ...prev,
-      birthday: p.birthday || "",
-      birthTime: p.birthTime || "",
-      birthPlace: p.birthPlace || "",
-      name: p.name || "",
-    }));
-  };
-
-  const removeProfile = (id: string) => {
-    deleteProfile(id);
-    const next = getProfiles();
-    setProfiles(next);
-    if (selectedProfile === id) applyProfile("");
-  };
+  const birthdayHistory = [...new Set(profiles.map((p) => p.birthday).filter(Boolean))] as string[];
+  const nameHistory = [...new Set(profiles.map((p) => p.name).filter(Boolean))] as string[];
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -522,55 +500,32 @@ function InputForm({
     return false;
   };
 
-  // 過去の入力（プロフィール）をワンタップで呼び出す小さなチップ列。
-  // 「占う人を選ぶ」のような独立した項目に見せず、生年月日・お名前のすぐ上に添える。
-  const profileChips = usesPersonalData && profiles.length > 0 && (
-    <div className="flex flex-wrap gap-2 mb-2">
-      {profiles.map((p) => (
-        <div
-          key={p.id}
-          className="inline-flex items-center gap-1 rounded-full pl-3 pr-1.5 py-1 text-xs"
-          style={{
-            background: selectedProfile === p.id ? "rgba(201,162,39,0.15)" : "rgba(124,58,237,0.06)",
-            border: selectedProfile === p.id ? "1px solid rgba(201,162,39,0.5)" : "1px solid rgba(124,58,237,0.18)",
-          }}
-        >
-          <button
-            type="button"
-            onClick={() => applyProfile(selectedProfile === p.id ? "" : p.id)}
-            style={{ color: selectedProfile === p.id ? "var(--gold)" : "var(--text-secondary)" }}
-          >
-            {p.label}
-          </button>
-          <button
-            type="button"
-            onClick={() => removeProfile(p.id)}
-            aria-label="この保存を削除"
-            className="text-gray-400 hover:text-red-400 px-1"
-          >
-            ×
-          </button>
-        </div>
-      ))}
-    </div>
-  );
-
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
+      {/* 過去の入力履歴（datalist）。どの入力欄が表示されていても参照できるよう共通で1つだけ置く */}
+      {birthdayHistory.length > 0 && (
+        <datalist id="birthday-history">
+          {birthdayHistory.map((b) => <option key={b} value={b} />)}
+        </datalist>
+      )}
+      {nameHistory.length > 0 && (
+        <datalist id="name-history">
+          {nameHistory.map((n) => <option key={n} value={n} />)}
+        </datalist>
+      )}
+
       {/* ── 生年月日 ── */}
       {(inputType === "birthday" || inputType === "birthday_name" || inputType === "birthday_time") && (
         <div>
           <label className="block text-sm text-yellow-500/70 mb-2">生年月日</label>
-          {profileChips}
           <input
-            key={selectedProfile || "new"}
             type="date"
-            defaultValue={values.birthday || ""}
+            list="birthday-history"
+            value={values.birthday || ""}
             onChange={(e) => set("birthday", e.target.value)}
             max={new Date().toISOString().split("T")[0]}
             min="1900-01-01"
           />
-          {profiles.length > 0 && <p className="text-xs text-gray-500 mt-1">前回までの入力はタップで呼び出せます。</p>}
         </div>
       )}
 
@@ -651,9 +606,9 @@ function InputForm({
           <label className="block text-sm text-yellow-500/70 mb-2">
             お名前{inputType === "birthday_name" ? "（任意）" : "（フルネーム）"}
           </label>
-          {inputType === "name" && profileChips}
           <input
             type="text"
+            list="name-history"
             placeholder={inputType === "birthday_name" ? "例：山田花子（なくてもOK）" : "例：山田 花子"}
             value={values.name || ""}
             onChange={(e) => set("name", e.target.value)}
@@ -1003,11 +958,10 @@ function InputForm({
         <div className="space-y-6">
           <div>
             <label className="block text-sm text-yellow-500/70 mb-2">生年月日</label>
-            {profileChips}
             <input
-              key={selectedProfile || "new"}
               type="date"
-              defaultValue={values.birthday || ""}
+              list="birthday-history"
+              value={values.birthday || ""}
               onChange={(e) => set("birthday", e.target.value)}
               max={new Date().toISOString().split("T")[0]}
               min="1900-01-01"
