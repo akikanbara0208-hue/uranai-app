@@ -95,7 +95,7 @@ export function getCompatibilityReading(
       { label: "💬 コミュニケーション・日常の相性", content: comm[tier] },
       { label: "⚡ ぶつかりやすい点", content: friction[tier] },
       { label: "🌸 相手への接し方", content: approach[tier] },
-      { label: "🔮 総合鑑定", content: `太陽（価値観）${sunSun}点・情緒${emo}点・恋愛${romance}点を総合し、相性は${overall}点。${verdict}` },
+      { label: "🔮 総合鑑定", content: `太陽（価値観）${sunSun}点・情緒${emo}点・恋愛${romance}点を総合すると、お二人の相性は${overall}点という結果になりました。${verdict}数字はあくまで星々が示す傾向であり、実際の関係を育てるのはお二人自身の日々の心がけです。` },
     ],
     lucky: { number: String(overall) },
     advice: `相性は「点数」より「向き合い方」で育ちます。${overall >= 70 ? "恵まれた相性です。当たり前にせず感謝を伝え合うことで、さらに深まります。" : "違いのある相性ほど、理解しようとする姿勢が二人を強く結びつけます。星は傾向を示すだけ。育てるのはお二人自身です。"}`,
