@@ -556,8 +556,9 @@ function InputForm({
         <div>
           <label className="block text-sm text-yellow-500/70 mb-2">生年月日</label>
           <input
+            key={selectedProfile || "new"}
             type="date"
-            value={values.birthday || ""}
+            defaultValue={values.birthday || ""}
             onChange={(e) => set("birthday", e.target.value)}
             max={new Date().toISOString().split("T")[0]}
             min="1900-01-01"
