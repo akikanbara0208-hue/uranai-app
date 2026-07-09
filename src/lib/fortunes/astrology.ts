@@ -420,6 +420,51 @@ function houseNumberOf(lon: number, ascLon: number): number {
   return Math.floor((((lon - ascLon) % 360) + 360) % 360 / 30) + 1;
 }
 
+// ── アスペクト（天体同士の角度による相互作用）──
+const PLANET_LABEL: Record<string, string> = {
+  sun: "太陽", moon: "月", mercury: "水星", venus: "金星", mars: "火星",
+  jupiter: "木星", saturn: "土星", uranus: "天王星", neptune: "海王星", pluto: "冥王星",
+};
+const PLANET_GLYPH: Record<string, string> = {
+  sun: "☉", moon: "☽", mercury: "☿", venus: "♀", mars: "♂",
+  jupiter: "♃", saturn: "♄", uranus: "♅", neptune: "♆", pluto: "♇",
+};
+const PLANET_MEANING: Record<string, string> = {
+  sun: "自己・意志・生命力", moon: "感情・本能・安心", mercury: "思考・言葉・学び", venus: "愛・美・価値観",
+  mars: "行動・情熱・欲求", jupiter: "拡大・幸運・成長", saturn: "責任・制限・忍耐",
+  uranus: "変革・自由・独自性", neptune: "夢・直感・境界の溶解", pluto: "変容・力・深層心理",
+};
+const ASPECTS = [
+  { name: "コンジャンクション（合）", symbol: "☌", angle: 0, orb: 8, nature: "融合", desc: "二つの力が一体化し、区別できないほど強く混ざり合って働く" },
+  { name: "セクスタイル（60度）", symbol: "⚹", angle: 60, orb: 4, nature: "調和のチャンス", desc: "自然に協力し合う関係で、意識的に活かすことで才能やチャンスに変わる" },
+  { name: "スクエア（90度）", symbol: "□", angle: 90, orb: 6, nature: "葛藤・成長痛", desc: "緊張と摩擦を生みやすいが、その葛藤を乗り越えることが大きな成長につながる" },
+  { name: "トライン（120度）", symbol: "△", angle: 120, orb: 6, nature: "調和", desc: "摩擦なく調和し、努力せずとも自然に発揮される才能として働く" },
+  { name: "オポジション（180度）", symbol: "☍", angle: 180, orb: 8, nature: "綱引き", desc: "正反対の力が引っ張り合い、両者のバランスを取ることが人生の課題になる" },
+];
+
+interface PlanetPos { key: string; longitude: number }
+function computeAspects(planets: PlanetPos[]): { label: string; content: string }[] {
+  const found: { label: string; content: string }[] = [];
+  for (let i = 0; i < planets.length; i++) {
+    for (let j = i + 1; j < planets.length; j++) {
+      const a = planets[i], b = planets[j];
+      const diff = Math.abs(a.longitude - b.longitude) % 360;
+      const sep = diff > 180 ? 360 - diff : diff;
+      for (const asp of ASPECTS) {
+        const delta = Math.abs(sep - asp.angle);
+        if (delta <= asp.orb) {
+          found.push({
+            label: `${PLANET_GLYPH[a.key]}${PLANET_LABEL[a.key]} ${asp.symbol} ${PLANET_GLYPH[b.key]}${PLANET_LABEL[b.key]}（${asp.name}・誤差${delta.toFixed(1)}°）`,
+            content: `${PLANET_MEANING[a.key]}と${PLANET_MEANING[b.key]}が「${asp.nature}」の関係。${asp.desc}。`,
+          });
+          break; // 1ペアにつき最も近い1アスペクトのみ採用
+        }
+      }
+    }
+  }
+  return found;
+}
+
 export function getAstrologyReading(birthday: string, birthHour?: number, lat: number = TOKYO.lat, lon: number = TOKYO.lon): FortuneResult {
   const [yearStr, monthStr, dayStr] = birthday.split("-");
   const year = Number(yearStr);
@@ -485,6 +530,19 @@ export function getAstrologyReading(birthday: string, birthHour?: number, lat: n
   const neptuneHouse = houseOf(neptuneLon);
   const plutoHouse = houseOf(plutoLon);
   const houseTag = (h: number | null) => (h !== null ? `（第${h}ハウス：${HOUSE_THEME[h - 1]}）` : "");
+
+  // 天体同士のアスペクト（10天体・全45ペアから角度が合うものを抽出）
+  const aspectPlanets: PlanetPos[] = [
+    { key: "sun", longitude: sunLon }, { key: "moon", longitude: moonLon },
+    { key: "mercury", longitude: mercuryLon }, { key: "venus", longitude: venusLon },
+    { key: "mars", longitude: marsLon }, { key: "jupiter", longitude: jupiterLon },
+    { key: "saturn", longitude: saturnLon }, { key: "uranus", longitude: uranusLon },
+    { key: "neptune", longitude: neptuneLon }, { key: "pluto", longitude: plutoLon },
+  ];
+  const aspects = computeAspects(aspectPlanets);
+  const aspectContent = aspects.length > 0
+    ? aspects.map((a) => `${a.label}\n${a.content}`).join("\n\n")
+    : "強い角度で結びつく天体の組み合わせは見当たりませんでした。各天体がそれぞれ独立して働くタイプです。";
 
   // ── 全天体から総合分類（太陽・月・水星・金星・火星・木星・土星＋上昇）──
   const chartBodies = [sunSign, moonSign, mercurySign, venusSign, marsSign, jupiterSign, saturnSign, ...(ascSign ? [ascSign] : [])];
@@ -567,6 +625,10 @@ export function getAstrologyReading(birthday: string, birthHour?: number, lat: n
     {
       label: "♇ 冥王星星座（変容・深層・世代）",
       content: `${plutoSign.symbol} ${plutoSign.name}${houseTag(plutoHouse)} ── 「${plutoSign.keyword}」の領域で深い変容と再生を促す、世代的な力`,
+    },
+    {
+      label: "🔗 天体同士のアスペクト（相互作用）",
+      content: aspectContent,
     },
     {
       label: "🔮 総合タイプ（全天体から見たあなた）",
