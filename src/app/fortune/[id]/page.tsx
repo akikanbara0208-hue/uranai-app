@@ -463,6 +463,7 @@ function InputForm({
   }, [usesPersonalData]);
   const birthdayHistory = [...new Set(profiles.map((p) => p.birthday).filter(Boolean))] as string[];
   const nameHistory = [...new Set(profiles.map((p) => p.name).filter(Boolean))] as string[];
+  const timeHistory = [...new Set(profiles.map((p) => p.birthTime).filter(Boolean))] as string[];
 
   // 「1990/01/15」「1990.1.15」なども受け付け、内部的には "YYYY-MM-DD" に統一する
   const normalizeDate = (v?: string): string | null => {
@@ -483,12 +484,24 @@ function InputForm({
     return d >= 1 && d <= daysInMonth;
   };
 
+  // 「1430」「14.30」なども受け付け、内部的には "HH:MM" に統一する（任意項目なので失敗時は元の値のまま）
+  const normalizeTime = (v?: string): string | null => {
+    if (!v) return null;
+    const m = v.trim().replace(/[.．]/g, ":").match(/^(\d{1,2}):?(\d{2})$/);
+    if (!m) return null;
+    const h = Number(m[1]), mi = Number(m[2]);
+    if (h < 0 || h > 23 || mi < 0 || mi > 59) return null;
+    return `${String(h).padStart(2, "0")}:${String(mi).padStart(2, "0")}`;
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     // 表記ゆれ（区切り文字・0埋め）を送信前に統一する
     const normalized = { ...values };
     if (normalized.birthday) normalized.birthday = normalizeDate(normalized.birthday) || normalized.birthday;
     if (normalized.birthday2) normalized.birthday2 = normalizeDate(normalized.birthday2) || normalized.birthday2;
+    if (normalized.birthTime) normalized.birthTime = normalizeTime(normalized.birthTime) || normalized.birthTime;
+    if (normalized.birthTime2) normalized.birthTime2 = normalizeTime(normalized.birthTime2) || normalized.birthTime2;
     // 入力した生年月日・名前を次回用に保存（相性占いは二人分をそれぞれ保存）
     if (usesPersonalData) {
       saveProfileFromValues(normalized);
@@ -541,6 +554,11 @@ function InputForm({
           {nameHistory.map((n) => <option key={n} value={n} />)}
         </datalist>
       )}
+      {timeHistory.length > 0 && (
+        <datalist id="time-history">
+          {timeHistory.map((t) => <option key={t} value={t} />)}
+        </datalist>
+      )}
 
       {/* ── 生年月日 ── */}
       {(inputType === "birthday" || inputType === "birthday_name" || inputType === "birthday_time") && (
@@ -572,10 +590,12 @@ function InputForm({
               onChange={(e) => set("birthday", e.target.value)}
             />
             <input
-              type="time"
+              type="text"
+              inputMode="numeric"
+              list="time-history"
+              placeholder="14:30"
               value={values.birthTime || ""}
               onChange={(e) => set("birthTime", e.target.value)}
-              style={SELECT_STYLE}
               className="mt-2"
             />
             <p className="text-xs text-gray-500 mt-1">生まれた時間（わかる場合・任意）。クリックで過去の入力から選べます。</p>
@@ -591,10 +611,12 @@ function InputForm({
               onChange={(e) => set("birthday2", e.target.value)}
             />
             <input
-              type="time"
+              type="text"
+              inputMode="numeric"
+              list="time-history"
+              placeholder="14:30"
               value={values.birthTime2 || ""}
               onChange={(e) => set("birthTime2", e.target.value)}
-              style={SELECT_STYLE}
               className="mt-2"
             />
             <p className="text-xs text-gray-500 mt-1">生まれた時間（わかる場合・任意）。クリックで過去の入力から選べます。</p>
@@ -609,12 +631,14 @@ function InputForm({
             生まれた時間（わかる場合・任意）
           </label>
           <input
-            type="time"
+            type="text"
+            inputMode="numeric"
+            list="time-history"
+            placeholder="14:30"
             value={values.birthTime || ""}
             onChange={(e) => set("birthTime", e.target.value)}
-            style={SELECT_STYLE}
           />
-          <p className="text-xs text-gray-500 mt-1">入力しなくてもOK（太陽・月・惑星は算出されます）。アセンダント・MCを正確に出すには時刻＋出生地が必要です。</p>
+          <p className="text-xs text-gray-500 mt-1">入力しなくてもOK（太陽・月・惑星は算出されます）。アセンダント・MCを正確に出すには時刻＋出生地が必要です。クリックで過去の入力から選べます。</p>
 
           <label className="block text-sm text-yellow-500/70 mb-2 mt-4">出生地（都道府県）</label>
           <select
