@@ -522,39 +522,46 @@ function InputForm({
     return false;
   };
 
+  // 過去の入力（プロフィール）をワンタップで呼び出す小さなチップ列。
+  // 「占う人を選ぶ」のような独立した項目に見せず、生年月日・お名前のすぐ上に添える。
+  const profileChips = usesPersonalData && profiles.length > 0 && (
+    <div className="flex flex-wrap gap-2 mb-2">
+      {profiles.map((p) => (
+        <div
+          key={p.id}
+          className="inline-flex items-center gap-1 rounded-full pl-3 pr-1.5 py-1 text-xs"
+          style={{
+            background: selectedProfile === p.id ? "rgba(201,162,39,0.15)" : "rgba(124,58,237,0.06)",
+            border: selectedProfile === p.id ? "1px solid rgba(201,162,39,0.5)" : "1px solid rgba(124,58,237,0.18)",
+          }}
+        >
+          <button
+            type="button"
+            onClick={() => applyProfile(selectedProfile === p.id ? "" : p.id)}
+            style={{ color: selectedProfile === p.id ? "var(--gold)" : "var(--text-secondary)" }}
+          >
+            {p.label}
+          </button>
+          <button
+            type="button"
+            onClick={() => removeProfile(p.id)}
+            aria-label="この保存を削除"
+            className="text-gray-400 hover:text-red-400 px-1"
+          >
+            ×
+          </button>
+        </div>
+      ))}
+    </div>
+  );
+
   return (
     <form onSubmit={handleSubmit} className="space-y-5">
-      {/* ── 保存した人を選ぶ ── */}
-      {usesPersonalData && profiles.length > 0 && (
-        <div>
-          <label className="block text-sm text-yellow-500/70 mb-2">占う人を選ぶ</label>
-          <select
-            value={selectedProfile}
-            onChange={(e) => applyProfile(e.target.value)}
-            style={SELECT_STYLE}
-          >
-            <option value="">＋ 新しい人を入力</option>
-            {profiles.map((p) => (
-              <option key={p.id} value={p.id}>{p.label}</option>
-            ))}
-          </select>
-          {selectedProfile && (
-            <button
-              type="button"
-              onClick={() => removeProfile(selectedProfile)}
-              className="text-xs text-gray-500 mt-1 underline"
-            >
-              この保存を削除
-            </button>
-          )}
-          <p className="text-xs text-gray-500 mt-1">過去に占った人は選ぶだけ。別の人を占うときは「新しい人を入力」を選んでください。</p>
-        </div>
-      )}
-
       {/* ── 生年月日 ── */}
       {(inputType === "birthday" || inputType === "birthday_name" || inputType === "birthday_time") && (
         <div>
           <label className="block text-sm text-yellow-500/70 mb-2">生年月日</label>
+          {profileChips}
           <input
             key={selectedProfile || "new"}
             type="date"
@@ -563,6 +570,7 @@ function InputForm({
             max={new Date().toISOString().split("T")[0]}
             min="1900-01-01"
           />
+          {profiles.length > 0 && <p className="text-xs text-gray-500 mt-1">前回までの入力はタップで呼び出せます。</p>}
         </div>
       )}
 
@@ -643,6 +651,7 @@ function InputForm({
           <label className="block text-sm text-yellow-500/70 mb-2">
             お名前{inputType === "birthday_name" ? "（任意）" : "（フルネーム）"}
           </label>
+          {inputType === "name" && profileChips}
           <input
             type="text"
             placeholder={inputType === "birthday_name" ? "例：山田花子（なくてもOK）" : "例：山田 花子"}
@@ -994,9 +1003,11 @@ function InputForm({
         <div className="space-y-6">
           <div>
             <label className="block text-sm text-yellow-500/70 mb-2">生年月日</label>
+            {profileChips}
             <input
+              key={selectedProfile || "new"}
               type="date"
-              value={values.birthday || ""}
+              defaultValue={values.birthday || ""}
               onChange={(e) => set("birthday", e.target.value)}
               max={new Date().toISOString().split("T")[0]}
               min="1900-01-01"
