@@ -21,9 +21,19 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="ja" className={`${notoSerifJP.variable} h-full`}>
+      <head>
+        {/* ルーン文字（Elder Futhark）はOSの標準フォントに収録されていないことが多く、
+            文字化け（別のグリフへの代替表示）を起こすため、専用フォントを読み込む */}
+        <link rel="preconnect" href="https://fonts.googleapis.com" />
+        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
+        <link
+          href="https://fonts.googleapis.com/css2?family=Noto+Sans+Runic&display=swap"
+          rel="stylesheet"
+        />
+      </head>
       <body
         className="min-h-full flex flex-col"
-        style={{ fontFamily: "var(--font-serif-jp), 'Noto Serif JP', serif" }}
+        style={{ fontFamily: "'Noto Sans Runic', var(--font-serif-jp), 'Noto Serif JP', serif" }}
       >
         {children}
       </body>
