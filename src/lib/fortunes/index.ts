@@ -20,7 +20,7 @@ export const FORTUNES: Fortune[] = [
   { id: "transit",     name: "今日の運勢（占星術）",nameEn: "Daily Transit",  description: "今日の天体の位置とあなたの出生の星を実計算し、今日一日の運勢を読みます",   origin: "西洋占星術",           icon: "🔭", category: "astrology",     inputType: "birthday"     },
   { id: "compatibility",name: "相性占い",         nameEn: "Synastry",        description: "二人の出生図の太陽・月・金星・火星を実際に計算し、星のエレメントから相性を読み解きます", origin: "西洋占星術", icon: "💞", category: "astrology",     inputType: "two_birthday" },
   { id: "eto-compat",  name: "干支相性占い",      nameEn: "Zodiac Compatibility", description: "二人の生まれ年の十二支を、三合・六合・冲という伝統理論で相性判定します", origin: "中国", icon: "🐲", category: "eastern",       inputType: "two_birthday" },
-  { id: "numerology-compat", name: "数秘術相性占い", nameEn: "Numerology Compatibility", description: "二人のライフパス数から相性とつき合い方の鍵を読み解きます", origin: "ピタゴラス数秘術", icon: "💑", category: "numbers",       inputType: "two_birthday" },
+  { id: "numerology-compat", name: "数秘術相性占い", nameEn: "Numerology Compatibility", description: "二人のライフパス数から相性とつき合い方の鍵を読み解きます", origin: "ピタゴラス数秘術", icon: "🤝", category: "numbers",       inputType: "two_birthday" },
   { id: "kyusei-compat", name: "九星気学相性占い", nameEn: "Nine Star Compatibility", description: "二人の本命星を実算出し、五行の相生・相剋で相性を判定します", origin: "中国・日本", icon: "🌗", category: "eastern",       inputType: "two_birthday" },
   { id: "cartomancy",  name: "トランプ占い",      nameEn: "Cartomancy",      description: "52枚のトランプの伝統的な意味で、あなたの問いを占います。引くたびに結果が変わります", origin: "ヨーロッパ", icon: "🂡", category: "cards",         inputType: "question"     },
   // ══ 自然と身体 ══
