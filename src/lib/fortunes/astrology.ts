@@ -343,10 +343,6 @@ export function getMCLongitude(jd: number, birthHourJST: number, lon: number = T
   return mc;
 }
 
-function getMCIndex(jd: number, birthHourJST: number, lon: number = TOKYO.lon): number {
-  return Math.floor(getMCLongitude(jd, birthHourJST, lon) / 30);
-}
-
 // 今日の通過天体（簡易トランジット）
 function getTransitSign(planet: string): number {
   const now = new Date();
@@ -513,7 +509,8 @@ export function getAstrologyReading(birthday: string, birthHour?: number, lat: n
   const hasTime = typeof birthHour === "number";
   const ascLonExact = hasTime ? getAscendantLongitude(jd, birthHour!, lat, lon) : null;
   const ascIdx = ascLonExact !== null ? Math.floor(ascLonExact / 30) : null;
-  const mcIdx = hasTime ? getMCIndex(jd, birthHour!, lon) : null;
+  const mcLonExact = hasTime ? getMCLongitude(jd, birthHour!, lon) : null;
+  const mcIdx = mcLonExact !== null ? Math.floor(mcLonExact / 30) : null;
   const ascSign = ascIdx !== null ? SIGNS[ascIdx] : null;
   const mcSign = mcIdx !== null ? SIGNS[mcIdx] : null;
 
@@ -589,10 +586,10 @@ export function getAstrologyReading(birthday: string, birthHour?: number, lat: n
       content: `${moonSign.symbol} ${moonSign.name}${houseTag(moonHouse)} ── ${moonSign.moon}`,
     },
     ...(ascSign
-      ? [{ label: "⬆️ 上昇星座・アセンダント（第一印象・外的人格）", content: `${ascSign.symbol} ${ascSign.name} ── ${ascSign.rising}` }]
+      ? [{ label: "⬆️ 上昇星座・アセンダント（第一印象・外的人格）", content: `${ascSign.symbol} ${ascSign.name}${houseTag(houseOf(ascLonExact!))} ── ${ascSign.rising}` }]
       : [{ label: "⬆️ 上昇星座", content: "生まれた時間を入力するとアセンダントを算出できます" }]),
     ...(mcSign
-      ? [{ label: "🏆 MC・中天（社会的使命・キャリア）", content: `${mcSign.symbol} ${mcSign.name} ── ${mcSign.mc}` }]
+      ? [{ label: "🏆 MC・中天（社会的使命・キャリア）", content: `${mcSign.symbol} ${mcSign.name}${houseTag(houseOf(mcLonExact!))} ── ${mcSign.mc}` }]
       : []),
     {
       label: "☿ 水星星座（思考・コミュニケーション）",
@@ -638,13 +635,13 @@ export function getAstrologyReading(birthday: string, birthHour?: number, lat: n
       label: "📖 各分類の意味",
       content: `${ELEMENT_DESC[domElem]}\n${QUALITY_DESC[domQual]}\n${POLARITY_DESC[domPol]}`,
     },
-    ...(ascLonExact !== null
-      ? [{ label: "🏠 ハウスの意味（人生の12の領域）", content: HOUSE_DESC.join("\n") }]
-      : [{ label: "🏠 ハウスの意味", content: "生まれた時間を入力すると、各天体がどの人生の領域（ハウス）で働くかも算出できます" }]),
     {
       label: "📅 今年の木星テーマ",
       content: yearlyTheme,
     },
+    ...(ascLonExact !== null
+      ? [{ label: "🏠 ハウスの意味（人生の12の領域・参考資料）", content: HOUSE_DESC.join("\n") }]
+      : [{ label: "🏠 ハウスの意味", content: "生まれた時間を入力すると、各天体がどの人生の領域（ハウス）で働くかも算出できます" }]),
   ];
 
   const threeSign = ascSign
