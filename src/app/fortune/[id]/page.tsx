@@ -456,7 +456,7 @@ function InputForm({
   const usesPersonalData =
     inputType === "birthday" || inputType === "birthday_name" ||
     inputType === "birthday_time" || inputType === "name" ||
-    fortuneId === "deity";
+    inputType === "two_birthday" || fortuneId === "deity";
   const [profiles, setProfiles] = useState<Profile[]>([]);
   useEffect(() => {
     if (usesPersonalData) setProfiles(getProfiles());
@@ -489,8 +489,13 @@ function InputForm({
     const normalized = { ...values };
     if (normalized.birthday) normalized.birthday = normalizeDate(normalized.birthday) || normalized.birthday;
     if (normalized.birthday2) normalized.birthday2 = normalizeDate(normalized.birthday2) || normalized.birthday2;
-    // 入力した生年月日・名前を次回用に保存
-    if (usesPersonalData) saveProfileFromValues(normalized);
+    // 入力した生年月日・名前を次回用に保存（相性占いは二人分をそれぞれ保存）
+    if (usesPersonalData) {
+      saveProfileFromValues(normalized);
+      if (inputType === "two_birthday" && normalized.birthday2) {
+        saveProfileFromValues({ birthday: normalized.birthday2, birthTime: normalized.birthTime2 || "" });
+      }
+    }
     // HSP: combine scores into hsp_answers for the reading function
     if (fortuneId === "hsp") {
       const answers = [0,1,2,3,4,5,6].map(i => normalized[`hsp_${i}`] || "5").join(",");
@@ -559,11 +564,12 @@ function InputForm({
           <div>
             <label className="block text-sm text-yellow-500/70 mb-2">お一人目の生年月日</label>
             <input
-              type="date"
+              type="text"
+              inputMode="numeric"
+              list="birthday-history"
+              placeholder="1990-01-15"
               value={values.birthday || ""}
               onChange={(e) => set("birthday", e.target.value)}
-              max={new Date().toISOString().split("T")[0]}
-              min="1900-01-01"
             />
             <input
               type="time"
@@ -572,16 +578,17 @@ function InputForm({
               style={SELECT_STYLE}
               className="mt-2"
             />
-            <p className="text-xs text-gray-500 mt-1">生まれた時間（わかる場合・任意）</p>
+            <p className="text-xs text-gray-500 mt-1">生まれた時間（わかる場合・任意）。クリックで過去の入力から選べます。</p>
           </div>
           <div>
             <label className="block text-sm text-yellow-500/70 mb-2">お二人目の生年月日</label>
             <input
-              type="date"
+              type="text"
+              inputMode="numeric"
+              list="birthday-history"
+              placeholder="1990-01-15"
               value={values.birthday2 || ""}
               onChange={(e) => set("birthday2", e.target.value)}
-              max={new Date().toISOString().split("T")[0]}
-              min="1900-01-01"
             />
             <input
               type="time"
@@ -590,7 +597,7 @@ function InputForm({
               style={SELECT_STYLE}
               className="mt-2"
             />
-            <p className="text-xs text-gray-500 mt-1">生まれた時間（わかる場合・任意）</p>
+            <p className="text-xs text-gray-500 mt-1">生まれた時間（わかる場合・任意）。クリックで過去の入力から選べます。</p>
           </div>
         </div>
       )}
