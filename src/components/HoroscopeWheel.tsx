@@ -16,6 +16,8 @@ const INNER_R = 152;
 const PLANET_TICK_R = 152;
 const PLANET_LABEL_R = 118;
 const PLANET_LABEL_R2 = 96; // 近接時の退避用の内側リング
+const HOUSE_SPOKE_INNER_R = 60;
+const HOUSE_NUM_R = 40;
 
 function toXY(r: number, angleDeg: number) {
   const rad = (angleDeg * Math.PI) / 180;
@@ -79,6 +81,25 @@ export function HoroscopeWheel({ data }: { data: ChartWheelData }) {
         {/* 内円 */}
         <circle cx={CX} cy={CY} r={INNER_R} fill="none" stroke="#c9a24a" strokeOpacity={0.35} strokeWidth={1} />
         <circle cx={CX} cy={CY} r={PLANET_LABEL_R2 - 18} fill="none" stroke="#c9a24a" strokeOpacity={0.2} strokeWidth={1} />
+
+        {/* ハウス区分線と番号（イコール・ハウス方式。出生時刻がある場合のみ） */}
+        {hasAngles &&
+          Array.from({ length: 12 }).map((_, n) => {
+            const cuspLon = anchor + n * 30;
+            const cuspAngle = angleFor(cuspLon, anchor);
+            const outer = toXY(INNER_R, cuspAngle);
+            const inner = toXY(HOUSE_SPOKE_INNER_R, cuspAngle);
+            const numAngle = angleFor(cuspLon + 15, anchor);
+            const numPos = toXY(HOUSE_NUM_R, numAngle);
+            return (
+              <g key={`house-${n}`}>
+                <line x1={outer.x} y1={outer.y} x2={inner.x} y2={inner.y} stroke="#e8c874" strokeOpacity={0.25} strokeWidth={0.75} />
+                <text x={numPos.x} y={numPos.y} textAnchor="middle" dominantBaseline="middle" fontSize={11} fill="#e8c874" fillOpacity={0.85}>
+                  {n + 1}
+                </text>
+              </g>
+            );
+          })}
 
         {/* ASC-DESC / MC-IC の軸線（出生時刻がある場合のみ） */}
         {hasAngles && ascAngle !== null && (
