@@ -464,24 +464,47 @@ function InputForm({
   const birthdayHistory = [...new Set(profiles.map((p) => p.birthday).filter(Boolean))] as string[];
   const nameHistory = [...new Set(profiles.map((p) => p.name).filter(Boolean))] as string[];
 
+  // 「1990/01/15」「1990.1.15」なども受け付け、内部的には "YYYY-MM-DD" に統一する
+  const normalizeDate = (v?: string): string | null => {
+    if (!v) return null;
+    const m = v.trim().replace(/[./]/g, "-").match(/^(\d{4})-(\d{1,2})-(\d{1,2})$/);
+    if (!m) return null;
+    const [, y, mo, d] = m;
+    return `${y}-${mo.padStart(2, "0")}-${d.padStart(2, "0")}`;
+  };
+
+  const isValidDate = (v?: string): boolean => {
+    const norm = normalizeDate(v);
+    if (!norm) return false;
+    const [y, mo, d] = norm.split("-").map(Number);
+    if (y < 1900 || y > new Date().getFullYear()) return false;
+    if (mo < 1 || mo > 12) return false;
+    const daysInMonth = new Date(y, mo, 0).getDate();
+    return d >= 1 && d <= daysInMonth;
+  };
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    // 表記ゆれ（区切り文字・0埋め）を送信前に統一する
+    const normalized = { ...values };
+    if (normalized.birthday) normalized.birthday = normalizeDate(normalized.birthday) || normalized.birthday;
+    if (normalized.birthday2) normalized.birthday2 = normalizeDate(normalized.birthday2) || normalized.birthday2;
     // 入力した生年月日・名前を次回用に保存
-    if (usesPersonalData) saveProfileFromValues(values);
+    if (usesPersonalData) saveProfileFromValues(normalized);
     // HSP: combine scores into hsp_answers for the reading function
     if (fortuneId === "hsp") {
-      const answers = [0,1,2,3,4,5,6].map(i => values[`hsp_${i}`] || "5").join(",");
-      onSubmit({ ...values, hsp_answers: answers });
+      const answers = [0,1,2,3,4,5,6].map(i => normalized[`hsp_${i}`] || "5").join(",");
+      onSubmit({ ...normalized, hsp_answers: answers });
       return;
     }
-    onSubmit(values);
+    onSubmit(normalized);
   };
 
   const isValid = (): boolean => {
-    if (inputType === "birthday") return !!values.birthday;
-    if (inputType === "birthday_name") return !!values.birthday;
-    if (inputType === "birthday_time") return !!values.birthday;
-    if (inputType === "two_birthday") return !!values.birthday && !!values.birthday2;
+    if (inputType === "birthday") return isValidDate(values.birthday);
+    if (inputType === "birthday_name") return isValidDate(values.birthday);
+    if (inputType === "birthday_time") return isValidDate(values.birthday);
+    if (inputType === "two_birthday") return isValidDate(values.birthday) && isValidDate(values.birthday2);
     if (inputType === "blood_type") return !!values.blood_type;
     if (inputType === "question") return !!values.question?.trim();
     if (inputType === "name") return !!values.name?.trim();
@@ -493,7 +516,7 @@ function InputForm({
     if (inputType === "quiz") {
       if (fortuneId === "aura-color") return values.aura_color !== undefined && values.aura_color !== "";
       if (fortuneId === "color-personality") return values.fav_color !== undefined && values.fav_color !== "";
-      if (fortuneId === "deity") return !!values.birthday && !!values.deity_q1 && !!values.deity_q2 && !!values.deity_q3;
+      if (fortuneId === "deity") return isValidDate(values.birthday) && !!values.deity_q1 && !!values.deity_q2 && !!values.deity_q3;
       if (fortuneId === "face-reading") return !!values.face_shape && !!values.face_eye && !!values.face_nose && !!values.face_mouth && !!values.face_brow;
       return true; // hsp, big-five, temperament, four-elements have defaults
     }
@@ -519,13 +542,14 @@ function InputForm({
         <div>
           <label className="block text-sm text-yellow-500/70 mb-2">生年月日</label>
           <input
-            type="date"
+            type="text"
+            inputMode="numeric"
             list="birthday-history"
+            placeholder="1990-01-15"
             value={values.birthday || ""}
             onChange={(e) => set("birthday", e.target.value)}
-            max={new Date().toISOString().split("T")[0]}
-            min="1900-01-01"
           />
+          <p className="text-xs text-gray-500 mt-1">年-月-日の形式で入力（例：1990-01-15）。クリックすると過去の入力から選べます。</p>
         </div>
       )}
 
@@ -959,14 +983,14 @@ function InputForm({
           <div>
             <label className="block text-sm text-yellow-500/70 mb-2">生年月日</label>
             <input
-              type="date"
+              type="text"
+              inputMode="numeric"
               list="birthday-history"
+              placeholder="1990-01-15"
               value={values.birthday || ""}
               onChange={(e) => set("birthday", e.target.value)}
-              max={new Date().toISOString().split("T")[0]}
-              min="1900-01-01"
             />
-            <p className="text-xs text-gray-500 mt-1">数秘術で「魂の領域（9タイプ）」を算出します</p>
+            <p className="text-xs text-gray-500 mt-1">年-月-日の形式で入力（例：1990-01-15）。数秘術で「魂の領域（9タイプ）」を算出します</p>
           </div>
           <p className="text-sm text-yellow-500/70">次に、あなたの価値観から神話世界との縁を探ります（全3問）</p>
           {[
