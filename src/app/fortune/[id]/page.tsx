@@ -1152,6 +1152,18 @@ function getReading(id: string, values: Record<string, string>): FortuneResult |
   const q  = values.question || "今";
   const nm = values.name || "";
 
+  // 生まれた時間（任意）を安全に「時（0〜24の小数）」へ変換する。
+  // "HH:MM" 以外（未入力・表記崩れ・範囲外）はすべて undefined＝「時刻の指定なし」として扱い、
+  // NaN が各占術に流れてクラッシュや「undefined」表示になるのを防ぐ。
+  const parseHour = (t?: string): number | undefined => {
+    if (!t) return undefined;
+    const m = t.trim().match(/^(\d{1,2}):(\d{2})$/);
+    if (!m) return undefined;
+    const hh = Number(m[1]), mm = Number(m[2]);
+    if (hh < 0 || hh > 23 || mm < 0 || mm > 59) return undefined;
+    return hh + mm / 60;
+  };
+
   // カード・霊的占いは押すたびに違う結果にする
   const rq = q + "|" + Date.now();
 
@@ -1160,8 +1172,7 @@ function getReading(id: string, values: Record<string, string>): FortuneResult |
     case "tarot":       return getTarotReading(rq);
     case "astrology": {
       if (!bd) return null;
-      let h: number | undefined;
-      if (values.birthTime) { const [hh, mm] = values.birthTime.split(":").map(Number); h = hh + mm / 60; }
+      const h = parseHour(values.birthTime);
       const pref = PREFECTURES.find((p) => p.name === values.birthPlace);
       return getAstrologyReading(bd, h, pref?.lat, pref?.lon);
     }
@@ -1178,8 +1189,9 @@ function getReading(id: string, values: Record<string, string>): FortuneResult |
     case "kyusei-kigaku":return bd ? getKyuseiReading(bd) : null;
     case "shichu-suimei": {
       if (!bd) return null;
-      let shH: number | undefined;
-      if (values.birthTime) { const [hh] = values.birthTime.split(":").map(Number); shH = hh; }
+      const parsed = parseHour(values.birthTime);
+      // 四柱推命は「時（整数）」だけを使うため、時刻があるときは整数部を渡す
+      const shH = parsed === undefined ? undefined : Math.floor(parsed);
       return getShichuReading(bd, shH);
     }
     // ── 東洋 ──
@@ -1189,20 +1201,15 @@ function getReading(id: string, values: Record<string, string>): FortuneResult |
     case "sanmeigaku":  return bd ? getSanmeigakuReading(bd) : null;
     case "shibi": {
       if (!bd) return null;
-      let sH: number | undefined;
-      if (values.birthTime) { const [hh, mm] = values.birthTime.split(":").map(Number); sH = hh + mm / 60; }
-      return getZiweiReading(bd, sH);
+      return getZiweiReading(bd, parseHour(values.birthTime));
     }
     case "sukuyo": {
       if (!bd) return null;
-      let skH: number | undefined;
-      if (values.birthTime) { const [hh, mm] = values.birthTime.split(":").map(Number); skH = hh + mm / 60; }
-      return getSukuyoReading(bd, skH);
+      return getSukuyoReading(bd, parseHour(values.birthTime));
     }
     case "compatibility": {
       if (!values.birthday || !values.birthday2) return null;
-      const toH = (t?: string) => { if (!t) return undefined; const [hh, mm] = t.split(":").map(Number); return hh + mm / 60; };
-      return getCompatibilityReading(values.birthday, values.birthday2, toH(values.birthTime), toH(values.birthTime2));
+      return getCompatibilityReading(values.birthday, values.birthday2, parseHour(values.birthTime), parseHour(values.birthTime2));
     }
     case "guardian-buddha": return bd ? getGuardianBuddhaReading(bd) : null;
     case "tibetan":        return bd ? getTibetanReading(bd) : null;
@@ -1221,10 +1228,8 @@ function getReading(id: string, values: Record<string, string>): FortuneResult |
     // ── 古代 ──
     case "vedic": {
       if (!bd) return null;
-      let vH: number | undefined;
-      if (values.birthTime) { const [hh, mm] = values.birthTime.split(":").map(Number); vH = hh + mm / 60; }
       const vPref = PREFECTURES.find((p) => p.name === values.birthPlace);
-      return getVedicReading(bd, vH, vPref?.lat, vPref?.lon);
+      return getVedicReading(bd, parseHour(values.birthTime), vPref?.lat, vPref?.lon);
     }
     case "maya":        return bd ? getMayaReading(bd) : null;
     case "egypt":       return bd ? getEgyptReading(bd) : null;
