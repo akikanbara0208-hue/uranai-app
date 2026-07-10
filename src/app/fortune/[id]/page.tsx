@@ -827,6 +827,33 @@ function InputForm({
          ══════════════════════════════════════════════ */}
 
       {/* ── ビッグファイブ ── */}
+      {/* ── 高感受性セルフチェック（HSP） ── */}
+      {inputType === "quiz" && fortuneId === "hsp" && (
+        <div className="space-y-5">
+          <p className="text-sm text-yellow-500/70">各項目が自分にどの程度当てはまるかを0〜10で評価してください</p>
+          {[
+            { key: "hsp_0", label: "刺激への敏感さ", desc: "些細な物音・光・匂いなどの刺激に、人より敏感に反応する" },
+            { key: "hsp_1", label: "他者の感情への気づき", desc: "その場にいる人の気分や感情の変化に、すぐ気づいてしまう" },
+            { key: "hsp_2", label: "マルチタスクの負荷", desc: "一度に多くのことを頼まれると、混乱したり疲れたりしやすい" },
+            { key: "hsp_3", label: "刺激過多への疲れやすさ", desc: "大きな音・強い光・人混みが苦手で、長くいるとすぐに疲れる" },
+            { key: "hsp_4", label: "芸術・美への感受性", desc: "音楽や芸術、自然の美しさに深く心を動かされることが多い" },
+            { key: "hsp_5", label: "時間的プレッシャーへの反応", desc: "短時間で多くをこなさなければならない状況に、動揺しやすい" },
+            { key: "hsp_6", label: "見られることへの緊張", desc: "人に見られていると感じると、緊張していつも通りの力を出しにくい" },
+          ].map(({ key, label, desc }) => (
+            <div key={key} className="bg-white/5 rounded-lg p-4">
+              <p className="text-base text-gray-100 font-bold mb-1">{label}</p>
+              <p className="text-sm text-gray-300 mb-3 leading-relaxed">{desc}</p>
+              <div className="flex items-center gap-3">
+                <span className="text-xs text-gray-500 w-16">当てはまらない</span>
+                <input type="range" min={0} max={10} value={values[key] || "5"} onChange={(e) => set(key, e.target.value)} style={{ ...SLIDER_STYLE }} />
+                <span className="text-xs text-gray-500 w-16 text-right">よく当てはまる</span>
+                <span className="text-sm font-semibold gold-text w-6 text-right">{values[key] || "5"}</span>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       {inputType === "quiz" && fortuneId === "big-five" && (
         <div className="space-y-5">
           <p className="text-sm text-yellow-500/70">各特性について自分がどの程度当てはまるかを0〜100で評価してください</p>
