@@ -50,7 +50,9 @@ function getChineseZodiac(y: number, m: number, d: number): string {
 }
 
 function getElement(y: number): string {
-  const elements = ["金","水","木","火","土"];
+  // 年の十干による五行。(y-4)%10 は甲=0 起点の天干インデックス。
+  // 甲乙=木, 丙丁=火, 戊己=土, 庚辛=金, 壬癸=水 の順に対応する。
+  const elements = ["木","火","土","金","水"];
   const idx = Math.floor(((y - 4) % 10 + 10) % 10 / 2);
   return elements[idx];
 }

@@ -712,7 +712,7 @@ const FENG_SHUI_ELEMENTS = [
     lucky: { color: "赤・紫", direction: "南" },
   },
   {
-    element: "土", years: [2, 5, 8], yin_yang: "陽の土・陰の土",
+    element: "土", years: [8, 9], yin_yang: "陽の土・陰の土",
     color: "黄・茶・ベージュ", direction: "中央・北東・南西",
     meaning: "安定と信頼、地に足のついた蓄積のエネルギー",
     personality: "安定を好み、周囲から信頼される存在です。実直で誠実な性格で、コツコツと物事を積み上げていく粘り強さを持っています。派手さはなくても、周囲から頼りにされる縁の下の力持ちです。",
@@ -738,7 +738,7 @@ const FENG_SHUI_ELEMENTS = [
     lucky: { color: "白・金", direction: "西・北西" },
   },
   {
-    element: "水", years: [3, 9], yin_yang: "陽の水・陰の水",
+    element: "水", years: [2, 3], yin_yang: "陽の水・陰の水",
     color: "黒・紺・濃い青", direction: "北",
     meaning: "智慧と柔軟性、絶えず流れ続けるコミュニケーションのエネルギー",
     personality: "知恵深く直感的な性格です。コミュニケーション能力が高く、状況に応じて柔軟に形を変えながら物事に対応していく力があります。表面は穏やかでも、内側に深い思慮を秘めているタイプです。",
