@@ -13,6 +13,7 @@ const PUBLIC_PATHS = [
   "/api/send-otp",
   "/api/verify-otp",
   "/api/stripe",
+  "/api/cron",
   "/_next",
   "/favicon",
 ];
