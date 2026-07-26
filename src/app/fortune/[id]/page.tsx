@@ -253,7 +253,14 @@ function RelatedFortunes({ currentId }: { currentId: string }) {
 }
 
 // ──────────────────────────────────────────────────────────────
-function ResultDisplay({ result, question, fortuneId }: { result: FortuneResult; question?: string; fortuneId: string }) {
+function ResultDisplay({ result, question, fortuneId, shareName }: { result: FortuneResult; question?: string; fortuneId: string; shareName?: string }) {
+  // 鑑定文に含まれる本名は、シェア文だけ「私」に置き換える（画面表示は名前のまま）
+  const shareResult = shareName
+    ? {
+        title: result.title.split(shareName).join("私"),
+        summary: result.summary.split(shareName).join("私"),
+      }
+    : result;
   const reordered = question ? reorderDetails(result.details, question) : result.details;
   const theme = question ? detectTheme(question) : "general";
   // 質問の種類（いつ／すべきか／どちら 等）に応じた直接回答を先頭に追加
@@ -397,7 +404,7 @@ function ResultDisplay({ result, question, fortuneId }: { result: FortuneResult;
           <button
             onClick={() => {
               window.open(
-                buildXShareUrl(result),
+                buildXShareUrl(shareResult),
                 "_blank", "noopener,noreferrer"
               );
             }}
@@ -409,7 +416,7 @@ function ResultDisplay({ result, question, fortuneId }: { result: FortuneResult;
           <button
             onClick={() => {
               window.open(
-                buildThreadsShareUrl(result),
+                buildThreadsShareUrl(shareResult),
                 "_blank", "noopener,noreferrer"
               );
             }}
@@ -420,7 +427,7 @@ function ResultDisplay({ result, question, fortuneId }: { result: FortuneResult;
           </button>
           <button
             onClick={() => {
-              const text = buildShareText(result, "copy");
+              const text = buildShareText(shareResult, "copy");
               navigator.clipboard.writeText(text).then(() => alert("コピーしました！Instagramなどに貼り付けてください"));
             }}
             className="inline-flex items-center gap-2 px-5 py-3 rounded-full text-sm font-semibold"
@@ -1299,6 +1306,9 @@ export default function FortunePage() {
   const fortune = FORTUNES.find((f) => f.id === id);
   const [result, setResult] = useState<FortuneResult | null>(null);
   const [lastQuestion, setLastQuestion] = useState<string | undefined>(undefined);
+  // 入力された氏名。鑑定文には名前が入る占術があり、そのままSNSへ公開投稿すると
+  // 本名が載ってしまうため、シェア文だけ差し替える用途で控えておく
+  const [lastName, setLastName] = useState<string | undefined>(undefined);
 
   if (!fortune) {
     return (
@@ -1315,6 +1325,7 @@ export default function FortunePage() {
     const r = getReading(id, values);
     setResult(r);
     setLastQuestion(values.question || values.keyword || undefined);
+    setLastName(values.name?.trim() || undefined);
     if (r) {
       setTimeout(() => {
         document.getElementById("result")?.scrollIntoView({ behavior: "smooth" });
@@ -1347,7 +1358,7 @@ export default function FortunePage() {
         </div>
 
         <div id="result">
-          {result && <ResultDisplay result={result} question={lastQuestion} fortuneId={id} />}
+          {result && <ResultDisplay result={result} question={lastQuestion} fortuneId={id} shareName={lastName} />}
         </div>
 
         {result && (
