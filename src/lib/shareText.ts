@@ -50,15 +50,24 @@ function summarize(text: string, max: number, weighted: boolean): string {
   return head + "…";
 }
 
+// 占術そのものの解説にあたる項目。読み手が知りたいのは「その人に何が出たか」なので、
+// シェア本文には使わない（例：十二直の「十二直とは」、占星術の「ハウスの意味（参考資料）」）
+const EXPLAINER_LABEL = /(とは|について|の説明|参考資料|基礎知識|歴史|読み方)/;
+
 // シェア本文に載せる文章を選ぶ。
-// summaryが「太陽：魚座 / 月：蠍座」「䷥ Opposition ─ 属性：乖違」のような見出し
-// 相当で意味を伝えていない占術があるため、その場合は実際の鑑定文（詳細の先頭）を使う
-function pickBody(result: Pick<FortuneResult, "summary"> & { details?: { content: string }[] }): string {
-  const s = (result.summary ?? "").trim();
-  const readable = /[。！？]/.test(s) && Array.from(s).length >= 40;
-  if (readable) return s;
-  const first = result.details?.[0]?.content?.trim();
-  return first || s;
+// summaryは占術によって性質がばらばらで、
+//   ・見出し相当で意味がない（易経「䷥ Opposition ─ 属性：乖違」）
+//   ・占術の由来説明で結果が入っていない（ジプシーカード）
+// といった例があるため、まず「結果を語っている詳細項目」を探し、無ければsummaryに戻す
+function pickBody(
+  result: Pick<FortuneResult, "summary"> & { details?: { label?: string; content: string }[] }
+): string {
+  for (const d of result.details ?? []) {
+    if (EXPLAINER_LABEL.test(d.label ?? "")) continue;
+    const c = (d.content ?? "").trim();
+    if (Array.from(c).length >= 30) return c;
+  }
+  return (result.summary ?? "").trim();
 }
 
 function measure(text: string, weighted: boolean): number {
@@ -84,7 +93,7 @@ function truncate(text: string, max: number, weighted: boolean): string {
   return out + "…";
 }
 
-type ShareInput = Pick<FortuneResult, "title" | "summary"> & { details?: { content: string }[] };
+type ShareInput = Pick<FortuneResult, "title" | "summary"> & { details?: { label?: string; content: string }[] };
 
 export function buildShareText(
   result: ShareInput,

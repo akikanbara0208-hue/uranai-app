@@ -259,7 +259,7 @@ function ResultDisplay({ result, question, fortuneId, shareName }: { result: For
   const shareResult = {
     title: redact(result.title),
     summary: redact(result.summary),
-    details: result.details.map((d) => ({ content: redact(d.content) })),
+    details: result.details.map((d) => ({ label: d.label, content: redact(d.content) })),
   };
   const reordered = question ? reorderDetails(result.details, question) : result.details;
   const theme = question ? detectTheme(question) : "general";
