@@ -420,7 +420,7 @@ function ResultDisplay({ result, question, fortuneId }: { result: FortuneResult;
           </button>
           <button
             onClick={() => {
-              const text = buildShareText(result, { includeUrl: true });
+              const text = buildShareText(result, "copy");
               navigator.clipboard.writeText(text).then(() => alert("コピーしました！Instagramなどに貼り付けてください"));
             }}
             className="inline-flex items-center gap-2 px-5 py-3 rounded-full text-sm font-semibold"
