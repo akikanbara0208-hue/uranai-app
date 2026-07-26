@@ -2,7 +2,6 @@ import type { FortuneResult } from "./types";
 import { FORTUNES } from "./fortunes";
 
 const APP_URL = "https://uranai-app-beta-ten.vercel.app";
-const LEAD = "世界の占い堂で占ってみた！";
 // 見た人が「自分もやってみたい」と思えるよう、占術の多さと問いかけを添える。
 // 件数は増減しても自動で追従させる（過去に「15種類」の固定値が残っていたため）
 const CTA = `${FORTUNES.length}種類の占いから、あなたは何が出る？`;
@@ -51,6 +50,17 @@ function summarize(text: string, max: number, weighted: boolean): string {
   return head + "…";
 }
 
+// シェア本文に載せる文章を選ぶ。
+// summaryが「太陽：魚座 / 月：蠍座」「䷥ Opposition ─ 属性：乖違」のような見出し
+// 相当で意味を伝えていない占術があるため、その場合は実際の鑑定文（詳細の先頭）を使う
+function pickBody(result: Pick<FortuneResult, "summary"> & { details?: { content: string }[] }): string {
+  const s = (result.summary ?? "").trim();
+  const readable = /[。！？]/.test(s) && Array.from(s).length >= 40;
+  if (readable) return s;
+  const first = result.details?.[0]?.content?.trim();
+  return first || s;
+}
+
 function measure(text: string, weighted: boolean): number {
   if (!weighted) return Array.from(text).length;
   let n = 0;
@@ -74,14 +84,21 @@ function truncate(text: string, max: number, weighted: boolean): string {
   return out + "…";
 }
 
+type ShareInput = Pick<FortuneResult, "title" | "summary"> & { details?: { content: string }[] };
+
 export function buildShareText(
-  result: Pick<FortuneResult, "title" | "summary">,
-  platform: SharePlatform
+  result: ShareInput,
+  platform: SharePlatform,
+  fortuneId?: string
 ): string {
   const { total, weighted, reserveForUrl, includeUrl } = LIMITS[platform];
 
+  // 何の占いをしたのかが分からないと読み手が試しようがないため、占術名を明示する
+  const fortuneName = FORTUNES.find((f) => f.id === fortuneId)?.name;
+  const lead = fortuneName ? `世界の占い堂で「${fortuneName}」を占ってみた！` : "世界の占い堂で占ってみた！";
+
   const footer = `\n\n${CTA}\n${TAGS}` + (includeUrl ? `\n${APP_URL}` : "");
-  const fixed = measure(`${LEAD}\n\n`, weighted) + measure(footer, weighted) + reserveForUrl;
+  const fixed = measure(`${lead}\n\n`, weighted) + measure(footer, weighted) + reserveForUrl;
   let budget = total - fixed;
 
   // タイトルと本文で予算を分け合う。タイトルが長い場合はタイトル側を削り、
@@ -92,17 +109,17 @@ export function buildShareText(
   budget -= measure(titleLine, weighted);
 
   // まず読みやすい長さへ要約し、そのうえで投稿先の上限にも文末で収める
-  const summary = summarize(summarize(result.summary, BODY_TARGET, false), budget, weighted);
+  const body = summarize(summarize(pickBody(result), BODY_TARGET, false), budget, weighted);
 
-  return `${LEAD}\n\n${titleLine}${summary}${footer}`;
+  return `${lead}\n\n${titleLine}${body}${footer}`;
 }
 
-export function buildXShareUrl(result: Pick<FortuneResult, "title" | "summary">): string {
-  const text = buildShareText(result, "x");
+export function buildXShareUrl(result: ShareInput, fortuneId?: string): string {
+  const text = buildShareText(result, "x", fortuneId);
   return `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(APP_URL)}`;
 }
 
-export function buildThreadsShareUrl(result: Pick<FortuneResult, "title" | "summary">): string {
-  const text = buildShareText(result, "threads");
+export function buildThreadsShareUrl(result: ShareInput, fortuneId?: string): string {
+  const text = buildShareText(result, "threads", fortuneId);
   return `https://www.threads.net/intent/post?text=${encodeURIComponent(text)}`;
 }

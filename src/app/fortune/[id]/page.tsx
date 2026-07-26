@@ -255,12 +255,12 @@ function RelatedFortunes({ currentId }: { currentId: string }) {
 // ──────────────────────────────────────────────────────────────
 function ResultDisplay({ result, question, fortuneId, shareName }: { result: FortuneResult; question?: string; fortuneId: string; shareName?: string }) {
   // 鑑定文に含まれる本名は、シェア文だけ「私」に置き換える（画面表示は名前のまま）
-  const shareResult = shareName
-    ? {
-        title: result.title.split(shareName).join("私"),
-        summary: result.summary.split(shareName).join("私"),
-      }
-    : result;
+  const redact = (t: string) => (shareName ? t.split(shareName).join("私") : t);
+  const shareResult = {
+    title: redact(result.title),
+    summary: redact(result.summary),
+    details: result.details.map((d) => ({ content: redact(d.content) })),
+  };
   const reordered = question ? reorderDetails(result.details, question) : result.details;
   const theme = question ? detectTheme(question) : "general";
   // 質問の種類（いつ／すべきか／どちら 等）に応じた直接回答を先頭に追加
@@ -404,7 +404,7 @@ function ResultDisplay({ result, question, fortuneId, shareName }: { result: For
           <button
             onClick={() => {
               window.open(
-                buildXShareUrl(shareResult),
+                buildXShareUrl(shareResult, fortuneId),
                 "_blank", "noopener,noreferrer"
               );
             }}
@@ -416,7 +416,7 @@ function ResultDisplay({ result, question, fortuneId, shareName }: { result: For
           <button
             onClick={() => {
               window.open(
-                buildThreadsShareUrl(shareResult),
+                buildThreadsShareUrl(shareResult, fortuneId),
                 "_blank", "noopener,noreferrer"
               );
             }}
@@ -427,7 +427,7 @@ function ResultDisplay({ result, question, fortuneId, shareName }: { result: For
           </button>
           <button
             onClick={() => {
-              const text = buildShareText(shareResult, "copy");
+              const text = buildShareText(shareResult, "copy", fortuneId);
               navigator.clipboard.writeText(text).then(() => alert("コピーしました！Instagramなどに貼り付けてください"));
             }}
             className="inline-flex items-center gap-2 px-5 py-3 rounded-full text-sm font-semibold"
