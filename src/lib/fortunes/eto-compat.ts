@@ -1,4 +1,5 @@
 import { FortuneResult } from "@/lib/types";
+import { baziYearOf } from "./astrology";
 
 // ══════════════════════════════════════════════
 // 干支相性占い（十二支の三合・六合・冲）
@@ -12,7 +13,8 @@ const ROKUGO: [number, number][] = [[0, 1], [2, 11], [3, 10], [4, 9], [5, 8], [6
 
 function branchOf(birthday: string): number {
   const [y, m, d] = birthday.split("-").map(Number);
-  const baziYear = (m === 1 || (m === 2 && d < 4)) ? y - 1 : y;
+  const baziYear = baziYearOf(y, m, d);
+  if (!Number.isFinite(baziYear)) return 0;
   return ((baziYear - 4) % 12 + 12) % 12;
 }
 

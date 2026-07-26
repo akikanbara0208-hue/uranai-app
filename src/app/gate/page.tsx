@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense } from "react";
+import { useState, Suspense } from "react";
 import { useSearchParams } from "next/navigation";
 import Link from "next/link";
 
@@ -12,20 +12,21 @@ function GateContent() {
   const [password, setPassword] = useState("");
   const [showPw, setShowPw] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [error, setError] = useState("");
+  const [error, setError] = useState(() => {
+    // 後の条件ほど優先（元の逐次if文と同じ上書き順序を保つ）
+    let e = "";
+    if (params.get("canceled")) e = "決済がキャンセルされました。もう一度お試しください。";
+    if (params.get("error")) e = "Googleログインに失敗しました。もう一度お試しください。";
+    if (params.get("expired")) e = "サブスクリプションが無効です。ログインして再開してください。";
+    if (params.get("overdue")) e = "お支払いが確認できず、ご利用を停止しています。お支払い情報を更新してください。";
+    if (params.get("verify_error")) e = "通信が不安定なため、ご利用状態を確認できませんでした。お手数ですが、もう一度ログインしてください。";
+    return e;
+  });
   const [info, setInfo] = useState("");
 
-  const [showBilling, setShowBilling] = useState(false);
-
-  useEffect(() => {
-    if (params.get("canceled")) setError("決済がキャンセルされました。もう一度お試しください。");
-    if (params.get("error")) setError("Googleログインに失敗しました。もう一度お試しください。");
-    if (params.get("expired")) setError("サブスクリプションが無効です。ログインして再開してください。");
-    if (params.get("overdue")) {
-      setError("お支払いが確認できず、ご利用を停止しています。お支払い情報を更新してください。");
-      setShowBilling(true);
-    }
-  }, [params]);
+  // URLパラメータ由来の初期メッセージは、描画前に確定できるため初期値として渡す
+  // （useEffect内で同期的にsetStateすると余計な再描画が連鎖するため）
+  const showBilling = !!params.get("overdue");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();

@@ -43,7 +43,7 @@ const BIRTH_FLOWERS: Record<number, { flower: string; en: string; meaning: strin
 };
 
 export function getBirthFlowerReading(birthday: string): FortuneResult {
-  const { y, m, d } = parseDate(birthday);
+  const { m } = parseDate(birthday);
   const flower = BIRTH_FLOWERS[m];
   const seed = dateSeed(birthday);
   const r = rng(seed + 17000);
@@ -59,7 +59,14 @@ export function getBirthFlowerReading(birthday: string): FortuneResult {
       { label: "恋愛運 ── 花が示す愛と縁", content: `「${flower.meaning}」を花言葉に持つあなたの愛し方には、この花の本質がそのまま表れます。${pick(["愛情を言葉と行動の両方で表現することが、深い縁を育てます。","自分の気持ちをまず自分で認め、ゆっくりと相手に伝えることが愛を深める鍵です。","情熱と優しさを同時に持ち合わせた愛し方が、あなた独自の魅力となっています。"], r)}飾らない素のあなたを見せられる相手とこそ、花がほころぶように関係が深まっていくでしょう。` },
       { label: "仕事運 ── 才能の活かし方", content: `${flower.flower}が持つ「${flower.meaning}」の性質は、あなたの働き方や才能の方向性にも宿っています。${pick(["人と協力し合う環境でこそ、あなたの個性は最も大きく花開きます。","自分のペースで丁寧に積み上げられる場で、本来の力が発揮されます。","新しいことに挑戦できる環境が、あなたの中の眠った才能を呼び覚まします。"], r)}焦って早咲きを目指すより、適した土壌を選ぶことが成功への近道です。` },
       { label: "対人運 ── 人との縁の育て方", content: `あなたの周りには、${flower.flower}の香りに惹かれるように自然と人が集まってきます。「${flower.meaning}」というあなたの花言葉そのものの誠実さが、長く続く信頼関係の礎になります。与えるばかりでなく、ときには周囲の優しさを素直に受け取ることで、縁の循環がより豊かになります。` },
-      { label: "今後の流れ", content: `花が蕾から開花、そして結実へと巡るように、あなたの運勢にも明確な季節があります。今は${pick(["これから咲く準備を整える蕾の時期。土の下で着実に力を蓄えています。","まさに花開こうとする開花の時期。表現と行動が実を結びやすいタイミングです。","咲いた花が実を結ぶ収穫の時期。これまでの努力が形になって返ってきます。"], r)}自分の季節を信頼して過ごすことが、最も自然な開運につながります。` },
+      { label: "今後の流れ", content: `${flower.flower}が毎年決まった季節に咲くように、あなたの運勢にも巡りがあります。あなたの花が咲くのは生まれ月である${m}月。${(() => {
+        const now = new Date().getMonth() + 1;
+        const diff = ((m - now) % 12 + 12) % 12;
+        if (diff === 0) return `今まさにその季節の只中にいます。表現したことも動いたことも、一つ残らず形になりやすい最高の時期です。遠慮せず前に出てください。`;
+        if (diff <= 3) return `開花まであと${diff}か月。土の下で根を張り終え、蕾がふくらみ始めた段階です。今の準備が咲いたときの大きさを決めます。`;
+        if (diff <= 6) return `咲いた後の結実の季節にあたります。派手さはなくとも、これまで積み上げたものが静かに実を結んでいく時期です。`;
+        return `次の開花まで${diff}か月あります。今は休養と充電の季節。焦って背伸びをせず、土を耕すことに専念してください。`;
+      })()}自分の季節を信頼して過ごすことが、最も自然な開運につながります。` },
       { label: "開運アクションと気をつけること", content: `部屋に${flower.flower}やその色（${flower.color}）を取り入れると、あなた本来のエネルギーが静かに高まります。一方で、他の花と自分を比べて焦ることだけは避けましょう。${flower.flower}が毎年自分の季節に必ず咲くように、あなたにも咲くべき時が必ず訪れます。咲く時期でないことを嘆かず、今できる手入れを淡々と続けることが自然の知恵です。` },
     ],
     lucky: { color: flower.color, item: pick(items, r), direction: pick(dirs, r) },
@@ -308,6 +315,15 @@ function bioBar(val: number): string {
 
 export function getBiorhythmReading(birthday: string): FortuneResult {
   const birth = new Date(birthday);
+  // 不正な生年月日だとInvalid Dateとなり、経過日数がNaNのまま鑑定文に「NaN日目」と出てしまう
+  if (Number.isNaN(birth.getTime())) {
+    return {
+      title: "バイオリズム",
+      summary: "生年月日を正しく読み取れませんでした。",
+      details: [{ label: "入力について", content: "バイオリズムは生まれた日からの経過日数をもとに算出します。生年月日を「1990-01-01」の形式で正しく入力し直してから、もう一度お試しください。" }],
+      advice: "生年月日を正しい形式で入力すると、身体・感情・知性の3つのリズムを鑑定できます。",
+    };
+  }
   birth.setHours(0, 0, 0, 0);
   const today = new Date();
   today.setHours(0, 0, 0, 0);

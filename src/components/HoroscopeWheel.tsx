@@ -45,15 +45,18 @@ export function HoroscopeWheel({ data }: { data: ChartWheelData }) {
   const sorted = [...data.planets].sort(
     (a, b) => ((a.longitude - anchor + 360) % 360) - ((b.longitude - anchor + 360) % 360)
   );
-  let lastRel: number | null = null;
-  let toggle = 0;
-  const placed = sorted.map((p) => {
-    const rel = (p.longitude - anchor + 3600) % 360;
-    const close = lastRel !== null && Math.min(Math.abs(rel - lastRel), 360 - Math.abs(rel - lastRel)) < 9;
-    toggle = close ? (toggle + 1) % 2 : 0;
-    lastRel = rel;
-    return { ...p, labelR: toggle === 1 ? PLANET_LABEL_R2 : PLANET_LABEL_R };
-  });
+  // 近接した天体のラベルを内外へ交互にずらす。レンダー中に外側の変数を書き換えないよう、
+  // 走査状態はreduceのアキュムレータに閉じ込める
+  const placed = sorted.reduce<{ list: (typeof sorted[number] & { labelR: number })[]; lastRel: number | null; toggle: number }>(
+    (acc, p) => {
+      const rel = (p.longitude - anchor + 3600) % 360;
+      const close = acc.lastRel !== null && Math.min(Math.abs(rel - acc.lastRel), 360 - Math.abs(rel - acc.lastRel)) < 9;
+      const toggle = close ? (acc.toggle + 1) % 2 : 0;
+      acc.list.push({ ...p, labelR: toggle === 1 ? PLANET_LABEL_R2 : PLANET_LABEL_R });
+      return { list: acc.list, lastRel: rel, toggle };
+    },
+    { list: [], lastRel: null, toggle: 0 }
+  ).list;
 
   const ascAngle = hasAngles ? angleFor(anchor, anchor) : null; // 常に180°（左）
   const mcAngle = hasAngles && typeof data.mc === "number" ? angleFor(data.mc, anchor) : null;

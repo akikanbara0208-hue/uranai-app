@@ -4,6 +4,7 @@ const PUBLIC_PATHS = [
   "/gate",
   "/payment-success",
   "/payment-cancel",
+  "/api/payment-confirm",
   "/legal",
   "/api/login",
   "/api/signup",
@@ -60,8 +61,9 @@ export async function proxy(req: NextRequest) {
     }
     return NextResponse.next();
   } catch {
-    // 検証に失敗したらログインユーザーは通す（fail-open：障害時に有料ユーザーを締め出さない）
-    return NextResponse.next();
+    // 検証に失敗したら締め出す（fail-closed：keepalive cronでSupabase一時停止は防止済みのため、
+    // 検証不能な状態を無条件で通すより安全側に倒す）
+    return NextResponse.redirect(new URL("/gate?verify_error=1", req.url));
   }
 }
 

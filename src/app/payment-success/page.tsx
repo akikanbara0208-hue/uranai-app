@@ -7,26 +7,38 @@ function SuccessContent() {
   const router = useRouter();
   const params = useSearchParams();
   const sessionId = params.get("session_id");
-  const [status, setStatus] = useState<"loading" | "ok" | "error">("loading");
+  // session_idの有無は描画前に確定するため初期値で決める（effect内の同期setStateを避ける）
+  const [status, setStatus] = useState<"loading" | "ok" | "error">(() => sessionId ? "loading" : "error");
 
   useEffect(() => {
-    if (!sessionId) { setStatus("error"); return; }
+    if (!sessionId) return;
+    let cancelled = false;
 
     async function pollForToken() {
       for (let i = 0; i < 20; i++) {
         await new Promise(r => setTimeout(r, 2000));
-        const res = await fetch(`/api/payment-confirm?session_id=${sessionId}`);
-        const data = await res.json();
-        if (data.loggedIn) {
-          // Cookieはサーバー側で既にセット済み
-          setStatus("ok");
-          setTimeout(() => { window.location.href = "/"; }, 2000);
-          return;
+        if (cancelled) return;
+        try {
+          const res = await fetch(`/api/payment-confirm?session_id=${sessionId}`);
+          // 認証リダイレクト等でHTMLが返ることがあり、その場合json()が例外を投げて
+          // ポーリングが無言で止まる。1回分の失敗として扱い、次の試行へ進める
+          if (!res.ok) continue;
+          const data = await res.json();
+          if (cancelled) return;
+          if (data.loggedIn) {
+            // Cookieはサーバー側で既にセット済み
+            setStatus("ok");
+            setTimeout(() => { window.location.href = "/"; }, 2000);
+            return;
+          }
+        } catch {
+          continue;
         }
       }
-      setStatus("error");
+      if (!cancelled) setStatus("error");
     }
     pollForToken();
+    return () => { cancelled = true; };
   }, [sessionId, router]);
 
   return (

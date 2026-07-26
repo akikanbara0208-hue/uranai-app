@@ -159,11 +159,13 @@ const TEMPERAMENTS = [
 ];
 
 export function getTemperamentReading(values: Record<string, string>): FortuneResult {
+  // 未入力時はUIのスライダー表示と同じ中間値5を既定とする（0にすると未操作の項目が
+  // 最低評価とみなされ、実際の回答と食い違った気質が選ばれてしまう）
   const scores = [
-    parseInt(values.temp_a || "0", 10),
-    parseInt(values.temp_b || "0", 10),
-    parseInt(values.temp_c || "0", 10),
-    parseInt(values.temp_d || "0", 10),
+    parseInt(values.temp_a || "5", 10),
+    parseInt(values.temp_b || "5", 10),
+    parseInt(values.temp_c || "5", 10),
+    parseInt(values.temp_d || "5", 10),
   ];
   const maxIdx = scores.indexOf(Math.max(...scores));
   const t = TEMPERAMENTS[maxIdx];
@@ -333,7 +335,9 @@ const AURA_COLORS = [
 ];
 
 export function getAuraColorReading(values: Record<string, string>): FortuneResult {
-  const idx = Math.min(parseInt(values.aura_color || "0", 10), AURA_COLORS.length - 1);
+  // 数値以外が入るとparseIntがNaNになり、AURA_COLORS[NaN]がundefinedとなって落ちるため下限も含めて丸める
+  const parsed = parseInt(values.aura_color || "0", 10);
+  const idx = Number.isFinite(parsed) ? Math.min(Math.max(parsed, 0), AURA_COLORS.length - 1) : 0;
   const a = AURA_COLORS[idx];
   const r = rng(idx * 777 + Date.now() % 10000);
 

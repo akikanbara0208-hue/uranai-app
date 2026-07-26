@@ -102,7 +102,7 @@ export function getSukuyoReading(birthday: string, birthHour?: number): FortuneR
       { label: "💰 金運・財運", content: ni.money },
       { label: "🤝 対人・人間関係", content: shuku.relation },
       { label: "🔮 これからの運の流れ", content: shuku.future },
-      { label: "🧭 開運アクション", content: `本命宿「${shuku.name}」の強み「${shuku.strength.split("・")[0]}」を一日一度は意識して発揮し、「${shuku.caution}」に注意を払うこと。さらに自分の番号「${idx + 1}」やムーンストーンを身近に置き、月を眺める習慣を持つと、宿の力が高まります。` },
+      { label: "🧭 開運アクション", content: `本命宿「${shuku.name}」の強み「${shuku.strength.split("・")[0]}」を、一日一度は意識して発揮する場面をつくってみてください。あわせて自分の番号「${idx + 1}」やムーンストーンを身近に置き、夜に月を眺める習慣を持つと、宿の力が静かに高まっていきます。月の満ち欠けに合わせて予定の強弱をつけると、さらに流れに乗りやすくなります。` },
     ],
     lucky: { item: "月のお守り（ムーンストーン）", number: String(idx + 1) },
     advice: `月はおよそ一日に一宿のペースで天を巡り、あなたが生まれたその瞬間、確かに「${shuku.name}」に宿っていました。それは偶然ではなく、あなたが受け取るべき性質だったのです。自分の宿を知る人は、無駄に背伸びをせず、自分の星にかなった生き方を選べます。今日からは「${shuku.nature}宿」の自分を受け入れ、その持ち味を信じて歩んでください。それが宿曜の叡智が教える、最も確かな幸運への道です。`,

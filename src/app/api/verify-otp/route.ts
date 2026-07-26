@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabase } from "@/lib/supabase";
 import { getStripe, FREE_LIMIT } from "@/lib/stripe";
+import { hitRateLimit, clearRateLimit, clientIp } from "@/lib/rateLimit";
 
 // ログイン用トークンをサーバー側でCookieに焼き込む（proxyが確実に読めるようにする）
 function loginResponse(token: string, extra: Record<string, unknown>) {
@@ -22,6 +23,18 @@ export async function POST(req: NextRequest) {
   }
 
   const normalizedEmail = email.toLowerCase().trim();
+
+  // 6桁の数字コードは総当たりが現実的なため、宛先・送信元の2つの軸で試行回数を制限する
+  const byEmail = hitRateLimit(`otp-verify:${normalizedEmail}`, 5, 10 * 60 * 1000);
+  const byIp = hitRateLimit(`otp-verify-ip:${clientIp(req)}`, 20, 10 * 60 * 1000);
+  if (!byEmail.allowed || !byIp.allowed) {
+    const retry = Math.max(byEmail.retryAfterSec, byIp.retryAfterSec);
+    return NextResponse.json(
+      { error: "認証の試行回数が上限に達しました。しばらく時間をおいてからお試しください。" },
+      { status: 429, headers: { "Retry-After": String(retry) } }
+    );
+  }
+
   const supabase = getSupabase();
 
   const { data: user } = await supabase
@@ -39,6 +52,9 @@ export async function POST(req: NextRequest) {
   if (!user.otp_expires_at || new Date(user.otp_expires_at) < new Date()) {
     return NextResponse.json({ error: "認証コードの有効期限が切れています" }, { status: 400 });
   }
+
+  // 正しいコードを入力できた時点で、そのメールアドレスの試行回数はリセットする
+  clearRateLimit(`otp-verify:${normalizedEmail}`);
 
   // OTP消費
   await supabase

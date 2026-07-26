@@ -4,11 +4,6 @@ import { julianDay, getMoonLongitude, getAscendantLongitude } from "@/lib/fortun
 function dateSeed(bd: string): number {
   return (Math.abs(parseInt(bd.replace(/-/g, ""), 10)) || 1) >>> 0;
 }
-function strSeed(s: string): number {
-  let h = 5381;
-  for (const c of s) h = (((h << 5) + h) + c.charCodeAt(0)) | 0;
-  return (Math.abs(h) || 1) >>> 0;
-}
 function rng(seed: number) {
   let s = (seed >>> 0) || 1;
   return (max: number): number => {
@@ -55,7 +50,7 @@ const NAKSHATRAS = [
   { name: "シャタビシャーク", deity: "ヴァルナ（水の神）", symbol: "円・千の花", quality: "癒し・秘密・探求", desc: "千の星が輝く神秘的な星宿。癒しと探求のエネルギーを持ち、秘められた真実を明らかにする洞察力があります。医療・科学・神秘学の分野で才能を発揮します。" },
   { name: "プールヴァ・バードラパダー", deity: "アジャ・エーカパード（一本足の山羊）", symbol: "双剣・前床", quality: "変容・情熱・深み", desc: "深い変容と精神的な情熱の星宿。物質的な価値を超えた精神的な探求に駆り立てられ、その深みと知恵で人々を変革に導きます。" },
   { name: "ウッタラ・バードラパダー", deity: "アヒル・ブドニヤ（深海の蛇）", symbol: "後ろ床・双蛇", quality: "深み・叡智・安定", desc: "深海のような静けさと叡智の星宿。物事の深層に安定した根を下ろし、長い時間をかけて積み上げた知恵が人生の確かな基盤となります。" },
-  { name: "レーヴァティー", deity: "プーシャン（旅人の神）", symbol: "太鼓・魚", quality: "旅・養育・保護", description: "旅と養育の星宿。豊かな感受性と養育の才能を持ち、人々を安全な目的地へと導く保護のエネルギーがあります。音楽と海への親和性が強い星宿です。" },
+  { name: "レーヴァティー", deity: "プーシャン（旅人の神）", symbol: "太鼓・魚", quality: "旅・養育・保護", desc: "旅と養育の星宿。豊かな感受性と養育の才能を持ち、人々を安全な目的地へと導く保護のエネルギーがあります。音楽と海への親和性が強い星宿です。" },
 ];
 
 // ── 27宿それぞれの追加の一文（本文・守護神・カルマの各欄を2〜3文へ拡張するための個別テキスト）──
@@ -240,7 +235,7 @@ export function getVedicReading(birthday: string, birthHour?: number, lat?: numb
   const posInNak = moonSid - nakIndex * NAK_SIZE;
   const pada = Math.floor(posInNak / (NAK_SIZE / 4)) + 1;
   const nakshatra = NAKSHATRAS[nakIndex];
-  const desc = (nakshatra as any).desc || (nakshatra as any).description || "";
+  const desc = nakshatra.desc;
   const rashi = RASHI_NAMES[Math.floor(moonSid / 30) % 12];
   const janmaLord = DASHA_LORDS[nakIndex % 9];
 
@@ -474,13 +469,24 @@ function getEgyptGod(m: number, d: number) {
 }
 
 export function getEgyptReading(birthday: string): FortuneResult {
-  const { y, m, d } = parseDate(birthday);
+  const { m, d } = parseDate(birthday);
   const god = getEgyptGod(m, d);
   const godIdx = EGYPT_GODS.indexOf(god);
   const seed = dateSeed(birthday);
   const r = rng(seed + 7000);
   const items = ["ラピスラズリ", "スカラベのお守り", "ゴールドのカルトゥーシュ", "アンクの護符", "コハクの石"];
   const dirs  = ["東（ラーの昇る方向）", "南（ナイルの流れ）", "西（死と再生）", "北（永遠の北極星）"];
+
+  // エジプト暦の季節は「今がいつか」で決まる事実であり、占う人ごとに変わるものではない。
+  // シリウスの日の出前の出現（およそ7/19）に始まるナイルの増水を起点に、3季×4か月で巡る
+  const today = new Date();
+  const md = (today.getMonth() + 1) * 100 + today.getDate();
+  const season =
+    (md >= 719 && md <= 1115)
+      ? "アケト（増水の季節）：ナイルが溢れ、古いものが一度洗い流される時期です。今は無理に進めるより、次の実りに備えて土壌を整えるとき"
+      : (md >= 1116 || md <= 315)
+      ? "ペレト（成長の季節）：水が引いた肥沃な土に種を蒔き、地道な努力が芽吹き始める時期です。今こそ着実に積み上げるとき"
+      : "シェムウ（収穫の季節）：これまで積み重ねてきた労力が実を結び、成果を刈り取る時期です。受け取ることをためらわないとき";
 
   return {
     title: `守護神：${god.name} ── エジプトの星が示す使命`,
@@ -490,7 +496,7 @@ export function getEgyptReading(birthday: string): FortuneResult {
       { label: "聖なるシンボル", content: `「${god.symbol}」があなたの力の象徴です。このシンボルを思い描くとき、守護神のエネルギーと深くつながることができます。迷いが生じたときや大切な決断の前に、このシンボルを心の中に描いてみると、進むべき道が静かに見えてきます。` },
       { label: "魂の属性カラー", content: `「${god.color}」があなたの魂の色です。この色を生活に取り入れることで、守護神との共鳴が強まります。持ち物や部屋の中に「${god.color}」を意識的に増やしていくと、日常の中で自然と守護のエネルギーを感じやすくなるでしょう。` },
       { label: "人生の使命", content: `${god.name}が守護するあなたには、${r(2) === 0 ? "この世界に深い変容と再生をもたらす" : "人々に光と知恵を分け与える"}という魂レベルの使命があります。日々の生き方の中にその使命の断片が現れています。${god.symbol}が象徴する力を思い出すたび、この使命への意識が静かに研ぎ澄まされていくでしょう。` },
-      { label: "エジプト暦の現在の時期", content: `現在あなたは${pick(["ペレト（成長の季節）：種を蒔いたものが芽吹き、地道な努力が形になり始める時期です", "シェムウ（収穫の季節）：これまで積み重ねてきた労力が実を結び、成果を刈り取る時期です", "アケト（洪水と再生の季節）：一度全てが洗い流され、新しい肥沃な土壌の上で人生を作り直す時期です"], r)}のエネルギーの中にいます。この季節のリズムに従って行動することが、最大の恵みをもたらします。` },
+      { label: "エジプト暦の現在の時期", content: `現在は${season}です。古代エジプトでは、この三つの季節の巡りが暮らしと祭祀のすべてを律していました。「${god.name}」の守護を受けるあなたも、この季節のリズムに逆らわず行動することで、最大の恵みを受け取れます。` },
       { label: "恋愛運", content: `「${god.name}」の守護を受けるあなたの愛は、神話に描かれる神々のように一途で深いものです。「${god.symbol}」が象徴する力が、惹かれ合う相手との間に強い縁を結びます。駆け引きに走るより誠実さを大切にすることで、ナイルの恵みのように豊かな関係が育っていきます。` },
       { label: "仕事運", content: `あなたは${god.name}から授かった資質を、仕事の場でこそ存分に発揮できます。神殿が長い年月をかけて完成したように、目先の成果より大きな構想を描いて取り組むと評価が定まります。「${god.color}」を仕事道具やデスク周りに取り入れると、集中力と直感が高まるでしょう。` },
       { label: "金運", content: `ナイルの氾濫が肥沃な土をもたらしたように、あなたの金運も巡りの中で豊かさを増していきます。一度の大きな利益より、流れを絶やさず循環させることが繁栄の鍵です。「${god.symbol}」を心に思い描きながら使い道を決めると、無駄な出費が自然と減っていきます。` },
@@ -538,7 +544,7 @@ const BABYLON_METAL_EXTRA = [
 ];
 
 export function getBabylonReading(birthday: string): FortuneResult {
-  const { y, m } = parseDate(birthday);
+  const { m } = parseDate(birthday);
   const planetIdx = (((m - 1) % 7) + 7) % 7;
   const planet = BABYLON_PLANETS[planetIdx];
   const seed = dateSeed(birthday);
@@ -554,7 +560,8 @@ export function getBabylonReading(birthday: string): FortuneResult {
       { label: "聖なる金属と色", content: `${planet.name}に対応する金属は「${planet.metal}」、色は「${planet.color}」です。バビロニア人はこれらを身につけることで守護神のエネルギーを受け取ると信じていました。${BABYLON_METAL_EXTRA[planetIdx]}` },
       { label: "バビロニア暦の現在の読み", content: `バビロニア占星術の計算によると、現在あなたは${pick(["シャバトゥ（厄祓いの月）","アッダール（祭祀の月）","ニサンヌ（新年の月）","ドゥズ（農耕の月）"], r)}のサイクルにあります。この月が持つ意味を暦の上で読み解くことで、今取るべき行動と控えるべき行動の見極めがつきやすくなります。神官が毎月の兆しを記録したように、あなた自身も今月の出来事を書き留めてみましょう。` },
       { label: "天体の示す才能", content: `「${planet.quality}」のエネルギーを持つあなたには、${r(2) === 0 ? "集団を率い、時代の流れを先導する" : "深い知識と技術で人々の生活を豊かにする"}才能が宿っています。この才能は放っておいても消えることはなく、使えば使うほど磨かれていく性質のものです。日々の小さな場面でこの力を意識的に発揮してみましょう。` },
-      { label: "エンマ・アヌ・エンリル（天体予兆書）からの啓示", content: pick([
+      { label: "エンマ・アヌ・エンリル（天体予兆書）からの啓示", content: `粘土板に刻まれた予兆書は、守護遊星「${planet.name}」が司る「${planet.quality}」の質が強まる時期を、あなたにとっての転機と読みます。${planet.name}が空に高く昇るとき、その質を必要とする出来事が身の回りに引き寄せられます。神官たちが星を読んで王に進言したように、あなたも「${planet.quality}」が求められる場面が来たら、それを偶然と片づけず、自分の出番として受け取ってください。逆にその質が空回りしていると感じるときは、無理に押し通さず星が巡るのを待つのが古代からの知恵です。`, },
+      { label: "予兆書が説く心得", content: pick([
         "天体の並びはあなたの前に大きな転機の訪れを告げています。変化を恐れず、星の導きに従ってください。粘土板に刻まれた予兆のように、いま起きている小さな出来事も後から振り返れば重要な兆しだったと気づくはずです。",
         "コンジャンクション（惑星の合）のエネルギーが高まる今、新しい縁と機会が動き始めています。人との出会いや思いがけない提案は、この星の合が呼び込んだものと捉え、素直に受け取ってみましょう。",
         "天体が示す方位に向かって行動するとき、バビロニアの神々の加護が最も強く働きます。守護遊星の色や金属を身につけながらその方角へ一歩踏み出すことで、加護の力を実感しやすくなります。",
@@ -698,11 +705,6 @@ const GEO_EXTRA = [
   "上昇の勢いに浮かれすぎると足元がおろそかになるので、基本を大切にしてください。",
   "過去への未練を引きずると新しいサイクルに乗り遅れるので、区切りをつける決断をしてください。",
 ];
-
-function dotsToArt(dots: [number, number, number, number]): string {
-  const labels = ["火", "風", "水", "地"];
-  return dots.map((d, i) => `${labels[i]}：${d === 1 ? "　●　" : "●　●"}`).join("\n");
-}
 
 export function getGeomancyReading(question: string): FortuneResult {
   const seed = (question ? (question.split("").reduce((a, c) => (a * 31 + c.charCodeAt(0)) | 0, 7)) : Date.now()) >>> 0;

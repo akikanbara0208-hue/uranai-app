@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
-import { Noto_Serif_JP } from "next/font/google";
+import { Noto_Serif_JP, Noto_Sans_Runic } from "next/font/google";
+import { FORTUNES } from "@/lib/fortunes";
 import "./globals.css";
 
 const notoSerifJP = Noto_Serif_JP({
@@ -9,9 +10,19 @@ const notoSerifJP = Noto_Serif_JP({
   display: "swap",
 });
 
+// ルーン文字（Elder Futhark）はOSの標準フォントに収録されていないことが多く、
+// 文字化け（別のグリフへの代替表示）を起こすため専用フォントを読み込む。
+// next/font経由にすることでビルド時に自己ホストされ、外部への追加リクエストが不要になる
+const notoSansRunic = Noto_Sans_Runic({
+  weight: ["400"],
+  subsets: ["runic"],
+  variable: "--font-runic",
+  display: "swap",
+});
+
 export const metadata: Metadata = {
-  title: "世界の占い堂 - 15種類の占いで運命を読み解く",
-  description: "タロット、星座、四柱推命、数秘術、易経、ルーン、おみくじ…世界中の占いが一堂に。完全無料で運命を占います。",
+  title: `世界の占い堂 - ${FORTUNES.length}種類の占いで運命を読み解く`,
+  description: "タロット、西洋占星術、四柱推命、数秘術、易経、ルーン、おみくじ…世界中の占いが一堂に。完全無料で運命を占います。",
 };
 
 export default function RootLayout({
@@ -20,20 +31,10 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="ja" className={`${notoSerifJP.variable} h-full`}>
-      <head>
-        {/* ルーン文字（Elder Futhark）はOSの標準フォントに収録されていないことが多く、
-            文字化け（別のグリフへの代替表示）を起こすため、専用フォントを読み込む */}
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link rel="preconnect" href="https://fonts.gstatic.com" crossOrigin="anonymous" />
-        <link
-          href="https://fonts.googleapis.com/css2?family=Noto+Sans+Runic&display=swap"
-          rel="stylesheet"
-        />
-      </head>
+    <html lang="ja" className={`${notoSerifJP.variable} ${notoSansRunic.variable} h-full`}>
       <body
         className="min-h-full flex flex-col"
-        style={{ fontFamily: "'Noto Sans Runic', var(--font-serif-jp), 'Noto Serif JP', serif" }}
+        style={{ fontFamily: "var(--font-runic), var(--font-serif-jp), 'Noto Serif JP', serif" }}
       >
         {children}
       </body>

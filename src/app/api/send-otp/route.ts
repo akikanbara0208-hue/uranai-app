@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabase } from "@/lib/supabase";
 import { Resend } from "resend";
+import { hitRateLimit, clientIp } from "@/lib/rateLimit";
 
 export async function POST(req: NextRequest) {
   const resend = new Resend(process.env.RESEND_API_KEY!);
@@ -10,6 +11,18 @@ export async function POST(req: NextRequest) {
   }
 
   const normalizedEmail = email.toLowerCase().trim();
+
+  // 無制限に送れると、任意のアドレスへのメール送りつけと送信料の浪費が可能になる。
+  // 同一宛先は3分に1通まで、同一IPからは10分に10通までに抑える
+  const byEmail = hitRateLimit(`otp-send:${normalizedEmail}`, 1, 3 * 60 * 1000);
+  const byIp = hitRateLimit(`otp-send-ip:${clientIp(req)}`, 10, 10 * 60 * 1000);
+  if (!byEmail.allowed || !byIp.allowed) {
+    const retry = Math.max(byEmail.retryAfterSec, byIp.retryAfterSec);
+    return NextResponse.json(
+      { error: `認証コードを送信したばかりです。${retry}秒ほどおいてからお試しください。` },
+      { status: 429, headers: { "Retry-After": String(retry) } }
+    );
+  }
   const code = String(Math.floor(100000 + Math.random() * 900000));
   const expires = new Date(Date.now() + 10 * 60 * 1000); // 10分
 

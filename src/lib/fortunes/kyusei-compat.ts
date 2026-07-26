@@ -1,4 +1,5 @@
 import { FortuneResult } from "@/lib/types";
+import { baziYearOf } from "./astrology";
 
 // ══════════════════════════════════════════════
 // 九星気学 相性占い
@@ -10,10 +11,11 @@ const STAR_NAMES = ["一白水星", "二黒土星", "三碧木星", "四緑木�
 const STAR_ELEM = [4, 2, 0, 0, 2, 3, 3, 2, 1];
 const ELEM_NAME = ["木", "火", "土", "金", "水"];
 
-// 本命星（1〜9）。立春(2/4頃)前は前年扱い
+// 本命星（1〜9）。立春（太陽黄経315°）前は前年扱い
 function honmei(birthday: string): number {
   const [y, m, d] = birthday.split("-").map(Number);
-  const adj = (m === 1 || (m === 2 && d < 4)) ? y - 1 : y;
+  const adj = baziYearOf(y, m, d);
+  if (!Number.isFinite(adj)) return 1;
   let n = adj;
   while (n >= 10) n = String(n).split("").reduce((a, c) => a + Number(c), 0);
   let star = (11 - n) % 9;

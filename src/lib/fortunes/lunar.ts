@@ -82,7 +82,8 @@ function solarTermJD(target: number, guess: number): number {
 // 朔望月 [k, k+1) が中気（黄経30°の倍数）を含むか
 function hasMajorTerm(kStart: number): boolean {
   const a = newMoonJD(kStart), b = newMoonJD(kStart + 1);
-  let sa = sunLon(a), sb = sunLon(b);
+  const sa = sunLon(a);
+  let sb = sunLon(b);
   if (sb < sa) sb += 360;
   return Math.floor(sa / 30) !== Math.floor(sb / 30);
 }

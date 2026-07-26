@@ -12,6 +12,17 @@ export async function GET(req: NextRequest) {
     return NextResponse.json({ waiting: true });
   }
 
+  // このAPIはsession_idだけでログインCookieを発行するため、URLがブラウザ履歴や
+  // アクセスログから漏れると第三者が本人としてログインできてしまう。
+  // 決済直後のリダイレクト以外では使えないよう、発行から30分で受け付けを打ち切る
+  const ageSec = Math.floor(Date.now() / 1000) - (session.created ?? 0);
+  if (ageSec > 30 * 60) {
+    return NextResponse.json(
+      { error: "この決済リンクの有効期限が切れています。ログイン画面からお進みください。" },
+      { status: 410 }
+    );
+  }
+
   const email = (session.metadata?.email || session.customer_email || "").toLowerCase();
   const supabase = getSupabase();
 

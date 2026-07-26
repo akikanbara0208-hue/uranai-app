@@ -221,6 +221,17 @@ export function getSunLongitude(jd: number): number {
   return ((L0 + C) % 360 + 360) % 360;
 }
 
+// 干支・九星の「年」は立春（太陽黄経315°）を境に替わる。立春の日付は年により
+// 2/3〜2/5と変動するため（例：2021年・2025年は2/3）、日付を決め打ちせず黄経で判定する。
+// 出生時刻が不明な場合は正午JSTとみなす。
+export function baziYearOf(year: number, month: number, day: number, hour = 12): number {
+  if (!Number.isFinite(year) || !Number.isFinite(month) || !Number.isFinite(day)) return NaN;
+  if (month === 1) return year - 1;
+  if (month > 2) return year;
+  const jd = julianDay(year, month, day) - 0.5 + (hour - 9) / 24;
+  return getSunLongitude(jd) < 315 ? year - 1 : year;
+}
+
 // 月の黄経（主要摂動項込み）— 誤差±0.3°
 export function getMoonLongitude(jd: number): number {
   const T  = (jd - 2451545.0) / 36525.0;
@@ -285,7 +296,7 @@ function heliocentric(el: number[], T: number): { x: number; y: number } {
   const yp = a * Math.sqrt(1 - e * e) * Math.sin(E);
   const cO = Math.cos(Omega), sO = Math.sin(Omega);
   const cw = Math.cos(omega), sw = Math.sin(omega);
-  const cI = Math.cos(I), sI = Math.sin(I);
+  const cI = Math.cos(I);
   return {
     x: (cw * cO - sw * sO * cI) * xp + (-sw * cO - cw * sO * cI) * yp,
     y: (cw * sO + sw * cO * cI) * xp + (-sw * sO + cw * cO * cI) * yp,
@@ -325,15 +336,11 @@ export function getAscendantLongitude(jd: number, birthHourJST: number, lat: num
   const y = -Math.cos(ramcRad);
   const x = Math.sin(ramcRad) * Math.cos(eps) + Math.tan(latRad) * Math.sin(eps);
   // atan2の式は下降点(DSC)を与えるため+180°して上昇点(ASC)にする
-  let asc = Math.atan2(y, x) / D2R + 180;
+  const asc = Math.atan2(y, x) / D2R + 180;
   return ((asc % 360) + 360) % 360;
 }
 
 // 上昇星座（アセンダント）。lat: 北緯, lon: 東経, birthHourJST: 出生時間(JST)
-function getAscendantIndex(jd: number, birthHourJST: number, lat: number = TOKYO.lat, lon: number = TOKYO.lon): number {
-  return Math.floor(getAscendantLongitude(jd, birthHourJST, lat, lon) / 30);
-}
-
 // MC（中天）の黄経（度）。RAMCを黄経に変換して算出
 export function getMCLongitude(jd: number, birthHourJST: number, lon: number = TOKYO.lon): number {
   const eps = 23.4393 * D2R;

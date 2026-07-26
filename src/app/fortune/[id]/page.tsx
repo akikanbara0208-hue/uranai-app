@@ -6,6 +6,7 @@ import { useParams } from "next/navigation";
 import Link from "next/link";
 import { FORTUNES } from "@/lib/fortunes";
 import { FortuneResult } from "@/lib/types";
+import { buildShareText, buildXShareUrl, buildThreadsShareUrl } from "@/lib/shareText";
 
 // ── 既存占い ──
 import { getTarotReading } from "@/lib/fortunes/tarot";
@@ -395,10 +396,8 @@ function ResultDisplay({ result, question, fortuneId }: { result: FortuneResult;
         <div className="flex justify-center gap-3 flex-wrap">
           <button
             onClick={() => {
-              const text = `🔮 世界の占い堂で占ってみた！\n\n✨ ${result.title}\n\n${result.summary.slice(0, 80)}${result.summary.length > 80 ? "…" : ""}\n\n#世界の占い堂 #占い`;
-              const url = "https://uranai-app-beta-ten.vercel.app";
               window.open(
-                `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(url)}`,
+                buildXShareUrl(result),
                 "_blank", "noopener,noreferrer"
               );
             }}
@@ -409,9 +408,8 @@ function ResultDisplay({ result, question, fortuneId }: { result: FortuneResult;
           </button>
           <button
             onClick={() => {
-              const text = `🔮 世界の占い堂で占ってみた！\n\n✨ ${result.title}\n\n${result.summary.slice(0, 80)}${result.summary.length > 80 ? "…" : ""}\n\n#世界の占い堂 #占い\n\nhttps://uranai-app-beta-ten.vercel.app`;
               window.open(
-                `https://www.threads.net/intent/post?text=${encodeURIComponent(text)}`,
+                buildThreadsShareUrl(result),
                 "_blank", "noopener,noreferrer"
               );
             }}
@@ -422,7 +420,7 @@ function ResultDisplay({ result, question, fortuneId }: { result: FortuneResult;
           </button>
           <button
             onClick={() => {
-              const text = `🔮 世界の占い堂で占ってみた！\n\n✨ ${result.title}\n\n${result.summary.slice(0, 80)}${result.summary.length > 80 ? "…" : ""}\n\n#世界の占い堂 #占い\nhttps://uranai-app-beta-ten.vercel.app`;
+              const text = buildShareText(result, { includeUrl: true });
               navigator.clipboard.writeText(text).then(() => alert("コピーしました！Instagramなどに貼り付けてください"));
             }}
             className="inline-flex items-center gap-2 px-5 py-3 rounded-full text-sm font-semibold"
@@ -468,6 +466,10 @@ function InputForm({
     hsp_0: "5", hsp_1: "5", hsp_2: "5", hsp_3: "5", hsp_4: "5", hsp_5: "5", hsp_6: "5",
     // BigFive デフォルト（中間値50）
     big5_O: "50", big5_C: "50", big5_E: "50", big5_A: "50", big5_N: "50",
+    // 四気質・四元素デフォルト（中間値5）。スライダーの表示値と送信値を一致させるため、
+    // 未操作でも実際の値として持たせる（未定義のままだと0扱いになり結果が先頭に固定される）
+    temp_a: "5", temp_b: "5", temp_c: "5", temp_d: "5",
+    elem_fire: "5", elem_water: "5", elem_earth: "5", elem_air: "5",
   });
 
   const set = (key: string, val: string) => setValues((prev) => ({ ...prev, [key]: val }));
@@ -480,7 +482,10 @@ function InputForm({
     inputType === "birthday_time" || inputType === "name" ||
     inputType === "two_birthday" || fortuneId === "deity";
   const [profiles, setProfiles] = useState<Profile[]>([]);
+  // 入力履歴はlocalStorageから読む。サーバー側では読めないため初期値に含められず、
+  // マウント後に取得するしかない（初期値で読むとhydrationが不一致になる）
   useEffect(() => {
+    // eslint-disable-next-line react-hooks/set-state-in-effect
     if (usesPersonalData) setProfiles(getProfiles());
   }, [usesPersonalData]);
   const birthdayHistory = [...new Set(profiles.map((p) => p.birthday).filter(Boolean))] as string[];
@@ -506,10 +511,15 @@ function InputForm({
     const norm = normalizeDate(v);
     if (!norm) return false;
     const [y, mo, d] = norm.split("-").map(Number);
-    if (y < 1900 || y > new Date().getFullYear()) return false;
+    if (y < 1900) return false;
     if (mo < 1 || mo > 12) return false;
     const daysInMonth = new Date(y, mo, 0).getDate();
-    return d >= 1 && d <= daysInMonth;
+    if (d < 1 || d > daysInMonth) return false;
+    // 未来の日付（まだ生まれていない日）は弾く。年で判定すると年内の未来日が通ってしまい、
+    // バイオリズムが「生まれてから-158日目」のような表示になる
+    const today = new Date();
+    today.setHours(0, 0, 0, 0);
+    return new Date(y, mo - 1, d).getTime() <= today.getTime();
   };
 
   // 「1430」「14.30」なども受け付け、内部的には "HH:MM" に統一する（任意項目なので失敗時は元の値のまま）
@@ -564,7 +574,16 @@ function InputForm({
       if (fortuneId === "color-personality") return values.fav_color !== undefined && values.fav_color !== "";
       if (fortuneId === "deity") return isValidDate(values.birthday) && !!values.deity_q1 && !!values.deity_q2 && !!values.deity_q3;
       if (fortuneId === "face-reading") return !!values.face_shape && !!values.face_eye && !!values.face_nose && !!values.face_mouth && !!values.face_brow;
-      return true; // hsp, big-five, temperament, four-elements have defaults
+      // 四気質・四元素は「最も高い項目」で型を決めるため、全項目が同じ値のままだと
+      // 誰が診断しても先頭の型（多血質／火）に固定されてしまう。差をつけた入力を必須にする
+      if (fortuneId === "temperament" || fortuneId === "four-elements") {
+        const keys = fortuneId === "temperament"
+          ? ["temp_a", "temp_b", "temp_c", "temp_d"]
+          : ["elem_fire", "elem_water", "elem_earth", "elem_air"];
+        const scores = keys.map((k) => values[k] ?? "5");
+        return new Set(scores).size > 1;
+      }
+      return true; // hsp, big-five have defaults
     }
     return false;
   };
@@ -692,7 +711,11 @@ function InputForm({
           <input
             type="text"
             list="name-history"
-            placeholder={inputType === "birthday_name" ? "例：山田花子（なくてもOK）" : "例：山田 花子"}
+            placeholder={
+              // 数秘術はローマ字/かなでしか表現数・魂の数を算出できないため、例自体をかなにする
+              fortuneId === "numerology" ? "例：やまだ はなこ / Yamada Hanako"
+                : inputType === "birthday_name" ? "例：山田花子（なくてもOK）" : "例：山田 花子"
+            }
             value={values.name || ""}
             onChange={(e) => set("name", e.target.value)}
           />
@@ -703,7 +726,7 @@ function InputForm({
             <p className="text-xs text-gray-500 mt-1">姓と名の間にスペースを入れてください（例：山田 花子）。漢字・ひらがな・カタカナ可。実際の画数で五格を鑑定します。</p>
           )}
           {fortuneId === "numerology" && (
-            <p className="text-xs text-gray-500 mt-1">ローマ字またはカタカナ・ひらがなで入力すると、表現数・魂の数も鑑定できます。</p>
+            <p className="text-xs text-gray-500 mt-1">数秘術の名前の数はローマ字（A=1…）で計算します。<strong className="text-yellow-500/80">ひらがな・カタカナ・ローマ字</strong>で入力すると、表現数と魂の数まで鑑定できます（漢字のみの場合は算出できません）。</p>
           )}
         </div>
       )}
@@ -889,7 +912,7 @@ function InputForm({
       {/* ── 四元素タイプ ── */}
       {inputType === "quiz" && fortuneId === "four-elements" && (
         <div className="space-y-4">
-          <p className="text-sm text-yellow-500/70">各元素が自分にどの程度当てはまるか評価してください</p>
+          <p className="text-sm text-yellow-500/70">各元素が自分にどの程度当てはまるか評価してください（最も高い元素であなたの支配元素を判定するため、4つに差をつけてください）</p>
           {[
             { key: "elem_fire",  label: "🔥 火（Fire）",  desc: "情熱的・行動力がある・変化を起こしたい・リーダー気質" },
             { key: "elem_water", label: "💧 水（Water）", desc: "感受性が高い・直感を信じる・共感力がある・流れに乗る" },
@@ -965,7 +988,7 @@ function InputForm({
       {/* ── 四気質診断 ── */}
       {inputType === "quiz" && fortuneId === "temperament" && (
         <div className="space-y-4">
-          <p className="text-sm text-yellow-500/70">各気質の説明を読み、自分にどの程度当てはまるかを0〜10で選んでください</p>
+          <p className="text-sm text-yellow-500/70">各気質の説明を読み、自分にどの程度当てはまるかを0〜10で選んでください（最も高い気質で判定するため、4つに差をつけてください）</p>
           {[
             { key: "temp_a", label: "多血質（風）", desc: "社交的・明るい・行動が早い・飽きっぽい・楽観的" },
             { key: "temp_b", label: "胆汁質（火）", desc: "意志が強い・情熱的・リーダー気質・怒りやすい・決断が速い" },
