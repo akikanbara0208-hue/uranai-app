@@ -8,14 +8,16 @@ const CTA = `${FORTUNES.length}種類の占いから、あなたは何が出る�
 const TAGS = "#世界の占い堂 #占い";
 
 // 投稿先ごとの上限。
-// X: 全角を2文字分として数え、上限は280単位（＝日本語140文字）。URLはt.coにより
-//    一律23単位として計上されるため、その分をあらかじめ差し引く。
-// Threads: 500文字（コードポイント数。全角も1文字として数える）。URLは本文に含める。
+// X: 全角を2文字分として数え、上限は280単位（＝日本語140文字）。
+// Threads/コピー: 500文字（コードポイント数。全角も1文字として数える）。
 const LIMITS = {
-  x:       { total: 280, weighted: true,  reserveForUrl: 24, includeUrl: false },
-  threads: { total: 500, weighted: false, reserveForUrl: 0,  includeUrl: true  },
-  copy:    { total: 500, weighted: false, reserveForUrl: 0,  includeUrl: true  },
+  x:       { total: 280, weighted: true  },
+  threads: { total: 500, weighted: false },
+  copy:    { total: 500, weighted: false },
 } as const;
+
+// XではURLがt.coに短縮され、実際の長さに関わらず一律23単位として数えられる
+const X_URL_UNITS = 23;
 
 export type SharePlatform = keyof typeof LIMITS;
 
@@ -100,14 +102,21 @@ export function buildShareText(
   platform: SharePlatform,
   fortuneId?: string
 ): string {
-  const { total, weighted, reserveForUrl, includeUrl } = LIMITS[platform];
+  const { total, weighted } = LIMITS[platform];
 
   // 何の占いをしたのかが分からないと読み手が試しようがないため、占術名を明示する
   const fortuneName = FORTUNES.find((f) => f.id === fortuneId)?.name;
   const lead = fortuneName ? `世界の占い堂で「${fortuneName}」を占ってみた！` : "世界の占い堂で占ってみた！";
 
-  const footer = `\n\n${CTA}\n${TAGS}` + (includeUrl ? `\n${APP_URL}` : "");
-  const fixed = measure(`${lead}\n\n`, weighted) + measure(footer, weighted) + reserveForUrl;
+  // 誘い文 → リンク → 空行 → ハッシュタグ の順。リンクはタグに埋もれず単独行に置く
+  // （Xのintentに&urlを渡すと本文末尾＝タグの後ろに連結されてしまうので、本文に含める）
+  const footerHead = `\n\n${CTA}\n`;
+  const footerTail = `\n\n${TAGS}`;
+  const footer = `${footerHead}${APP_URL}${footerTail}`;
+  const urlUnits = weighted ? X_URL_UNITS : measure(APP_URL, weighted);
+  const fixed =
+    measure(`${lead}\n\n`, weighted) +
+    measure(footerHead, weighted) + urlUnits + measure(footerTail, weighted);
   let budget = total - fixed;
 
   // タイトルと本文で予算を分け合う。タイトルが長い場合はタイトル側を削り、
@@ -125,7 +134,7 @@ export function buildShareText(
 
 export function buildXShareUrl(result: ShareInput, fortuneId?: string): string {
   const text = buildShareText(result, "x", fortuneId);
-  return `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}&url=${encodeURIComponent(APP_URL)}`;
+  return `https://twitter.com/intent/tweet?text=${encodeURIComponent(text)}`;
 }
 
 export function buildThreadsShareUrl(result: ShareInput, fortuneId?: string): string {
