@@ -1,0 +1,37 @@
+# Supabaseの無料枠は「7日間活動なし」で自動一時停止される。
+# 以前は Vercel cron (vercel.json) で叩いていたが、cronの宛先がデプロイ固有URLのため
+# Vercel Authentication(SSO保護)に 302 で弾かれ、Supabaseに1度も届いていなかった。
+# Vercelは「リダイレクトされたcronはログにも残さない」ので失敗が見えない。
+# そのためVercelに依存しないGitHub Actionsから直接叩き、失敗時はジョブを落として通知させる。
+name: Supabase keepalive
+
+on:
+  schedule:
+    # 毎日 18:00 UTC = 翌03:00 JST
+    - cron: "0 18 * * *"
+  workflow_dispatch:
+
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase REST
+        env:
+          SUPABASE_URL: https://hbcnaflwtjtcgpucunvg.supabase.co
+          KEY: ${{ secrets.SUPABASE_SERVICE_ROLE_KEY }}
+        run: |
+          set -euo pipefail
+          if [ -z "${KEY}" ]; then
+            echo "::error::SUPABASE_SERVICE_ROLE_KEY が未設定です"
+            exit 1
+          fi
+          code=$(curl -sS -o /tmp/res.json -w '%{http_code}' \
+            "${SUPABASE_URL}/rest/v1/uranai_users?select=id&limit=1" \
+            -H "apikey: ${KEY}" -H "Authorization: Bearer ${KEY}")
+          echo "HTTP ${code}"
+          if [ "${code}" != "200" ]; then
+            echo "::error::Supabase keepalive 失敗 (HTTP ${code})"
+            cat /tmp/res.json
+            exit 1
+          fi
+          echo "Supabase keepalive OK"
