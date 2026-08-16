@@ -27,29 +27,24 @@ const MIN_SUMMARY = 40;
 const MAX_TITLE = 60;
 // シェア文に載せる本文の目安（文字数）。投稿先の上限とは別に、読みやすさのために
 // ここで区切る。上限まで詰め込むと「全文貼り付け」になり、シェアとして読まれない
-const BODY_TARGET = 80;
-// 文の途中で切らずに済ませたいので、句点がこの位置以降にあればそこで区切る
-const BODY_MIN_SENTENCE = 30;
+const BODY_TARGET = 100;
 
-// 鑑定文を、なるべく文の切れ目（。！？）で終わるように要約する。
+// 鑑定文を、文の切れ目（。！？）でだけ終わるように要約する。
+// 「体が軽く、スタミナに満ちてい…」のような尻切れは読み手に何も伝わらないので、
+// 1文すら収まらないときの最終手段としてだけ切り詰める。
 // weighted=false なら文字数、true ならXの重み付き単位で測る
 function summarize(text: string, max: number, weighted: boolean): string {
   if (measure(text, weighted) <= max) return text;
-  const ellipsis = measure("…", weighted);
-  let acc = 0, head = "";
+  let acc = 0, head = "", cut = -1;
   for (const ch of Array.from(text)) {
     const w = weighted ? (ch.codePointAt(0)! > 0x7f ? 2 : 1) : 1;
-    if (acc + w > max - ellipsis) break;
+    if (acc + w > max) break;
     acc += w;
     head += ch;
+    if (ch === "。" || ch === "！" || ch === "？") cut = head.length;
   }
-  // 収まる範囲で最後に現れる文末を探し、そこで綺麗に閉じる
-  let cut = -1;
-  for (const mark of ["。", "！", "？"]) {
-    cut = Math.max(cut, head.lastIndexOf(mark));
-  }
-  if (cut >= BODY_MIN_SENTENCE) return head.slice(0, cut + 1);
-  return head + "…";
+  if (cut > 0) return head.slice(0, cut);
+  return truncate(text, max, weighted);
 }
 
 // 占術そのものの解説にあたる項目。読み手が知りたいのは「その人に何が出たか」なので、
@@ -61,15 +56,46 @@ const EXPLAINER_LABEL = /(とは|について|の説明|参考資料|基礎知�
 //   ・見出し相当で意味がない（易経「䷥ Opposition ─ 属性：乖違」）
 //   ・占術の由来説明で結果が入っていない（ジプシーカード）
 // といった例があるため、まず「結果を語っている詳細項目」を探し、無ければsummaryに戻す
-function pickBody(
-  result: Pick<FortuneResult, "summary"> & { details?: { label?: string; content: string }[] }
-): string {
+
+// アプリ画面では意味を持つが、シェア文に貼ると「[███░░░ +52%]」のような
+// 文字化けにしか見えない装飾を落とす（バイオリズムのゲージ等）
+function stripDecorations(text: string): string {
+  return text
+    .replace(/\[?[█░]+[^\]\n]*\]?/g, "")
+    .split("\n")
+    .map((line) => line.trim())
+    .filter(Boolean)
+    .join("\n");
+}
+
+// 括弧や区切りが開いたまま終わると読みづらいので、切り詰めた末尾を整える
+function trimDangling(text: string): string {
+  return text.replace(/[\s　（(「『【〈《［[・、，,／/…—─ー-]+$/u, "");
+}
+
+// シェア本文の候補を、載せたい順に並べて返す。
+// 呼び出し側が上限に収まるかを見て選べるよう、1つに絞らずすべて返す
+function bodyCandidates(
+  result: Pick<FortuneResult, "title" | "summary"> & { details?: { label?: string; content: string }[] }
+): string[] {
+  const out: string[] = [];
+  const title = result.title ?? "";
   for (const d of result.details ?? []) {
     if (EXPLAINER_LABEL.test(d.label ?? "")) continue;
-    const c = (d.content ?? "").trim();
-    if (Array.from(c).length >= 30) return c;
+    const c = stripDecorations((d.content ?? "").trim());
+    // 装飾を落としたうえで、鑑定文として読める長さがあるものだけを採用する
+    if (Array.from(c).length < 30) continue;
+    // 何についての鑑定なのかが分からないと読み手に伝わらないので、見出しも短く添える
+    // （「（23日周期）」のような補足は場所を取るだけなので落とす）
+    const head = (d.label ?? "").replace(/（[^）]*）/g, "").trim();
+    // 見出しの実体（絵文字を除いた部分）がタイトルに入っているなら、重ねても情報が増えない
+    const plain = head.replace(/^[^\p{L}\p{N}]+/u, "");
+    const useHead = head && Array.from(head).length <= 14 && !(plain && title.includes(plain));
+    out.push(useHead ? `${head}：${c}` : c);
   }
-  return (result.summary ?? "").trim();
+  const summary = stripDecorations((result.summary ?? "").trim());
+  if (summary) out.push(summary);
+  return out;
 }
 
 function measure(text: string, weighted: boolean): number {
@@ -122,12 +148,20 @@ export function buildShareText(
   // タイトルと本文で予算を分け合う。タイトルが長い場合はタイトル側を削り、
   // 鑑定文が丸ごと消えることがないようにする
   const titleBudget = Math.max(0, Math.min(MAX_TITLE, budget - MIN_SUMMARY - 2));
-  const title = truncate(result.title, titleBudget, weighted);
+  const truncated = truncate(result.title, titleBudget, weighted);
+  const title = truncated === result.title ? truncated : `${trimDangling(truncated.replace(/…$/, ""))}…`;
   const titleLine = title ? `【${title}】\n` : "";
   budget -= measure(titleLine, weighted);
 
-  // まず読みやすい長さへ要約し、そのうえで投稿先の上限にも文末で収める
-  const body = summarize(summarize(pickBody(result), BODY_TARGET, false), budget, weighted);
+  // まず読みやすい長さへ要約し、そのうえで投稿先の上限にも文末で収める。
+  // 尻切れ（末尾が「…」）になる候補は読んでも何も伝わらないので、
+  // 文として言い切れる項目が他にあればそちらを優先する
+  let body = "";
+  for (const candidate of bodyCandidates(result)) {
+    const text = summarize(summarize(candidate, BODY_TARGET, false), budget, weighted);
+    if (!body) body = text;
+    if (!text.endsWith("…")) { body = text; break; }
+  }
 
   return `${lead}\n\n${titleLine}${body}${footer}`;
 }

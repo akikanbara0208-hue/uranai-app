@@ -389,8 +389,9 @@ export function getBiorhythmReading(birthday: string): FortuneResult {
               `全体としては下降傾向です（3つのうち${3 - risingCount}つが下降）。`;
 
   return {
-    title: `今日のバイオリズム：${overallLabel}（生まれてから${days.toLocaleString()}日目）`,
-    summary: `今日のあなたのバイオリズムは「${overallLabel}」。生まれてから${days.toLocaleString()}日、身体・感情・知性の三つのリズムが描く今日の波を読み解きます。1900年代初頭の生理学研究から生まれたバイオリズムは、23日・28日・33日という自然な周期で私たちのコンディションに影響を与えるとされています。`,
+    // 経過日数は年齢が割り出せてしまううえ、読み手にとって意味を持たないため表に出さない
+    title: `今日のバイオリズム：${overallLabel}`,
+    summary: `今日のあなたのバイオリズムは「${overallLabel}」。身体・感情・知性の三つのリズムが描く今日の波を読み解きます。1900年代初頭の生理学研究から生まれたバイオリズムは、23日・28日・33日という自然な周期で私たちのコンディションに影響を与えるとされています。`,
     details: [
       { label: "💪 身体サイクル（23日周期）", content: `[${bioBar(phy)}]　${label(phy)}\n${CYCLE_TEXT.phy(phy)}` },
       { label: "❤️ 感情サイクル（28日周期）", content: `[${bioBar(emo)}]　${label(emo)}\n${CYCLE_TEXT.emo(emo)}` },
