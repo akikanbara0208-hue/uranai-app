@@ -253,7 +253,7 @@ function RelatedFortunes({ currentId }: { currentId: string }) {
 }
 
 // ──────────────────────────────────────────────────────────────
-function ResultDisplay({ result, question, fortuneId, shareName }: { result: FortuneResult; question?: string; fortuneId: string; shareName?: string }) {
+function ResultDisplay({ result, question, fortuneId, shareName, privateQuestion }: { result: FortuneResult; question?: string; fortuneId: string; shareName?: string; privateQuestion?: string }) {
   // 鑑定文に含まれる本名は、シェア文だけ「私」に置き換える（画面表示は名前のまま）
   const redact = (t: string) => (shareName ? t.split(shareName).join("私") : t);
   const shareResult = {
@@ -261,6 +261,9 @@ function ResultDisplay({ result, question, fortuneId, shareName }: { result: For
     share: result.share ? redact(result.share) : undefined,
     summary: redact(result.summary),
     details: result.details.map((d) => ({ label: d.label, content: redact(d.content) })),
+    advice: redact(result.advice),
+    // 入力された悩みを引用している文はシェア文から除外させる
+    question: privateQuestion,
   };
   const reordered = question ? reorderDetails(result.details, question) : result.details;
   const theme = question ? detectTheme(question) : "general";
@@ -1310,6 +1313,10 @@ export default function FortunePage() {
   // 入力された氏名。鑑定文には名前が入る占術があり、そのままSNSへ公開投稿すると
   // 本名が載ってしまうため、シェア文だけ差し替える用途で控えておく
   const [lastName, setLastName] = useState<string | undefined>(undefined);
+  // 入力された「悩み」。鑑定文はこれを引用するため、そのままシェアすると
+  // 相談内容がSNSに公開されてしまう。シェア文から除くために控えておく
+  // （夢占いのキーワードは鑑定対象そのものなので、ここには含めない）
+  const [lastPrivateQuestion, setLastPrivateQuestion] = useState<string | undefined>(undefined);
 
   if (!fortune) {
     return (
@@ -1327,6 +1334,7 @@ export default function FortunePage() {
     setResult(r);
     setLastQuestion(values.question || values.keyword || undefined);
     setLastName(values.name?.trim() || undefined);
+    setLastPrivateQuestion(values.question?.trim() || undefined);
     if (r) {
       setTimeout(() => {
         document.getElementById("result")?.scrollIntoView({ behavior: "smooth" });
@@ -1359,7 +1367,7 @@ export default function FortunePage() {
         </div>
 
         <div id="result">
-          {result && <ResultDisplay result={result} question={lastQuestion} fortuneId={id} shareName={lastName} />}
+          {result && <ResultDisplay result={result} question={lastQuestion} fortuneId={id} shareName={lastName} privateQuestion={lastPrivateQuestion} />}
         </div>
 
         {result && (

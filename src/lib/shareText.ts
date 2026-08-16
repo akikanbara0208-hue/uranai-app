@@ -72,6 +72,16 @@ function stripDecorations(text: string): string {
     .join("\n");
 }
 
+// 入力された悩みは本人以外には見せたくない情報なので、それを引用した文はシェアに載せない。
+// 鑑定文は質問を丸ごとではなく先頭だけ引用することがある（例：`q.slice(0, 40)`）ため、
+// 完全一致ではなく先頭の一部が含まれるかで判定する
+function quotesQuestion(text: string, question?: string): boolean {
+  const q = (question ?? "").split("|")[0].trim();
+  const chars = Array.from(q);
+  if (chars.length < 4) return false;
+  return text.includes(chars.slice(0, 10).join(""));
+}
+
 // 括弧や区切りが開いたまま終わると読みづらいので、切り詰めた末尾を整える
 function trimDangling(text: string): string {
   return text.replace(/[\s　（(「『【〈《［[・、，,／/…—─ー-]+$/u, "");
@@ -79,9 +89,7 @@ function trimDangling(text: string): string {
 
 // シェア本文の候補を、載せたい順に並べて返す。
 // 呼び出し側が上限に収まるかを見て選べるよう、1つに絞らずすべて返す
-function bodyCandidates(
-  result: Pick<FortuneResult, "title" | "summary"> & { share?: string; details?: { label?: string; content: string }[] }
-): string[] {
+function bodyCandidates(result: ShareInput): string[] {
   const out: string[] = [];
   const title = `${result.title ?? ""} ${result.share ?? ""}`;
   for (const d of result.details ?? []) {
@@ -89,6 +97,8 @@ function bodyCandidates(
     const c = stripDecorations((d.content ?? "").trim());
     // 装飾を落としたうえで、鑑定文として読める長さがあるものだけを採用する
     if (Array.from(c).length < 30) continue;
+    // 入力された悩みを引用している文は、公開投稿に相談内容が載ってしまうので使わない
+    if (quotesQuestion(c, result.question)) continue;
     // 何についての鑑定なのかが分からないと読み手に伝わらないので、見出しも短く添える
     // （「（23日周期）」のような補足は場所を取るだけなので落とす）
     const head = (d.label ?? "").replace(/（[^）]*）/g, "").trim();
@@ -98,7 +108,11 @@ function bodyCandidates(
     out.push(useHead ? `${head}：${c}` : c);
   }
   const summary = stripDecorations((result.summary ?? "").trim());
-  if (summary) out.push(summary);
+  if (summary && !quotesQuestion(summary, result.question)) out.push(summary);
+  // 悩みを引用する占術（タロット・ルーン等）は詳細もsummaryも全滅することがある。
+  // adviceは問いを引用しないので、最後の受け皿として残しておく
+  const advice = stripDecorations((result.advice ?? "").trim());
+  if (advice && !quotesQuestion(advice, result.question)) out.push(advice);
   return out;
 }
 
@@ -127,7 +141,10 @@ function truncate(text: string, max: number, weighted: boolean): string {
 
 type ShareInput = Pick<FortuneResult, "title" | "summary"> & {
   share?: string;
+  advice?: string;
   details?: { label?: string; content: string }[];
+  /** 入力された悩み。これを引用した鑑定文はシェア文から除外する */
+  question?: string;
 };
 
 export function buildShareText(
@@ -155,7 +172,9 @@ export function buildShareText(
   // 見出しには、その人固有の結果を一目で伝える share を優先して使う。
   // titleは「5枚スプレッド」「今日のバイオリズム」のように占術の枠組みを述べるだけのことが多く、
   // 見た人が「自分は何が出るんだろう」と思う材料にならない
-  const headline = (result.share ?? "").trim() || result.title;
+  // 見出しにも悩みが混ざらないようにする（占術を追加したときの取りこぼし対策）
+  const safe = (t: string) => (t && !quotesQuestion(t, result.question) ? t : "");
+  const headline = safe((result.share ?? "").trim()) || safe(result.title);
   const headlineBudget = Math.max(0, Math.min(MAX_HEADLINE, budget - MIN_SUMMARY - 2));
   const truncated = truncate(headline, headlineBudget, weighted);
   const clipped = truncated === headline ? truncated : `${trimDangling(truncated.replace(/…$/, ""))}…`;
