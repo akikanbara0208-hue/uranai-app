@@ -235,6 +235,7 @@ export function getComprehensiveReading(birthday: string, name: string = ""): Fo
 
   return {
     title: `総合鑑定：${name ? name + "さんの" : ""}過去・現在・未来`,
+    share: `🌍私の総合鑑定は 数秘${lifePathNum}×${westernSign}×${chineseZodiac}年×マヤ「${mayaSign}」`,
     summary: `東洋・西洋・古代・スピリチュアルの叡智を横断した総合鑑定です。数秘術「${lifePathNum}（${lifepathMeaning}）」、西洋占星術「${westernSign}」、干支「${chineseZodiac}年生まれ・${element}の気質」、ヴェーダ占星術「${nakshatra}」、マヤ暦「${mayaSign}」──これらが示す魂の青写真と、過去・現在・未来の深層を読み解きます。`,
     details: [
       // ─── 魂の設計図 ───

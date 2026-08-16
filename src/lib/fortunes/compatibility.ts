@@ -127,6 +127,7 @@ export function getCompatibilityReading(
 
   return {
     title: `相性 ${overall}点 ── ${stars(overall)}`,
+    share: `💞${SIGN_NAMES[A.sun]}×${SIGN_NAMES[B.sun]}の相性は ${overall}点 ${stars(overall)}`,
     summary: `お二人の出生図を西洋占星術で実際に計算しました。総合相性は${overall}点。${verdict}`,
     details: [
       { label: "🌞 太陽どうし（基本的な価値観）", content: `お相手①：${SIGN_NAMES[A.sun]}／お相手②：${SIGN_NAMES[B.sun]}。相性度 ${sunSun}点 ${stars(sunSun)}。\n${sunComment}` },

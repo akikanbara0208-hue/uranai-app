@@ -53,6 +53,7 @@ export function getPastLifeReading(birthday: string): FortuneResult {
 
   return {
     title: `前世：${life.era}の${life.role}`,
+    share: `🕯️私の前世は${life.era}の「${life.role}」でした`,
     summary: `生年月日に刻まれたアカシックエネルギーから読み解く、あなたの魂にもっとも強い影響を残している前世。${life.era}の${life.place}で「${life.role}」として生きたその記憶が、今のあなたの性格・才能・人生のテーマの根っこを形づくっています。前世を知ることは、今のあなたを深く肯定し、これから進むべき方向を照らす手がかりになります。`,
     details: [
       { label: "前世の姿", content: life.desc },
@@ -117,6 +118,7 @@ export function getAuraReading(birthday: string): FortuneResult {
 
   return {
     title: `あなたのオーラ：${aura.color}（サブ：${subAura.color}）`,
+    share: `✨今日の私のオーラは「${aura.color}」×「${subAura.color}」──${aura.keyword}`,
     summary: `スピリチュアルな観点から見た、あなたという存在を包むエネルギーの光＝オーラ。生年月日とあなたの「今」が重なり合って浮かび上がる、今日のメインオーラは「${aura.color}」、その奥で支えるサブオーラは「${subAura.color}」です。オーラはあなたの状態が変われば色も変わる、生きたエネルギー。今日のあなたは「${fluctuation.state}」です。`,
     details: [
       { label: `メインオーラ：${aura.color}（${aura.keyword}）`, content: aura.desc },
@@ -166,6 +168,7 @@ export function getChakraReading(question: string): FortuneResult {
 
   return {
     title: `注目チャクラ：${focus.name}（${focus.ja}）`,
+    share: `🔮いま整えるべきは第${focus.num}チャクラ「${focus.name}」（${balanceState}）`,
     summary: `あなたの問いに宿るエネルギーの流れを、7つのチャクラの観点から読み解きました。今いちばんケアが必要な中心は第${focus.num}チャクラ「${focus.name}（${focus.ja}）」で、現在${balanceState}の状態にあります。このチャクラを整えることが、あなたの心身とエネルギーの巡りを取り戻す鍵になります。`,
     details: [
       { label: `フォーカスチャクラ：第${focus.num}チャクラ ${focus.name}（${focus.keywords}）`, content: `${focus.location}に位置し、「${focus.color}」の光を持つこのチャクラが今最も注目のエネルギー中心です。現在${balanceState}の状態にあります。${balanceState === "少し閉じ気味" ? focus.blocked : `エネルギーが強すぎる状態では、${focus.keywords}に関して過剰反応が起きやすくなります。バランスを取ることが大切です。`}` },
@@ -213,6 +216,7 @@ export function getAkashicReading(question: string): FortuneResult {
 
   return {
     title: "アカシックレコード ── 魂の書庫からの啓示",
+    share: `📖魂の書庫が示したテーマは「${msg1.theme}」「${msg2.theme}」「${msg3.theme}」`,
     summary: `アカシックレコードとは、すべての魂が経てきた全ての経験・選択・想いが記録された宇宙の図書館です。今のあなたの魂の記録を開いたところ、「${msg1.theme}」「${msg2.theme}」「${msg3.theme}」という3つのテーマが強く光って浮かび上がってきました。これらは今のあなたが受け取るべき、魂からの大切なメッセージです。`,
     details: [
       { label: `テーマ：${msg1.theme}`, content: msg1.message },
@@ -263,6 +267,7 @@ export function getSpiritAnimalReading(question: string): FortuneResult {
 
   return {
     title: `スピリットアニマル：${primary.name}`,
+    share: `🐾私を導く精霊は「${primary.name.replace(/（.*$/, "")}」──${primary.keyword}`,
     summary: `シャーマニズムの伝統では、誰もが自分を導く動物の精霊＝スピリットアニマルを持つと考えられています。今のあなたを導くメインのスピリットは「${primary.name}（${primary.keyword}）」、それを背後から支えるのは「${secondary.name}」です。この二頭の精霊が、今のあなたに必要な力とメッセージを携えて寄り添っています。`,
     details: [
       { label: `メインスピリット：${primary.name}（${primary.keyword}）`, content: primary.message },

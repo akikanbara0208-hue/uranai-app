@@ -75,6 +75,7 @@ export function getEtoCompatReading(birthdayA: string, birthdayB: string): Fortu
 
   return {
     title: `干支相性 ${score}点 ${stars}`,
+    share: `🐾${ANIMALS[a]}年×${ANIMALS[b]}年の相性は ${score}点 ${stars}（${rel}）`,
     summary: `${ANIMALS[a]}年 × ${ANIMALS[b]}年の相性は「${rel}」で、相性スコアは${score}点です。${verdict} 干支の伝統的な相性理論をもとに、お二人の関係を多面的に読み解きました。`,
     details: [
       { label: "🐾 お二人の干支", content: `お一人目：${ANIMALS[a]}年／お二人目：${ANIMALS[b]}年。干支占いでは、生まれ年の十二支そのものの組み合わせから、二人の間に流れる自然な相性を読み解きます。まずはお互いの干支を確かめたうえで、次の関係性の解説を見ていきましょう。` },

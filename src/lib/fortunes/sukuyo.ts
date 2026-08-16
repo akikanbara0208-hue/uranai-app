@@ -91,6 +91,7 @@ export function getSukuyoReading(birthday: string, birthHour?: number): FortuneR
 
   return {
     title: `あなたの本命宿は「${shuku.name}（${shuku.yomi}）」`,
+    share: `🌙私の本命宿は二十七宿の「${shuku.name}（${shuku.yomi}）」──${shuku.nature}宿`,
     summary: `宿曜占星術により、生まれた瞬間の月は二十七宿の「${shuku.name}」にありました。これは空海が唐から日本に伝えた仏教占星術が示す、あなたの魂の核とも言える星座です。「${shuku.nature}宿」に属するこの宿の気質を知れば、生まれ持った本質と運の流れが見えてきます。${precision}`,
     details: [
       { label: `🌙 本命宿：${shuku.name}（${shuku.yomi}）`, content: shuku.char },

@@ -120,6 +120,7 @@ export function getJuniChokuReading(): FortuneResult {
 
   return {
     title: `今日の十二直は「${c.name}」`,
+    share: `📅今日の十二直は「${c.name}」──${c.good}に吉`,
     summary: `${y}年${m}月${d}日（${weekdays[today.getDay()]}曜日）の十二直は「${c.name}」です。${c.meaning}十二直は、その日の十二支と節気で替わる月建との関係から定まる暦注で、何をするのに向いた日かを古来の知恵で教えてくれます。`,
     details: [
       { label: "📜 十二直とは", content: "建・除・満・平・定・執・破・危・成・納・開・閉の12種からなる暦注。日の十二支と、その月の月建（節気で替わる）の関係から定まり、行動の吉凶を示します。中国から伝わり、江戸時代には暦の中段に記され、人々が日取りを選ぶ目安として親しまれてきました。" },

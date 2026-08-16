@@ -77,4 +77,12 @@ export interface FortuneResult {
   diceRoll?: number[];
   chartWheel?: ChartWheelData;
   advice: string;
+  /**
+   * SNSシェア文の見出しに使う「結果の要点」。
+   * 引いたカード・出た星座・スコアなど “その人にしか出ない結果” を一目で伝える一文にする。
+   * 鑑定文の抜き書きや占術の説明にはしない（読んだ人が「自分は何が出るんだろう」と
+   * 思えないとシェアされる意味がないため）。
+   * Xの140文字制限に収める必要があるので、目安30文字以内。
+   */
+  share?: string;
 }

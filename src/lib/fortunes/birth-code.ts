@@ -50,6 +50,7 @@ export function getBirthCodeReading(birthday: string, name?: string): FortuneRes
 
   return {
     title: `誕生コード：${code}`,
+    share: `🧬私の誕生コードは「${code}」でした`,
     summary: `${nameLine}誕生日に刻まれた4つの実データ──数秘「ライフパス${lifePath}」、干支「${ANIMALS[animalIdx]}」、生まれた日の月相「${MOON_PHASES[phaseIdx][0]}」、七十二候「第${koIdx + 1}候」──を統合した、当アプリ独自のプロファイルです。これらはすべて生年月日からの実計算で導いた値であり、伝統占術の寄せ集めではなく、世界であなただけの組み合わせになります。`,
     details: [
       { label: `① 数秘ライフパス ${lifePath}（${lpKey}）`, content: `生年月日の数を還元した、あなたの人生の主題は「${lpKey}」。これが行動の根本動機になります。困ったときに立ち返るべき軸であり、あなたが心から満たされる方向を指し示します。` },

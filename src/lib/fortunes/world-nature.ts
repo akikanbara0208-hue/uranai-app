@@ -52,6 +52,7 @@ export function getBirthFlowerReading(birthday: string): FortuneResult {
 
   return {
     title: `誕生花：${flower.flower} ── 花が語るあなたの本質`,
+    share: `🌸私の誕生花は「${flower.flower}」、花言葉は「${flower.meaning}」`,
     summary: `あなたの誕生月（${m}月）の誕生花は「${flower.flower.replace("＆", "」と「")}」の2つ、その花言葉は「${flower.meaning}」です。花が季節のリズムに従って咲くように、この花にはあなたが生まれ持った気質と魂の本質が映し出されています。誕生花が語るあなたの人柄、運勢の流れ、そして開運の鍵をひもといていきましょう。`,
     details: [
       { label: `誕生花：${flower.flower}（${flower.en}）`, content: `花言葉「${flower.meaning}」。${flower.personality}` },
@@ -110,6 +111,7 @@ export function getMoonReading(birthday: string): FortuneResult {
 
   return {
     title: `生まれたときの月：${moon.symbol} ${moon.name}`,
+    share: `${moon.symbol} 生まれた夜の月は「${moon.name.replace(/（.*$/, "")}」──${moon.theme}`,
     summary: `あなたが生まれた日（${y}年${m}月${d}日）の夜空には「${moon.name}」が浮かんでいました。月相は約29.5日かけて満ち欠けを繰り返し、生まれた瞬間の月の姿には魂が選んだリズムが刻まれます。テーマは「${moon.theme}」。月のサイクルが示すあなたの本質、強み、そして人生で磨かれていく課題を読み解いていきましょう。`,
     details: [
       { label: `${moon.symbol} ${moon.name}（テーマ：${moon.theme}）`, content: moon.desc },
@@ -184,6 +186,7 @@ export function getKabbalahReading(name: string): FortuneResult {
 
   return {
     title: `カバラ数：${lifeNum} ── ${path.name}への道`,
+    share: `✡️私のカバラ数は「${lifeNum}」、生命の樹の「${path.name}」の道でした`,
     summary: `カバラ数秘術では、名前を構成する一文字ずつに固有の数値を与え、それらを合算・還元することで、生命の樹（セフィロト）上にあなたの魂が辿る道を映し出します。あなたの名前「${name}」から導かれた数は「${lifeNum}」──生命の樹の「${path.name}」へ続く道です。この数が示す魂の質、人生のテーマ、そして開運の指針をひもといていきましょう。${isPrecise ? "" : "\n\n※漢字のお名前は、そのままではヘブライ文字の数値に変換できないため、名前の響き全体から数を割り出す簡易算出になっています。ローマ字またはカタカナ・ひらがなで入力し直すと、伝統的なカバラ数秘術の正式な計算で鑑定できます。"}`,
     details: [
       { label: `ソウルナンバー：${lifeNum}（${path.name}）`, content: path.desc },
@@ -235,6 +238,7 @@ export function getBirthDayReading(birthday: string): FortuneResult {
 
   return {
     title: `誕生曜日：${wd.day}（${wd.planet}支配）`,
+    share: `🪐${wd.day}生まれ、支配星は${wd.planet.replace(/（.*$/, "")}──${wd.keyword}`,
     summary: `あなたが生まれた${y}年${m}月${d}日は「${wd.day}」でした。西洋占星術では一週間の各曜日にそれぞれ惑星が割り当てられており、あなたの誕生曜日は「${wd.planet}」が支配しています。この支配星があなたの本質的なエネルギー、才能の方向性、そして人生で果たすべき使命を静かに物語っています。`,
     details: [
       { label: `${wd.day}生まれ（支配星：${wd.planet}）`, content: wd.desc },
@@ -285,6 +289,7 @@ export function getDiceReading(): FortuneResult {
 
   return {
     title: `🎲 ${d1}・${d2}・${d3}（合計 ${total}） ── ${reading.title}`,
+    share: `🎲振った目は ${d1}・${d2}・${d3} ＝ ${total} → ${reading.title}`,
     summary: `古代ローマや東洋で広く行われてきたサイコロ占い（クレロマンシー）は、転がるサイコロの目に偶然を超えた天の意志が宿ると考えます。今回振られた三つのサイコロは「${d1}・${d2}・${d3}」、その合計「${total}」が今このときのあなたへのメッセージです。数が告げる今日のエネルギーの質と、各分野での過ごし方を読み解いていきましょう。`,
     details: [
       { label: `サイコロの目：${d1}・${d2}・${d3} = ${total}`, content: reading.summary },
@@ -391,6 +396,7 @@ export function getBiorhythmReading(birthday: string): FortuneResult {
   return {
     // 経過日数は年齢が割り出せてしまううえ、読み手にとって意味を持たないため表に出さない
     title: `今日のバイオリズム：${overallLabel}`,
+    share: `今日の私は「${overallLabel}」💪身体${pct(phy)} ❤️感情${pct(emo)} 🧠知性${pct(int)}`,
     summary: `今日のあなたのバイオリズムは「${overallLabel}」。身体・感情・知性の三つのリズムが描く今日の波を読み解きます。1900年代初頭の生理学研究から生まれたバイオリズムは、23日・28日・33日という自然な周期で私たちのコンディションに影響を与えるとされています。`,
     details: [
       { label: "💪 身体サイクル（23日周期）", content: `[${bioBar(phy)}]　${label(phy)}\n${CYCLE_TEXT.phy(phy)}` },

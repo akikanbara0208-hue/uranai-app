@@ -465,6 +465,7 @@ export function getTarotReading(question: string): FortuneResult {
 
   return {
     title: `5枚スプレッド — ${mainCard.name}${main.isReversed ? "（逆）" : ""}が中心`,
+    share: `🃏中心に出たのは「${mainCard.name}${main.isReversed ? "（逆位置）" : ""}」、結末は「${outcomeCard.card.name}」`,
     summary: `「${q}」への答えを5枚のカードが示します`,
     details,
     drawnCards: cards.map(({ card, isReversed, position }) => ({

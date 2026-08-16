@@ -82,6 +82,7 @@ export function getShichijunikoReading(birthday: string): FortuneResult {
 
   return {
     title: `あなたの本命の候は「${koName}」`,
+    share: `🌿私の本命の候は七十二候の「${koName}」──${koGloss}`,
     summary: `生まれた日の太陽の位置から、あなたは二十四節気「${sekki}」の${ICHI[within]}「${koName}」の頃に生まれました（${koGloss}）。一年をわずか72に分けた繊細な季節「七十二候」は、日本人が古来大切にしてきた自然観そのものです。その一片を本質として授かったあなたの姿を、自然の移ろいとともにご覧ください。`,
     details: [
       { label: `🌿 本命の候：${koName}（${sekki}・${ICHI[within]}）`, content: `「${koName}」── ${koGloss}、そんな自然の情景が宿る候に生まれました。わずか5日ほどで移ろうこの一片の季節が、あなたという人の原風景になっています。` },

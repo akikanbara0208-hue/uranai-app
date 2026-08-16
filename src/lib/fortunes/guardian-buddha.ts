@@ -143,6 +143,7 @@ export function getGuardianBuddhaReading(birthday: string): FortuneResult {
 
   return {
     title: `あなたの守り本尊は「${buddha.name}」`,
+    share: `🙏${animal}年生まれの私の守り本尊は「${buddha.name}」`,
     summary: `${branch}（${animal}）年生まれのあなたを生涯にわたり守護する本尊は「${buddha.name}」です。十二支ごとに守り本尊が定まるのは、古くから日本に伝わる確かな信仰です。一生に一体、変わることなく寄り添う守護仏があなたにはついています。`,
     details: [
       { label: `🪷 守り本尊：${buddha.name}`, content: buddha.guard },

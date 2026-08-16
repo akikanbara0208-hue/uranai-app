@@ -677,6 +677,7 @@ export function getAstrologyReading(birthday: string, birthHour?: number, lat: n
 
   return {
     title: `${sunSign.symbol} ${sunSign.name}のホロスコープ`,
+    share: `${sunSign.symbol}私は太陽${sunSign.name}・月${moonSign.name}${ascSign ? `・ASC${ascSign.name}` : ""}`,
     summary: threeSign,
     details,
     lucky: {

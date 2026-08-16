@@ -113,6 +113,7 @@ export function getZiweiReading(birthday: string, birthHour?: number): FortuneRe
 
   return {
     title: `命宮「${BRANCHES[mei]}」・${JU_NAME[ju]} ── 主星は${starNames}`,
+    share: `🀄紫微斗数の私の命宮は「${BRANCHES[mei]}宮」、主星は「${starNames}」`,
     summary: `「東洋占星術の最高峰」とも称される紫微斗数の命盤を、あなたの旧暦の生月・生日・生時から実際に立てました。旧暦${lunar.month}月${lunar.day}日・${JU_NAME[ju]}、人生の中心を司る命宮の主星は「${starNames}」です。帝王星・紫微を頂点とする十四主星の配置が、あなたの本質と人生の青写真を映し出します。`,
     details,
     lucky: { item: "紫の石（アメジスト）", number: String(ju) },

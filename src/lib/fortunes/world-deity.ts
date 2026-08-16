@@ -170,6 +170,7 @@ export function getDeityReading(values: Record<string, string>): FortuneResult {
 
   return {
     title: `あなたの守護神：${deity.icon} ${deity.name}`,
+    share: `${deity.icon}私の守護神は${CULTURE_NAMES[culture]}の「${deity.name}（${deity.title}）」`,
     summary: `生年月日の数秘術が示す「${domainData.domain}」の領域と、あなたの価値観が引き寄せた${CULTURE_NAMES[culture]}の神話。その交点に宿る守護神は「${deity.name}（${deity.title}）」です。古今東西の数多の神々の中から、いまのあなたに最も深く寄り添う一柱が選ばれました。`,
     details: [
       { label: `${deity.icon} ${deity.name}（${deity.title}）の神話`, content: `${deity.myth} ${CULTURE_NAMES[culture]}の人々が語り継いできたこの神話に宿る力が、いまも「${domainData.domain}」を求めるあなたの背後に静かに息づいています。物語の中の${deity.name}の姿は、あなた自身がまだ気づいていない可能性を映す鏡でもあります。` },

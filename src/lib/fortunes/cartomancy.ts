@@ -78,6 +78,7 @@ export function getCartomancyReading(question: string): FortuneResult {
 
   return {
     title: `トランプ占いの結果（結末：${RANKS[drawn[2] % 13].label}${lastSuit.mark}）`,
+    share: `🃏引いた3枚は ${drawn.map((c) => `${RANKS[c % 13].label}${SUITS[Math.floor(c / 13)].mark}`).join("・")}（現状→鍵→結末）`,
     summary: `「${q.slice(0, 40)}」という問いに対し、シャッフルした52枚のトランプから3枚を引きました。今の状況・鍵・結末の順に並んだ3枚が、この問いをめぐる流れを一つの物語として描き出しています。${outlook}`,
     details: [
       ...details,

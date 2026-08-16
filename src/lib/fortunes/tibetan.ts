@@ -42,6 +42,7 @@ export function getTibetanReading(birthday: string): FortuneResult {
 
   return {
     title: `本命サイン：${element.name}の${animal.name}`,
+    share: `🏔️チベット占星術の私の本命サインは「${element.name}の${animal.name}」`,
     summary: `チベット占星術（ナクツィ）では、生まれ年を司る元素と動物の組み合わせが、その人の魂の本質を映すとされます。あなたは「${element.name}の${animal.name}（${polarity}）」の年に生まれました。十二の動物に五つの元素が掛け合わさる六十通りの中で、この組み合わせがあなただけの個性です。`,
     details: [
       { label: `🐾 本命動物：${animal.name}`, content: animal.trait },

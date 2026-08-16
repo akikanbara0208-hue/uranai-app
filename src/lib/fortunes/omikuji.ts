@@ -109,6 +109,7 @@ export function getOmikujiReading(): FortuneResult {
 
   return {
     title: `${selected.rank}（${selected.rankEn}）`,
+    share: `🎋おみくじを引いたら「${selected.rank}」が出ました`,
     summary: `神籤の詩：「${selected.poem}」`,
     details: [
       { label: "🌟 全体運", content: selected.general },

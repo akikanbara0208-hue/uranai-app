@@ -292,6 +292,7 @@ export function getVedicReading(birthday: string, birthHour?: number, lat?: numb
 
   return {
     title: `ナクシャトラ：${nakshatra.name}（第${pada}パダ）── ${nakshatra.quality}の魂`,
+    share: `🕉️私のナクシャトラは「${nakshatra.name}」第${pada}パダでした`,
     summary: `ジョーティッシュ（インド占星術）の実計算により、生まれた瞬間の月は恒星黄道で${moonSid.toFixed(1)}°、ナクシャトラ「${nakshatra.name}」第${pada}パダ、月星座（ジャンマ・ラーシ）は「${rashi}」でした。${precisionNote}`,
     details: [
       { label: `ナクシャトラ：${nakshatra.name}（第${pada}パダ）`, content: `${desc}${NAKSHATRA_EXTRA[nakIndex]}\n月の支配星（出生ダシャー主）は「${janmaLord}」です。` },
@@ -400,6 +401,7 @@ export function getMayaReading(birthday: string): FortuneResult {
 
   return {
     title: `${tone.num}・${sign.name}（${sign.ja}）── マヤの魂のサイン`,
+    share: `🗿マヤ暦の私は「${tone.num}・${sign.name.replace(/（.*$/, "")}（${sign.ja}）」──${sign.quality}`,
     summary: `マヤ暦ツォルキンによれば、あなたは「${tone.num}・${sign.name}（${sign.ja}・Kin ${signIdx + 1}）」の日に生まれました。デイサインは「${sign.quality}」、銀河の音は「${tone.name}」のエネルギーを帯びています。260日周期の神聖暦が、あなたの魂が今回の人生で果たすべき使命を指し示します。`,
     details: [
       { label: `デイサイン：${sign.name}（${sign.ja}）`, content: `${sign.desc}${TZOLKIN_EXTRA[signIdx]}` },
@@ -490,6 +492,7 @@ export function getEgyptReading(birthday: string): FortuneResult {
 
   return {
     title: `守護神：${god.name} ── エジプトの星が示す使命`,
+    share: `🏺私のエジプト守護神は「${god.name}」、聖なる象徴は「${god.symbol}」`,
     summary: `古代エジプト占星術によれば、あなたの守護神は「${god.name}」、その聖なるシンボルは「${god.symbol}」、魂の色は「${god.color}」です。ピラミッドの時代から四千年受け継がれてきたナイルの知恵が、あなたの本質と、神々から託された使命を照らし出します。`,
     details: [
       { label: `守護神：${god.name}`, content: `${god.desc}${EGYPT_EXTRA[godIdx]}` },
@@ -554,6 +557,7 @@ export function getBabylonReading(birthday: string): FortuneResult {
 
   return {
     title: `守護遊星：${planet.name} ── バビロニアの星表が示す運命`,
+    share: `🏛️私の守護遊星は「${planet.name}」──${planet.quality}`,
     summary: `メソポタミアの神官・天文学者たちが三千年かけて粘土板に刻んだ星表。その叡智によれば、あなたを守護する遊星は「${planet.name}」、対応する宮は「${planet.sign}」です。「${planet.quality}」のエネルギーが、あなたの本質と、星々が指し示す使命を照らし出します。`,
     details: [
       { label: `守護遊星：${planet.name}（${planet.quality}）`, content: `${planet.desc}${BABYLON_EXTRA[planetIdx]}` },
@@ -643,6 +647,7 @@ export function getCelticReading(birthday: string): FortuneResult {
 
   return {
     title: `${tree.name} ── ケルト樹木占星術が示すあなたの本質`,
+    share: `🌳ケルトの樹木暦が示した私の聖樹は「${tree.name}」`,
     summary: `古代ケルトのドルイド僧が遺した樹木暦に基づく占い。あなたの誕生月日に対応する聖樹は「${tree.name}」、その聖なる色は「${tree.color}」です。森の叡智を宿すこの木が、あなたの魂の本質と、これから歩むべき人生の道を照らし出します。`,
     details: [
       { label: `聖樹：${tree.name}`, content: `${tree.desc}${CELTIC_EXTRA[treeIdx]}` },
@@ -718,6 +723,7 @@ export function getGeomancyReading(question: string): FortuneResult {
 
   return {
     title: `ジオマンシー鑑定 ── 大地の声が答える`,
+    share: `🪨大地が示した図形は ${[fig1, fig2, fig3].map((f) => f.name.replace(/（.*$/, "")).join("・")}`,
     summary: `中世ヨーロッパと中東で発展した地相術（ジオマンシー）。砂や点の乱数から生まれる16の図形があなたの問いに答えます。各図形は「火・風・水・地」4行の点で構成され、1点（奇数）= 能動、2点（偶数）= 受動を表します。`,
     details: [
       { label: "大地の判断", content: pick([

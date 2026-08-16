@@ -147,6 +147,7 @@ export function getOracleReading(question: string): FortuneResult {
 
   return {
     title: `✨ ${main.name}`,
+    share: `👼引いた3枚は ${cards.map((c) => c.card.name).join("・")}、中心は「${main.name}」`,
     summary: `天使と精霊が、あなたの問いに3枚のカードで答えました。過去・現在・未来の流れの中で、今のあなたの中心となるメッセージは「${main.name}」（${main.element}のエネルギー）です。カードが示す導きに、静かに心を開いてみてください。`,
     details: [
       ...cards.map(({ card, position }, i) => ({
@@ -396,6 +397,7 @@ export function getDreamReading(keyword: string): FortuneResult {
   if (matched.length === 0) {
     return {
       title: "夢占い結果",
+      share: "💤見た夢を占ってもらいました",
       summary: DEFAULT_DREAM.overall,
       details: [
         { label: "❤️ 恋愛運", content: DEFAULT_DREAM.love },
@@ -412,6 +414,7 @@ export function getDreamReading(keyword: string): FortuneResult {
     const { symbol, data } = matched[0];
     return {
       title: `「${symbol}」の夢占い結果`,
+      share: `💤私が見た「${symbol}」の夢が意味していたのは…`,
       summary: data.overall,
       details: [
         { label: "❤️ 恋愛運", content: data.love },
@@ -434,6 +437,7 @@ export function getDreamReading(keyword: string): FortuneResult {
 
   return {
     title: `「${symbols}」複合夢占い結果`,
+    share: `💤私が見た夢のシンボルは「${symbols}」でした`,
     summary: `複数のシンボルが重なる夢を見ています。${matched.map((m) => m.data.overall).join(" さらに、")}`,
     details: [
       { label: "❤️ 恋愛運", content: combine("love") },
@@ -488,6 +492,7 @@ export function getAngelNumberReading(number: string): FortuneResult {
   if (found) {
     return {
       title: `エンジェルナンバー ${clean}`,
+      share: `😇私が見かけた数字「${clean}」は天使からのサインでした`,
       summary: found.meaning,
       details: [
         { label: "💌 天使からのメッセージ", content: found.message },
@@ -507,6 +512,7 @@ export function getAngelNumberReading(number: string): FortuneResult {
 
   return {
     title: `エンジェルナンバー ${clean}`,
+    share: `😇私が見かけた数字「${clean}」は数字${singleStr}のエネルギーを持つサインでした`,
     summary: `${clean}は数字${singleStr}のエネルギーを持つ特別な数字です`,
     details: [
       { label: "💌 天使からのメッセージ", content: `${clean}という特別な数字を通じて天使が語りかけています。${baseData.message}` },
@@ -546,6 +552,7 @@ export function getBirthstoneReading(birthday: string): FortuneResult {
 
   return {
     title: `${month}月の誕生石：${s.stone}`,
+    share: `💍${month}月生まれの私の誕生石は「${s.stone}」（${s.color}）`,
     summary: `${s.color}に輝く${s.stone}（${s.originShort}産）があなたへのメッセージを持っています`,
     details: [
       { label: "💎 誕生石", content: `${month}月生まれのあなたを象徴する石は「${s.stone}」──${s.color}に輝くこの石が、生涯を通じてあなたを見守る守護石になります。誕生石は生まれた月の光と結びついているとされ、お守りとして身につけることで本来の自分らしさを思い出させてくれます。` },
@@ -657,6 +664,7 @@ export function getFengShuiReading(birthday: string): FortuneResult {
 
   return {
     title: `${el.element}のエレメントを持つあなたへ`,
+    share: `🧭風水で見た私が持つのは「${el.element}」のエレメントでした`,
     summary: `${year}年生まれのあなたは「${el.element}（${el.yin_yang}）」の気を持っています`,
     details: [
       { label: "🔮 あなたの属性", content: `${el.element}（${el.meaning}）。${el.personality.split("。")[0]}という性質が、この属性の根底に流れています。生年の下一桁から導かれるこの属性は、あなたの気質や運気の傾向を映し出す風水の基本要素です。` },
@@ -825,6 +833,7 @@ export function getKyuseiReading(birthday: string): FortuneResult {
 
   return {
     title: `${star.star}のあなたへ`,
+    share: `🔯九星気学の私の本命星は「${star.star}」でした`,
     summary: `${year}年生まれ。あなたの本命星は「${star.star}」`,
     details: [
       { label: "⭐ 本命星", content: `あなたの生まれ持った運命の星は「${star.star}」──${star.element}のエネルギーと${star.color}の色を司る星です。九星気学ではこの本命星が、生涯を通じてのあなたの気質と運勢のベースになります。` },
@@ -960,6 +969,7 @@ export function getShichuReading(birthday: string, birthHour?: number): FortuneR
 
   return {
     title: `${stem}${branch}（${animal}年）の命式`,
+    share: `🀄四柱推命の私の日柱は「${stem}${branch}」（${animal}年）──${polarity}の${element}`,
     summary: `${year}年${month}月${day}日生まれ。四本の柱があなたの運命を示します`,
     details,
     lucky: { item: `${animal}のお守り` },

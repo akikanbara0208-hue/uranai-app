@@ -84,6 +84,7 @@ export function getKyuseiCompatReading(birthdayA: string, birthdayB: string): Fo
 
   return {
     title: `九星相性 ${r.score}点 ${stars}`,
+    share: `🔯${STAR_NAMES[sa - 1]}×${STAR_NAMES[sb - 1]}の相性は ${r.score}点 ${stars}（${r.type}）`,
     summary: `${STAR_NAMES[sa - 1]}（${ELEM_NAME[eA]}）× ${STAR_NAMES[sb - 1]}（${ELEM_NAME[eB]}）の相性は「${r.type}」。${r.note} 九星気学の五行（木・火・土・金・水）の流れから、お二人の関係を読み解きました。`,
     details: [
       { label: "⭐ お二人の本命星", content: `お一人目：${STAR_NAMES[sa - 1]}（五行：${ELEM_NAME[eA]}）／お二人目：${STAR_NAMES[sb - 1]}（五行：${ELEM_NAME[eB]}）。九星気学では、生まれ年から算出する本命星が持つ五行（木・火・土・金・水）の組み合わせから、二人の相性の流れを読み解きます。まずはお互いの本命星と、その裏にある五行の性質を確かめてみましょう。` },

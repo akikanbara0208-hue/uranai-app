@@ -134,6 +134,7 @@ export function getBloodTypeReading(bloodType: string): FortuneResult {
 
   return {
     title: `${bloodType}型の深層分析`,
+    share: `🩸${bloodType}型の私のキーワードは「${d.keyword}」`,
     summary: `キーワード：${d.keyword}`,
     details: [
       { label: "🧬 性格・本質", content: d.personality },

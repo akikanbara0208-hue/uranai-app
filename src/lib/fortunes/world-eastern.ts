@@ -144,6 +144,8 @@ export function getSeimeiReading(name: string): FortuneResult {
 
   return {
     title: goodCount >= 4 ? `「${name}」── 五格に守られし名` : goodCount >= 2 ? `「${name}」── 試練と光が宿る名` : `「${name}」── 強さを秘めた名`,
+    // 本名はシェアに載せない（呼び出し側で伏せ字にされるが、そもそも入れない）
+    share: `🖌️姓名判断の結果、私の名前は五格のうち${goodCount}格が吉でした`,
     summary: `「${name}」の五格を姓名判断で解読しました。${goodCount}格が吉運を持ちます。名前に宿る運命の全貌をご覧ください。`,
     details,
     lucky: { color: pick(colors, r2), number: pick(nums, r2), item: pick(items, r2) },
@@ -296,6 +298,7 @@ export function getEtoReading(birthday: string): FortuneResult {
 
   return {
     title: `${eto.name}年生まれ ── ${eto.en}の星を持つ人`,
+    share: `🐲干支占いの私は「${eto.name}」年生まれでした`,
     summary: `あなたは「${eto.name}」年の生まれです。立春を境とする干支では${adjustedYear}年の十二支の力があなたの本質を形作っています。古来より十二支はその年の生命のエネルギーを宿すとされ、ここでは性格・強み・運気の流れから恋愛・仕事・金運までを読み解きます。`,
     details: [
       { label: "本質的な性格", content: eto.personality },
@@ -400,6 +403,7 @@ export function getRokuyoReading(): FortuneResult {
 
   return {
     title: `今日は${rk.name}`,
+    share: `📆今日の六曜は「${rk.name}」（旧暦${lunar.month}月${lunar.day}日）`,
     summary: `${y}年${m}月${d}日（${weekdays[today.getDay()]}）＝旧暦${lunar.isLeap ? "閏" : ""}${lunar.month}月${lunar.day}日。六曜は「${rk.name}」です。今日一日をどう過ごすか、古来からの知恵が示します。`,
     details: [
       { label: "📅 旧暦", content: `${lunar.isLeap ? "閏" : ""}${lunar.month}月${lunar.day}日（天文計算による旧暦）。六曜は旧暦の月日から定まります。今日が「${rk.name}」となるのは、この旧暦の日付に基づいた巡り合わせです。${rk.lunarNote}` },
@@ -531,6 +535,7 @@ export function getSanmeigakuReading(birthday: string): FortuneResult {
 
   return {
     title: `日干「${dayStem}（${dayYin}の${dayElement}）」── 主星は${star.name}`,
+    share: `🀄算命学の私は日干「${dayStem}」、中心星は「${star.name}」`,
     summary: `算命学では生まれた日の天干「日干（日主）」をあなたの本体とし、月支の蔵干との関係から中心となる主星を導きます。あなたの日干は「${dayStem}」、中心星（主星）は「${star.name}」です。`,
     details: [
       { label: `日干（日主）：${dayStem}`, content: `あなたの本質を表す日干は「${dayStem}（${dayYin}の${dayElement}）」。算命学で最も重視する、あなたという存在の核です。${STEM_NOTE[dayStem]}` },

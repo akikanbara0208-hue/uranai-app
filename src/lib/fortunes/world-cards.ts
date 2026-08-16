@@ -135,6 +135,7 @@ export function getLenormandReading(question: string): FortuneResult {
 
   return {
     title: `ルノルマン四枚引き ── ${past.name}・${present.name}・${future.name}`,
+    share: `🎴引いた4枚は ${[past, present, future, advice].map((c) => c.name.replace(/（.*$/, "")).join("・")}`,
     summary: `19世紀フランスの女預言者マリー・アンヌ・ルノルマンが生み出した36枚のカード。ルノルマンはカード単体ではなく「組み合わせ」で読むのが本質です。今回引かれた4枚が過去・現在・未来・指針として、あなたの問いに一つの物語を描きます。`,
     details: [
       { label: `過去：${past.name}（${past.num}番）`, content: `これまでの土台を示すカードは「${past.name}」。${past.meaning}のエネルギーが、現在地までの流れを静かに形作ってきました。今あなたが立っている場所は、この「${kw(past)}」という経験の積み重ねの上にあります。良くも悪くも、ここで芽生えたものが現在へとつながっています。` },
@@ -214,6 +215,7 @@ export function getGypsyReading(question: string): FortuneResult {
 
   return {
     title: `ロマのカード占い ── ${card1.name}・${card2.name}・${card3.name}`,
+    share: `🔮ロマのカードが出したのは ${[card1, card2, card3].map((c) => c.name.replace(/（.*$/, "")).join("・")}`,
     summary: `東ヨーロッパのロマ（ジプシー）の民が数百年にわたって使い続けてきた伝統のカード。流浪の民は星や机ではなく、人生そのものを読みました。今回引かれた三枚が、あなたの問いに対して流浪の民の知恵で答えます。`,
     details: [
       { label: `第一のカード：${card1.name}（${card1.domain}）`, content: `${card1.meaning}。${card1.message}この「${card1.domain}」の領域から、今回の物語は幕を開けます。これまでの流れや、いまの状況の土台を示す一枚です。` },

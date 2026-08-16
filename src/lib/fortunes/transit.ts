@@ -271,6 +271,7 @@ export function getTransitReading(birthday: string): FortuneResult {
 
   return {
     title: `今日のあなたの運勢 ${score}点 ${stars}`,
+    share: `⭐今日の私の運勢は ${score}点 ${stars}（出生の太陽は${SIGNS[Math.floor(natalSun / 30)]}）`,
     summary: `${now.getMonth() + 1}月${now.getDate()}日、あなたの出生の太陽（${SIGNS[Math.floor(natalSun / 30)]}）に、今日空を運行する天体が結ぶ角度（アスペクト）を実際に計算しました。これは毎日変わる「今日だけのあなたの空模様」です。今日の月は${moodSign}にあり、場の空気をやわらかく彩っています。${verdict}`,
     details: [
       { label: "🌞 全体運・活力", content: detail(lines[0]) },

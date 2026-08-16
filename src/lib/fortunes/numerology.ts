@@ -317,6 +317,7 @@ export function getNumerologyReading(birthday: string, name: string): FortuneRes
 
   return {
     title: `ライフパス ${lifePathNum}：${lp.title}（${lp.archetype}）`,
+    share: `🔢私のライフパスは「${lifePathNum}・${lp.title}」──${lp.archetype}`,
     summary: `${name || "あなた"}の人生の数字は「${lifePathNum}」。${lp.archetype}としての使命を持ちます`,
     details: [
       { label: "📖 人生の使命・テーマ", content: lp.description },

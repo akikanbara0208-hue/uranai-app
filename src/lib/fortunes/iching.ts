@@ -784,6 +784,7 @@ export function getIChingReading(question: string): FortuneResult {
 
   return {
     title: `第${hex.number}卦 ${hex.name}`,
+    share: `☯️出た卦は「第${hex.number}卦 ${hex.symbol} ${hex.name}」──${hex.attribute}`,
     summary: `${hex.symbol} ${hex.nameEn} ─ 属性：${hex.attribute}（${hex.element}）`,
     details: [
       { label: "📖 卦の全体的な意味", content: hex.overview },

@@ -126,6 +126,7 @@ export function getPowerStoneReading(birthday: string): FortuneResult {
 
   return {
     title: `あなたの守護石は「${main.name}」`,
+    share: `💎${s.sign}生まれの私の守護石は「${main.name}」──テーマは「${s.theme}」`,
     summary: `生まれた日の太陽星座は「${s.sign}」。星座と宝石の対応は古くから文書に残されており、${s.sign}には守護の石が伝統的に定められています。あなたのテーマは「${s.theme}」。この方向を後押ししてくれるパワーストーンをご紹介します。`,
     details: [
       { label: `💎 第一の守護石：${main.name}`, content: `${main.effect}。${s.sign}のあなたを最も力強く支える石です。${s.mainTip}` },

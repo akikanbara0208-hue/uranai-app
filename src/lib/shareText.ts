@@ -23,8 +23,8 @@ export type SharePlatform = keyof typeof LIMITS;
 
 // 見出しに使う本文の最低確保量。タイトルが長くても鑑定文が消えないようにする
 const MIN_SUMMARY = 40;
-// タイトルに割り当てる上限
-const MAX_TITLE = 60;
+// 見出し（share／title）に割り当てる上限
+const MAX_HEADLINE = 76;
 // シェア文に載せる本文の目安（文字数）。投稿先の上限とは別に、読みやすさのために
 // ここで区切る。上限まで詰め込むと「全文貼り付け」になり、シェアとして読まれない
 const BODY_TARGET = 100;
@@ -35,13 +35,17 @@ const BODY_TARGET = 100;
 // weighted=false なら文字数、true ならXの重み付き単位で測る
 function summarize(text: string, max: number, weighted: boolean): string {
   if (measure(text, weighted) <= max) return text;
-  let acc = 0, head = "", cut = -1;
+  let acc = 0, head = "", cut = -1, quote = 0;
   for (const ch of Array.from(text)) {
     const w = weighted ? (ch.codePointAt(0)! > 0x7f ? 2 : 1) : 1;
     if (acc + w > max) break;
     acc += w;
     head += ch;
-    if (ch === "。" || ch === "！" || ch === "？") cut = head.length;
+    // 鉤括弧の中の「？」で切ると、引用した質問の途中で終わってしまう
+    // （例：タロットの「仕事はうまくいく？ ← ここで切れる）
+    if (ch === "「" || ch === "『") quote++;
+    else if (ch === "」" || ch === "』") quote = Math.max(0, quote - 1);
+    else if (quote === 0 && (ch === "。" || ch === "！" || ch === "？")) cut = head.length;
   }
   if (cut > 0) return head.slice(0, cut);
   return truncate(text, max, weighted);
@@ -49,7 +53,7 @@ function summarize(text: string, max: number, weighted: boolean): string {
 
 // 占術そのものの解説にあたる項目。読み手が知りたいのは「その人に何が出たか」なので、
 // シェア本文には使わない（例：十二直の「十二直とは」、占星術の「ハウスの意味（参考資料）」）
-const EXPLAINER_LABEL = /(とは|について|の説明|参考資料|基礎知識|歴史|読み方)/;
+const EXPLAINER_LABEL = /(とは|について|の説明|参考資料|基礎知識|歴史|読み方|内訳|原産地|旧暦)/;
 
 // シェア本文に載せる文章を選ぶ。
 // summaryは占術によって性質がばらばらで、
@@ -76,10 +80,10 @@ function trimDangling(text: string): string {
 // シェア本文の候補を、載せたい順に並べて返す。
 // 呼び出し側が上限に収まるかを見て選べるよう、1つに絞らずすべて返す
 function bodyCandidates(
-  result: Pick<FortuneResult, "title" | "summary"> & { details?: { label?: string; content: string }[] }
+  result: Pick<FortuneResult, "title" | "summary"> & { share?: string; details?: { label?: string; content: string }[] }
 ): string[] {
   const out: string[] = [];
-  const title = result.title ?? "";
+  const title = `${result.title ?? ""} ${result.share ?? ""}`;
   for (const d of result.details ?? []) {
     if (EXPLAINER_LABEL.test(d.label ?? "")) continue;
     const c = stripDecorations((d.content ?? "").trim());
@@ -121,7 +125,10 @@ function truncate(text: string, max: number, weighted: boolean): string {
   return out + "…";
 }
 
-type ShareInput = Pick<FortuneResult, "title" | "summary"> & { details?: { label?: string; content: string }[] };
+type ShareInput = Pick<FortuneResult, "title" | "summary"> & {
+  share?: string;
+  details?: { label?: string; content: string }[];
+};
 
 export function buildShareText(
   result: ShareInput,
@@ -145,13 +152,16 @@ export function buildShareText(
     measure(footerHead, weighted) + urlUnits + measure(footerTail, weighted);
   let budget = total - fixed;
 
-  // タイトルと本文で予算を分け合う。タイトルが長い場合はタイトル側を削り、
-  // 鑑定文が丸ごと消えることがないようにする
-  const titleBudget = Math.max(0, Math.min(MAX_TITLE, budget - MIN_SUMMARY - 2));
-  const truncated = truncate(result.title, titleBudget, weighted);
-  const title = truncated === result.title ? truncated : `${trimDangling(truncated.replace(/…$/, ""))}…`;
-  const titleLine = title ? `【${title}】\n` : "";
-  budget -= measure(titleLine, weighted);
+  // 見出しには、その人固有の結果を一目で伝える share を優先して使う。
+  // titleは「5枚スプレッド」「今日のバイオリズム」のように占術の枠組みを述べるだけのことが多く、
+  // 見た人が「自分は何が出るんだろう」と思う材料にならない
+  const headline = (result.share ?? "").trim() || result.title;
+  const headlineBudget = Math.max(0, Math.min(MAX_HEADLINE, budget - MIN_SUMMARY - 2));
+  const truncated = truncate(headline, headlineBudget, weighted);
+  const clipped = truncated === headline ? truncated : `${trimDangling(truncated.replace(/…$/, ""))}…`;
+  // shareは「引いたのは正義」のように文として読めるので括弧で囲まず、そのまま置く
+  const headlineLine = clipped ? (result.share ? `${clipped}\n` : `【${clipped}】\n`) : "";
+  budget -= measure(headlineLine, weighted);
 
   // まず読みやすい長さへ要約し、そのうえで投稿先の上限にも文末で収める。
   // 尻切れ（末尾が「…」）になる候補は読んでも何も伝わらないので、
@@ -163,7 +173,7 @@ export function buildShareText(
     if (!text.endsWith("…")) { body = text; break; }
   }
 
-  return `${lead}\n\n${titleLine}${body}${footer}`;
+  return `${lead}\n\n${headlineLine}${body}${footer}`;
 }
 
 export function buildXShareUrl(result: ShareInput, fortuneId?: string): string {

@@ -258,6 +258,7 @@ function ResultDisplay({ result, question, fortuneId, shareName }: { result: For
   const redact = (t: string) => (shareName ? t.split(shareName).join("私") : t);
   const shareResult = {
     title: redact(result.title),
+    share: result.share ? redact(result.share) : undefined,
     summary: redact(result.summary),
     details: result.details.map((d) => ({ label: d.label, content: redact(d.content) })),
   };

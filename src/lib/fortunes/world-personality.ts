@@ -26,6 +26,7 @@ export function getHSPReading(values: Record<string, string>): FortuneResult {
 
   return {
     title: `感受性レベル：${level}（スコア ${percentage}%）`,
+    share: `🌱HSP診断の結果、私の感受性は「${level}」（スコア${percentage}%）でした`,
     summary: `高感受性（HSP）セルフチェックの結果、あなたの感受性レベルは「${level}」（スコア${percentage}%）でした。感受性の高さ・低さは優劣ではなく、世界の感じ方そのものの個性です。あなたの特性と、その活かし方を恋愛・仕事・これからの流れまで深く読み解きます。`,
     details: [
       { label: isHSP ? "あなたは高感受性の特性を持っています" : "あなたの感受性は中〜低めです",
@@ -101,6 +102,7 @@ export function getBigFiveReading(values: Record<string, string>): FortuneResult
 
   return {
     title: `ビッグファイブ性格分析（O:${O} C:${C} E:${E} A:${A} N:${N}）`,
+    share: `🧠私のビッグファイブは O${O}／C${C}／E${E}／A${A}／N${N}、一番強いのは${dominantTrait.label.replace(/（.*$/, "")}`,
     summary: `心理学で最も研究された性格モデル「ビッグファイブ（OCEAN）」による分析です。5つの主要な性格次元であなたの本質的なパーソナリティプロファイルを描き出します。`,
     details: [
       ...profile.map(p => ({ label: `${p.label}：${p.bar}（${p.score}/100）`, content: p.detail })),
@@ -174,6 +176,7 @@ export function getTemperamentReading(values: Record<string, string>): FortuneRe
 
   return {
     title: `あなたの気質：${t.name}（${t.keyword}）`,
+    share: `🏛️ヒポクラテスの四気質、私は「${t.name}」──${t.keyword}`,
     summary: `紀元前460年頃、医学の父ヒポクラテスが提唱した四気質論。血液・黄胆汁・粘液・黒胆汁の4つの体液バランスが性格を決めると考えました。あなたの気質は「${t.name}」です。`,
     details: [
       { label: `${t.name}の本質（元素：${t.element}）`, content: t.desc },
@@ -249,6 +252,7 @@ export function getFourElementsReading(values: Record<string, string>): FortuneR
 
   return {
     title: `あなたの支配元素：${e.name}（${e.en}）`,
+    share: `🔥四元素診断、私を支配する元素は「${e.name}（${e.en}）」`,
     summary: `紀元前450年頃、哲学者エンペドクレスが提唱した四元素論。火・水・地・風の4元素が万物を構成するという思想は西洋占星術・錬金術・ヒポクラテス医学の礎となりました。あなたの支配元素は「${e.name}」です。`,
     details: [
       { label: `${e.name}の元素（${e.en}）`, content: e.desc },
@@ -343,6 +347,7 @@ export function getAuraColorReading(values: Record<string, string>): FortuneResu
 
   return {
     title: `あなたのオーラ：${a.color}（${a.keyword}）`,
+    share: `✨私のオーラカラーは「${a.color}」──${a.keyword}`,
     summary: `19世紀に神智学協会が体系化したオーラ診断。人体を取り巻くエネルギーフィールドの色が、魂の状態と本質を示すという考えです。あなたのオーラカラーは「${a.color}」です。`,
     details: [
       { label: `${a.icon} ${a.color}のオーラ`, content: a.desc },
@@ -429,6 +434,7 @@ export function getFaceReading(values: Record<string, string>): FortuneResult {
 
   return {
     title: `人相鑑定：${shape.label}×${eye.label}`,
+    share: `👁️人相鑑定の結果、私は「${shape.label}×${eye.label}」でした`,
     summary: "中国4000年・ギリシャ2500年の観相術。顔のパーツは魂の地図であり、それぞれが内側の性格・才能・運命を映し出しています。",
     details: [
       { label: `🔲 顔の形：${shape.label}`,       content: `${shape.core}\n\n【強み】${shape.strength}\n【成長のヒント】${shape.caution}` },
@@ -453,6 +459,7 @@ export function getColorPersonalityReading(values: Record<string, string>): Fort
 
   return {
     title: `あなたのカラーパーソナリティ：${c.name}（${c.keyword}）`,
+    share: `🎨好きな色でわかる私の本質は「${c.name}」──${c.keyword}`,
     summary: `色彩心理学では、好きな色はその人の無意識の価値観・欲求・本質的な性格を映し出すとされます。あなたが最も惹かれる「${c.name}」は、「${c.keyword}」という魂のテーマを物語っています。このパーソナリティを、性格から恋愛・仕事・金運まで多面的に読み解きます。`,
     details: [
       { label: `${c.name}が示す本質`, content: `${c.desc}　「${c.name}」を好むあなたの内側には、この色が象徴する世界観が深く根づいています。` },

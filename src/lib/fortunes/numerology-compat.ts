@@ -101,6 +101,7 @@ export function getNumerologyCompatReading(birthdayA: string, birthdayB: string)
 
   return {
     title: `数秘相性 ${score}点 ${stars}`,
+    share: `🔢ライフパス${a}×${b}の相性は ${score}点 ${stars}`,
     summary: `ライフパス「${a}（${KEY[a]}）」× ライフパス「${b}（${KEY[b]}）」。${verdict} 生年月日から導くライフパス数をもとに、お二人の本質的な相性を読み解きました。`,
     details: [
       { label: "🔢 お二人のライフパス数", content: `お一人目：${a}（${KEY[a]}）／お二人目：${b}（${KEY[b]}）。数秘術では、生年月日を数字に還元して導く「ライフパス数」が、その人の本質的な気質を表すとされます。まずはお互いのライフパス数とキーワードを確かめ、二人の相性の土台を見ていきましょう。` },
