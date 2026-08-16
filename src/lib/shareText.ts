@@ -10,10 +10,11 @@ const TAGS = "#世界の占い堂 #占い";
 // 投稿先ごとの上限。
 // X: 全角を2文字分として数え、上限は280単位（＝日本語140文字）。
 // Threads/コピー: 500文字（コードポイント数。全角も1文字として数える）。
+// emoji: 絵文字をそのまま載せてよいか。Threadsだけ false（下の stripEmoji 参照）
 const LIMITS = {
-  x:       { total: 280, weighted: true  },
-  threads: { total: 500, weighted: false },
-  copy:    { total: 500, weighted: false },
+  x:       { total: 280, weighted: true,  emoji: true  },
+  threads: { total: 500, weighted: false, emoji: false },
+  copy:    { total: 500, weighted: false, emoji: true  },
 } as const;
 
 // XではURLがt.coに短縮され、実際の長さに関わらず一律23単位として数えられる
@@ -69,6 +70,26 @@ function stripDecorations(text: string): string {
     .split("\n")
     .map((line) => line.trim())
     .filter(Boolean)
+    .join("\n");
+}
+
+// Threadsの投稿画面は、intent URLで渡した絵文字を「�」に置き換えてしまう。
+// URLのUTF-8エンコード自体は正しく（同じ文字列をXへ渡せば絵文字のまま表示される）、
+// こちらでは直せないため、Threads向けだけ絵文字表示になる文字を落とす。
+// ★（★★☆☆☆の相性スコア）や♠♥（トランプ占い）のようにテキスト表示のままの記号は
+// 化けないので残す ── Emoji_Presentation と異体字セレクタ付きだけを対象にする
+const EMOJI_PRESENTATION = /\p{Emoji_Presentation}|.\uFE0F/gu;
+function stripEmoji(text: string): string {
+  return text
+    .split("\n")
+    .map((line) =>
+      line
+        .replace(EMOJI_PRESENTATION, "")
+        // 絵文字が消えた跡に残る二重空白や「：␣」を詰める
+        .replace(/[ \u3000]{2,}/g, " ")
+        .replace(/([：「（])[ \u3000]+/g, "$1")
+        .trim()
+    )
     .join("\n");
 }
 
@@ -152,7 +173,7 @@ export function buildShareText(
   platform: SharePlatform,
   fortuneId?: string
 ): string {
-  const { total, weighted } = LIMITS[platform];
+  const { total, weighted, emoji } = LIMITS[platform];
 
   // 何の占いをしたのかが分からないと読み手が試しようがないため、占術名を明示する
   const fortuneName = FORTUNES.find((f) => f.id === fortuneId)?.name;
@@ -192,7 +213,8 @@ export function buildShareText(
     if (!text.endsWith("…")) { body = text; break; }
   }
 
-  return `${lead}\n\n${headlineLine}${body}${footer}`;
+  const text = `${lead}\n\n${headlineLine}${body}${footer}`;
+  return emoji ? text : stripEmoji(text);
 }
 
 export function buildXShareUrl(result: ShareInput, fortuneId?: string): string {
