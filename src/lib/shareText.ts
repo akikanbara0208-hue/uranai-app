@@ -1,7 +1,7 @@
 import type { FortuneResult } from "./types";
 import { FORTUNES } from "./fortunes";
 
-const APP_URL = "https://uranai-app-beta-ten.vercel.app";
+const APP_URL = process.env.NEXT_PUBLIC_URL!;
 // 見た人が「自分もやってみたい」と思えるよう、占術の多さと問いかけを添える。
 // 件数は増減しても自動で追従させる（過去に「15種類」の固定値が残っていたため）
 const CTA = `${FORTUNES.length}種類の占いから、あなたは何が出る？`;

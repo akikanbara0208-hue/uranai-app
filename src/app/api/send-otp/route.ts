@@ -1,10 +1,9 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabase } from "@/lib/supabase";
-import { Resend } from "resend";
+import { sendMail } from "@/lib/mail";
 import { hitRateLimit, clientIp } from "@/lib/rateLimit";
 
 export async function POST(req: NextRequest) {
-  const resend = new Resend(process.env.RESEND_API_KEY!);
   const { email } = await req.json();
   if (!email || !email.includes("@")) {
     return NextResponse.json({ error: "メールアドレスが無効です" }, { status: 400 });
@@ -52,12 +51,7 @@ export async function POST(req: NextRequest) {
     });
   }
 
-  await resend.emails.send({
-    from: "世界の占い堂 <noreply@resend.dev>",
-    to: normalizedEmail,
-    replyTo: "akika.rainbow@gmail.com",
-    subject: "【世界の占い堂】認証コード",
-    html: `
+  await sendMail(normalizedEmail, "【世界の占い堂】認証コード", `
       <div style="background:#0f0a1e;color:#e2c87d;padding:40px;font-family:sans-serif;max-width:480px;margin:0 auto;border-radius:12px;">
         <h1 style="font-size:20px;margin-bottom:8px;">世界の占い堂</h1>
         <p style="color:#9ca3af;font-size:14px;margin-bottom:24px;">以下の認証コードを入力してください（10分間有効）</p>
@@ -66,8 +60,7 @@ export async function POST(req: NextRequest) {
         </div>
         <p style="color:#6b7280;font-size:12px;">心当たりがない場合は無視してください。</p>
       </div>
-    `,
-  });
+    `);
 
   return NextResponse.json({ sent: true });
 }

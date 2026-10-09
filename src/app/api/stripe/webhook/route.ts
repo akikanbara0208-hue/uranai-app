@@ -2,10 +2,8 @@ import { NextRequest, NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe";
 import { getSupabase } from "@/lib/supabase";
 import { randomUUID } from "crypto";
-import { Resend } from "resend";
+import { sendMail } from "@/lib/mail";
 
-const FROM = "世界の占い堂 <noreply@resend.dev>";
-const REPLY_TO = "akika.rainbow@gmail.com"; // お客さんの返信はここに届く
 
 // 請求書からメールアドレスを特定（無ければstripe_customer_idでDB照会）
 async function resolveEmail(
@@ -37,16 +35,11 @@ function mailShell(title: string, bodyHtml: string) {
 }
 
 // 領収書代わりの課金成功メール
-async function sendReceiptEmail(resend: Resend, to: string, amount: number, dateStr: string, receiptUrl?: string | null) {
+async function sendReceiptEmail(to: string, amount: number, dateStr: string, receiptUrl?: string | null) {
   const receiptLink = receiptUrl
     ? `<p style="margin:20px 0;"><a href="${receiptUrl}" style="display:inline-block;background:#e2c87d;color:#0f0a1e;text-decoration:none;font-weight:bold;padding:12px 24px;border-radius:8px;">領収書（PDF）を見る</a></p>`
     : "";
-  await resend.emails.send({
-    from: FROM,
-    to,
-    replyTo: REPLY_TO,
-    subject: "【世界の占い堂】お支払い完了のお知らせ（領収書）",
-    html: mailShell(
+  await sendMail(to, "【世界の占い堂】お支払い完了のお知らせ（領収書）", mailShell(
       "お支払いありがとうございます",
       `<table style="width:100%;font-size:14px;color:#e5e7eb;border-collapse:collapse;">
         <tr><td style="padding:6px 0;color:#9ca3af;">商品</td><td style="padding:6px 0;text-align:right;">世界の占い堂</td></tr>
@@ -55,24 +48,17 @@ async function sendReceiptEmail(resend: Resend, to: string, amount: number, date
       </table>
       ${receiptLink}
       <p style="color:#9ca3af;font-size:13px;">引き続き世界中の占いをお楽しみください。</p>`
-    ),
-  });
+  ));
 }
 
 // 課金失敗メール
-async function sendFailureEmail(resend: Resend, to: string, amount: number) {
-  await resend.emails.send({
-    from: FROM,
-    to,
-    replyTo: REPLY_TO,
-    subject: "【世界の占い堂】お支払いに失敗しました",
-    html: mailShell(
+async function sendFailureEmail(to: string, amount: number) {
+  await sendMail(to, "【世界の占い堂】お支払いに失敗しました", mailShell(
       "お支払いを確認できませんでした",
       `<p style="color:#e5e7eb;font-size:14px;">月額 ¥${amount.toLocaleString()} のお支払いが完了しませんでした。カードの有効期限切れや残高不足が考えられます。</p>
-      <p style="margin:20px 0;"><a href="https://uranai-app-beta-ten.vercel.app/api/billing-portal" style="display:inline-block;background:#e2c87d;color:#0f0a1e;text-decoration:none;font-weight:bold;padding:12px 24px;border-radius:8px;">お支払い情報を更新する</a></p>
+      <p style="margin:20px 0;"><a href="${process.env.NEXT_PUBLIC_URL}/api/billing-portal" style="display:inline-block;background:#e2c87d;color:#0f0a1e;text-decoration:none;font-weight:bold;padding:12px 24px;border-radius:8px;">お支払い情報を更新する</a></p>
       <p style="color:#9ca3af;font-size:13px;">お支払いが確認できない状態が続くと、サービスのご利用が停止されます。お早めにご確認ください。</p>`
-    ),
-  });
+  ));
 }
 
 export async function POST(req: NextRequest) {
@@ -88,7 +74,6 @@ export async function POST(req: NextRequest) {
   }
 
   const supabase = getSupabase();
-  const resend = new Resend(process.env.RESEND_API_KEY!);
 
   if (event.type === "checkout.session.completed") {
     const session = event.data.object;
@@ -134,7 +119,7 @@ export async function POST(req: NextRequest) {
     if (email) {
       const amount = invoice.amount_paid ?? 0;
       const dateStr = new Date((invoice.created ?? 0) * 1000).toLocaleDateString("ja-JP", { timeZone: "Asia/Tokyo" });
-      await sendReceiptEmail(resend, email, amount, dateStr, invoice.hosted_invoice_url);
+      await sendReceiptEmail(email, amount, dateStr, invoice.hosted_invoice_url);
     }
   }
 
@@ -147,7 +132,7 @@ export async function POST(req: NextRequest) {
       .eq("stripe_customer_id", invoice.customer || "")
       .is("payment_failed_at", null);
     if (email) {
-      await sendFailureEmail(resend, email, invoice.amount_due ?? 0);
+      await sendFailureEmail(email, invoice.amount_due ?? 0);
     }
   }
 
