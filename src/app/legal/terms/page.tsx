@@ -21,7 +21,7 @@ export default function TermsPage() {
             <ul className="list-disc list-inside space-y-1">
               <li>有料プランの料金は月額¥980（税込）です。</li>
               <li>ご契約日から1ヶ月ごとに自動更新されます。</li>
-              <li>決済はStripe Inc.を通じて処理されます。</li>
+              <li>決済はPayPal Pte. Ltd.（一部の既存契約はStripe Inc.）を通じて処理されます。</li>
               <li>解約後は当該契約期間の終了日までご利用いただけます。</li>
               <li>期間途中の返金・日割り計算は行いません。</li>
             </ul>

@@ -16,7 +16,7 @@ export default function PrivacyPage() {
             <h2 className="text-base font-bold gold-text mb-3">2. 取得する情報</h2>
             <ul className="list-disc list-inside space-y-1">
               <li>メールアドレス（登録・ログイン用）</li>
-              <li>決済情報（Stripeを通じて処理。当方はカード情報を保持しません）</li>
+              <li>決済情報（PayPalまたはStripeを通じて処理。当方はカード情報を保持しません）</li>
               <li>サービス利用状況（アクセスログ）</li>
             </ul>
           </section>
@@ -31,7 +31,7 @@ export default function PrivacyPage() {
           </section>
           <section>
             <h2 className="text-base font-bold gold-text mb-3">4. 第三者への提供</h2>
-            <p>当方は、法令に基づく場合を除き、利用者の同意なく第三者に個人情報を提供しません。なお、決済処理のためStripe Inc.に必要な情報を提供します。</p>
+            <p>当方は、法令に基づく場合を除き、利用者の同意なく第三者に個人情報を提供しません。なお、決済処理のためPayPal Pte. Ltd.およびStripe Inc.に必要な情報を提供します。</p>
           </section>
           <section>
             <h2 className="text-base font-bold gold-text mb-3">5. 個人情報の管理</h2>

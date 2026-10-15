@@ -127,7 +127,7 @@ export default async function AdminPage() {
         </div>
 
         <p className="text-xs text-gray-600 mt-6">
-          決済・返金・解約の詳細操作は Stripe ダッシュボードで行えます。この画面は閲覧用の概況です。
+          決済・返金・解約の詳細操作は PayPal（新規の契約）または Stripe（以前からの契約）の管理画面で行えます。この画面は閲覧用の概況です。
         </p>
       </div>
     </div>

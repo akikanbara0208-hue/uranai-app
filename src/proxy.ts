@@ -14,6 +14,7 @@ const PUBLIC_PATHS = [
   "/api/send-otp",
   "/api/verify-otp",
   "/api/stripe",
+  "/api/paypal",
   "/api/cron",
   "/_next",
   "/favicon",

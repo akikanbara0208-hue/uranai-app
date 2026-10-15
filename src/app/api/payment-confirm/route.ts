@@ -1,8 +1,43 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getStripe } from "@/lib/stripe";
 import { getSupabase } from "@/lib/supabase";
+import { activatePaypalUser, getPaypalSubscription } from "@/lib/paypal";
+
+function loggedIn(token: string) {
+  const res = NextResponse.json({ loggedIn: true });
+  res.cookies.set("uranai_token", token, {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === "production",
+    sameSite: "lax",
+    path: "/",
+    maxAge: 60 * 60 * 24 * 365,
+  });
+  return res;
+}
+
+// PayPal から戻ってきたとき（?subscription_id=I-xxx）
+async function confirmPaypal(subscriptionId: string) {
+  const sub = await getPaypalSubscription(subscriptionId);
+  if (sub.status !== "ACTIVE") {
+    return NextResponse.json({ waiting: true });
+  }
+  // Stripe側と同じく、URLの漏えいで第三者がログインできないよう作成から30分で打ち切る
+  const ageMs = Date.now() - Date.parse(sub.create_time ?? "");
+  if (!(ageMs <= 30 * 60 * 1000)) {
+    return NextResponse.json(
+      { error: "この決済リンクの有効期限が切れています。ログイン画面からお進みください。" },
+      { status: 410 }
+    );
+  }
+  // Webhookの遅延に備え、ここでも有料会員にする（何度呼んでも同じ結果）
+  const token = await activatePaypalUser(sub);
+  return token ? loggedIn(token) : NextResponse.json({ waiting: true });
+}
 
 export async function GET(req: NextRequest) {
+  const subscriptionId = req.nextUrl.searchParams.get("subscription_id");
+  if (subscriptionId) return confirmPaypal(subscriptionId);
+
   const sessionId = req.nextUrl.searchParams.get("session_id");
   if (!sessionId) return NextResponse.json({ error: "missing session_id" }, { status: 400 });
 
@@ -38,16 +73,6 @@ export async function GET(req: NextRequest) {
     .eq("email", email)
     .single();
 
-  if (data?.access_token) {
-    const res = NextResponse.json({ loggedIn: true });
-    res.cookies.set("uranai_token", data.access_token, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === "production",
-      sameSite: "lax",
-      path: "/",
-      maxAge: 60 * 60 * 24 * 365,
-    });
-    return res;
-  }
+  if (data?.access_token) return loggedIn(data.access_token);
   return NextResponse.json({ waiting: true });
 }

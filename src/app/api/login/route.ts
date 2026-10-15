@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabase } from "@/lib/supabase";
-import { getStripe } from "@/lib/stripe";
+import { createPaypalCheckout } from "@/lib/paypal";
 import { loginResponse } from "@/lib/auth";
 import bcrypt from "bcryptjs";
 
@@ -36,17 +36,7 @@ export async function POST(req: NextRequest) {
     return loginResponse(user.access_token, { plan: user.plan });
   }
 
-  // 退会・未決済 → 再課金のためCheckoutへ
-  const stripe = getStripe();
-  const session = await stripe.checkout.sessions.create({
-    mode: "subscription",
-    payment_method_types: ["card"],
-    line_items: [{ price: process.env.STRIPE_PRICE_ID!, quantity: 1 }],
-    customer_email: normalizedEmail,
-    success_url: `${process.env.NEXT_PUBLIC_URL}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${process.env.NEXT_PUBLIC_URL}/gate?canceled=1`,
-    locale: "ja",
-    metadata: { email: normalizedEmail },
-  });
-  return NextResponse.json({ checkoutUrl: session.url, reason: "subscription_inactive" });
+  // 退会・未決済 → 再課金のためPayPalの申し込み画面へ
+  const checkoutUrl = await createPaypalCheckout(normalizedEmail);
+  return NextResponse.json({ checkoutUrl, reason: "subscription_inactive" });
 }

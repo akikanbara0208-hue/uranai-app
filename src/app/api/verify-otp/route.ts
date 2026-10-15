@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getSupabase } from "@/lib/supabase";
-import { getStripe, FREE_LIMIT } from "@/lib/stripe";
+import { FREE_LIMIT } from "@/lib/stripe";
+import { createPaypalCheckout } from "@/lib/paypal";
 import { hitRateLimit, clearRateLimit, clientIp } from "@/lib/rateLimit";
 
 // ログイン用トークンをサーバー側でCookieに焼き込む（proxyが確実に読めるようにする）
@@ -84,18 +85,8 @@ export async function POST(req: NextRequest) {
     return loginResponse(token, { plan: "free", freeRemaining: FREE_LIMIT - freeCount - 1 });
   }
 
-  // 有料枠 → Stripe Checkout
-  const stripe = getStripe();
-  const session = await stripe.checkout.sessions.create({
-    mode: "subscription",
-    payment_method_types: ["card"],
-    line_items: [{ price: process.env.STRIPE_PRICE_ID!, quantity: 1 }],
-    customer_email: normalizedEmail,
-    success_url: `${process.env.NEXT_PUBLIC_URL}/payment-success?session_id={CHECKOUT_SESSION_ID}`,
-    cancel_url: `${process.env.NEXT_PUBLIC_URL}/gate?canceled=1`,
-    locale: "ja",
-    metadata: { email: normalizedEmail },
-  });
+  // 有料枠 → PayPal の申し込み画面
+  const checkoutUrl = await createPaypalCheckout(normalizedEmail);
 
-  return NextResponse.json({ checkoutUrl: session.url });
+  return NextResponse.json({ checkoutUrl });
 }

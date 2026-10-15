@@ -6,12 +6,17 @@ import { useRouter, useSearchParams } from "next/navigation";
 function SuccessContent() {
   const router = useRouter();
   const params = useSearchParams();
+  // Stripe は session_id、PayPal は subscription_id を付けて戻ってくる
   const sessionId = params.get("session_id");
+  const subscriptionId = params.get("subscription_id");
+  const query = subscriptionId
+    ? `subscription_id=${encodeURIComponent(subscriptionId)}`
+    : sessionId ? `session_id=${encodeURIComponent(sessionId)}` : null;
   // session_idの有無は描画前に確定するため初期値で決める（effect内の同期setStateを避ける）
-  const [status, setStatus] = useState<"loading" | "ok" | "error">(() => sessionId ? "loading" : "error");
+  const [status, setStatus] = useState<"loading" | "ok" | "error">(() => query ? "loading" : "error");
 
   useEffect(() => {
-    if (!sessionId) return;
+    if (!query) return;
     let cancelled = false;
 
     async function pollForToken() {
@@ -19,7 +24,7 @@ function SuccessContent() {
         await new Promise(r => setTimeout(r, 2000));
         if (cancelled) return;
         try {
-          const res = await fetch(`/api/payment-confirm?session_id=${sessionId}`);
+          const res = await fetch(`/api/payment-confirm?${query}`);
           // 認証リダイレクト等でHTMLが返ることがあり、その場合json()が例外を投げて
           // ポーリングが無言で止まる。1回分の失敗として扱い、次の試行へ進める
           if (!res.ok) continue;
@@ -39,7 +44,7 @@ function SuccessContent() {
     }
     pollForToken();
     return () => { cancelled = true; };
-  }, [sessionId, router]);
+  }, [query, router]);
 
   return (
     <div className="mystical-bg min-h-screen flex flex-col items-center justify-center px-4 text-center">
