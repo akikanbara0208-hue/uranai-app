@@ -4,6 +4,7 @@ import Link from "next/link";
 import { Suspense, useEffect, useState } from "react";
 import { useSearchParams } from "next/navigation";
 import { FORTUNES, FORTUNE_CATEGORIES } from "@/lib/fortunes";
+import { FINDER_TOPICS } from "@/lib/fortuneFinder";
 import { Fortune } from "@/lib/types";
 
 function BillingNotice() {
@@ -18,7 +19,7 @@ function BillingNotice() {
   );
 }
 
-function FortuneCard({ fortune }: { fortune: Fortune }) {
+function FortuneCard({ fortune, reason }: { fortune: Fortune; reason?: string }) {
   const cat = FORTUNE_CATEGORIES[fortune.category];
   return (
     <Link href={`/fortune/${fortune.id}`}>
@@ -31,7 +32,7 @@ function FortuneCard({ fortune }: { fortune: Fortune }) {
           <h3 className="text-lg font-bold gold-text">{fortune.name}</h3>
           <p className="text-xs text-purple-300 mt-0.5">{fortune.nameEn}</p>
         </div>
-        <p className="text-sm text-gray-300 flex-1 leading-relaxed">{fortune.description}</p>
+        <p className="text-sm text-gray-300 flex-1 leading-relaxed">{reason ?? fortune.description}</p>
         <div className="flex items-center justify-between mt-auto pt-2 border-t border-white/10">
           <span className="text-xs text-gray-500">起源：{fortune.origin}</span>
           <span className="text-xs gold-text">占う →</span>
@@ -45,6 +46,8 @@ export default function Home() {
   const categoryKeys = Object.keys(FORTUNE_CATEGORIES) as (keyof typeof FORTUNE_CATEGORIES)[];
   const [isAdmin, setIsAdmin] = useState(false);
   const [userName, setUserName] = useState<string | null>(null);
+  const [topicLabel, setTopicLabel] = useState("");
+  const topic = FINDER_TOPICS.find((t) => t.label === topicLabel);
 
   useEffect(() => {
     fetch("/api/me")
@@ -120,7 +123,33 @@ export default function Home() {
       </Suspense>
 
       <main className="max-w-6xl mx-auto px-4 pb-20">
-        {categoryKeys.map((catKey) => {
+        <div className="mb-12 text-center">
+          <label htmlFor="fortune-topic" className="block text-lg font-bold gold-text mb-3">
+            何を知りたいですか？
+          </label>
+          <select
+            id="fortune-topic"
+            value={topicLabel}
+            onChange={(e) => setTopicLabel(e.target.value)}
+            className="w-full max-w-md bg-white border border-yellow-500/40 rounded-lg px-4 py-3 text-base text-gray-800 outline-none focus:border-yellow-400"
+          >
+            <option value="">すべての占いを見る</option>
+            {FINDER_TOPICS.map((t) => (
+              <option key={t.label} value={t.label}>{t.label}</option>
+            ))}
+          </select>
+        </div>
+
+        {topic && (
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {topic.picks.map((p) => {
+              const fortune = FORTUNES.find((f) => f.id === p.id);
+              return fortune && <FortuneCard key={p.id} fortune={fortune} reason={p.reason} />;
+            })}
+          </div>
+        )}
+
+        {!topic && categoryKeys.map((catKey) => {
           const fortunes = FORTUNES.filter((f) => f.category === catKey);
           const cat = FORTUNE_CATEGORIES[catKey];
           return (
