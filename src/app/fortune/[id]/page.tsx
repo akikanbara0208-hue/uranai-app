@@ -71,6 +71,7 @@ import {
 import {
   getHSPReading,
   getBigFiveReading,
+  BIG_FIVE_ITEMS,
   getTemperamentReading,
   getFourElementsReading,
   getAuraColorReading,
@@ -475,8 +476,6 @@ function InputForm({
   const [values, setValues] = useState<Record<string, string>>({
     // HSP デフォルト（中間値5）
     hsp_0: "5", hsp_1: "5", hsp_2: "5", hsp_3: "5", hsp_4: "5", hsp_5: "5", hsp_6: "5",
-    // BigFive デフォルト（中間値50）
-    big5_O: "50", big5_C: "50", big5_E: "50", big5_A: "50", big5_N: "50",
     // 四気質・四元素デフォルト（中間値5）。スライダーの表示値と送信値を一致させるため、
     // 未操作でも実際の値として持たせる（未定義のままだと0扱いになり結果が先頭に固定される）
     temp_a: "5", temp_b: "5", temp_c: "5", temp_d: "5",
@@ -594,7 +593,9 @@ function InputForm({
         const scores = keys.map((k) => values[k] ?? "5");
         return new Set(scores).size > 1;
       }
-      return true; // hsp, big-five have defaults
+      // ビッグファイブは20問すべてに答えてからでないと診断できない
+      if (fortuneId === "big-five") return BIG_FIVE_ITEMS.every((_, i) => !!values[`big5_q${i}`]);
+      return true; // hsp has defaults
     }
     return false;
   };
@@ -889,33 +890,35 @@ function InputForm({
       )}
 
       {inputType === "quiz" && fortuneId === "big-five" && (
-        <div className="space-y-5">
-          <p className="text-sm text-yellow-500/70">各特性について自分がどの程度当てはまるかを0〜100で評価してください</p>
-          {[
-            { key: "big5_O", label: "開放性（O）", desc: "好奇心・創造性・新体験への開放度" },
-            { key: "big5_C", label: "誠実性（C）", desc: "計画性・責任感・自制心の高さ" },
-            { key: "big5_E", label: "外向性（E）", desc: "社交性・活発さ・外向的エネルギー" },
-            { key: "big5_A", label: "協調性（A）", desc: "思いやり・信頼性・協力的な姿勢" },
-            { key: "big5_N", label: "神経症傾向（N）", desc: "感情の波・ストレス反応・不安傾向" },
-          ].map(({ key, label, desc }) => (
-            <div key={key} className="bg-white/5 rounded-lg p-4">
-              <p className="text-base text-gray-100 font-bold mb-1">{label}</p>
-              <p className="text-sm text-gray-300 mb-3 leading-relaxed">{desc}</p>
-              <div className="flex items-center gap-3">
-                <span className="text-xs text-gray-500 w-6">低</span>
-                <input
-                  type="range"
-                  min={0}
-                  max={100}
-                  value={values[key] || "50"}
-                  onChange={(e) => set(key, e.target.value)}
-                  style={{ ...SLIDER_STYLE }}
-                />
-                <span className="text-xs text-gray-500 w-6 text-right">高</span>
-                <span className="text-sm font-semibold gold-text w-8 text-right">{values[key] || "50"}</span>
+        <div className="space-y-4">
+          <p className="text-sm text-yellow-500/70">
+            次の20問に、ふだんの自分にどれくらい当てはまるかで答えてください（1＝まったく当てはまらない〜5＝とても当てはまる）。
+            なりたい自分ではなく、今のありのままで選ぶと正確に出ます
+          </p>
+          {BIG_FIVE_ITEMS.map((item, i) => {
+            const key = `big5_q${i}`;
+            return (
+              <div key={key} className="bg-white/5 rounded-lg p-4">
+                <p className="text-base text-gray-100 mb-3">{i + 1}. {item.text}</p>
+                <div className="flex items-center gap-2">
+                  <span className="text-xs text-gray-500 w-14 leading-tight">当てはまらない</span>
+                  {["1", "2", "3", "4", "5"].map((v) => (
+                    <label
+                      key={v}
+                      style={{ flex: 1, textAlign: "center", cursor: "pointer", padding: "8px 0", borderRadius: "6px", background: values[key] === v ? "rgba(201,162,39,0.15)" : "transparent", border: values[key] === v ? "1px solid rgba(201,162,39,0.6)" : "1px solid rgba(255,255,255,0.12)", color: values[key] === v ? "var(--gold)" : "var(--text-secondary)", fontSize: "14px" }}
+                    >
+                      <input type="radio" name={key} value={v} checked={values[key] === v} onChange={() => set(key, v)} style={{ display: "none" }} />
+                      {v}
+                    </label>
+                  ))}
+                  <span className="text-xs text-gray-500 w-14 leading-tight text-right">当てはまる</span>
+                </div>
               </div>
-            </div>
-          ))}
+            );
+          })}
+          <p className="text-xs text-gray-500">
+            回答済み {BIG_FIVE_ITEMS.filter((_, i) => !!values[`big5_q${i}`]).length} / {BIG_FIVE_ITEMS.length}
+          </p>
         </div>
       )}
 

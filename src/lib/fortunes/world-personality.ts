@@ -79,12 +79,48 @@ export function getHSPReading(values: Record<string, string>): FortuneResult {
 // 28. ビッグファイブ（五大性格因子）
 // ══════════════════════════════════════════════
 
+// 質問はMini-IPIP（Donnellan et al., 2006。国際パーソナリティ項目プール IPIP の20問版・パブリックドメイン）を和訳したもの。
+// 各因子4問、うち半分は逆転項目。1〜5で答え、因子ごとの合計（4〜20）を0〜100に換算する。
+// 以前は5因子の数値を利用者がスライダーで直接決める作りで、診断になっていなかった
+export const BIG_FIVE_ITEMS: { text: string; trait: "O" | "C" | "E" | "A" | "N"; reverse: boolean }[] = [
+  { text: "集まりでは場を盛り上げる役になる", trait: "E", reverse: false },
+  { text: "人の気持ちに共感する", trait: "A", reverse: false },
+  { text: "やるべき用事はすぐに片づける", trait: "C", reverse: false },
+  { text: "気分の浮き沈みが激しい", trait: "N", reverse: false },
+  { text: "想像力が豊かだ", trait: "O", reverse: false },
+  { text: "口数は少ないほうだ", trait: "E", reverse: true },
+  { text: "他人の悩みごとにはあまり関心がない", trait: "A", reverse: true },
+  { text: "使った物を元の場所に戻し忘れることがよくある", trait: "C", reverse: true },
+  { text: "たいていは落ち着いてリラックスしている", trait: "N", reverse: true },
+  { text: "抽象的な考えには興味がない", trait: "O", reverse: true },
+  { text: "集まりではいろいろな人と話す", trait: "E", reverse: false },
+  { text: "人の感情を自分のことのように感じる", trait: "A", reverse: false },
+  { text: "きちんと整っている状態が好きだ", trait: "C", reverse: false },
+  { text: "すぐに動揺してしまう", trait: "N", reverse: false },
+  { text: "抽象的な考えを理解するのは苦手だ", trait: "O", reverse: true },
+  { text: "目立たず後ろのほうにいる", trait: "E", reverse: true },
+  { text: "他人にはあまり興味がない", trait: "A", reverse: true },
+  { text: "物事を散らかしたり台無しにしたりしがちだ", trait: "C", reverse: true },
+  { text: "落ち込むことはめったにない", trait: "N", reverse: true },
+  { text: "想像力はあまり豊かではない", trait: "O", reverse: true },
+];
+
+function bigFiveScore(values: Record<string, string>, trait: "O" | "C" | "E" | "A" | "N"): number {
+  let sum = 0;
+  BIG_FIVE_ITEMS.forEach((item, i) => {
+    if (item.trait !== trait) return;
+    const raw = Math.min(5, Math.max(1, parseInt(values[`big5_q${i}`] || "3", 10) || 3));
+    sum += item.reverse ? 6 - raw : raw;
+  });
+  return Math.round(((sum - 4) / 16) * 100);
+}
+
 export function getBigFiveReading(values: Record<string, string>): FortuneResult {
-  const O = parseInt(values.big5_O || "50", 10); // 開放性
-  const C = parseInt(values.big5_C || "50", 10); // 誠実性
-  const E = parseInt(values.big5_E || "50", 10); // 外向性
-  const A = parseInt(values.big5_A || "50", 10); // 協調性
-  const N = parseInt(values.big5_N || "50", 10); // 神経症傾向
+  const O = bigFiveScore(values, "O"); // 開放性
+  const C = bigFiveScore(values, "C"); // 誠実性
+  const E = bigFiveScore(values, "E"); // 外向性
+  const A = bigFiveScore(values, "A"); // 協調性
+  const N = bigFiveScore(values, "N"); // 神経症傾向
 
   const desc = (score: number, high: string, low: string) =>
     score >= 70 ? `高い（${high}）` : score >= 40 ? `中程度` : `低め（${low}）`;
@@ -103,7 +139,7 @@ export function getBigFiveReading(values: Record<string, string>): FortuneResult
   return {
     title: `ビッグファイブ性格分析（O:${O} C:${C} E:${E} A:${A} N:${N}）`,
     share: `🧠私のビッグファイブは O${O}／C${C}／E${E}／A${A}／N${N}、一番強いのは${dominantTrait.label.replace(/（.*$/, "")}`,
-    summary: `心理学で最も研究された性格モデル「ビッグファイブ（OCEAN）」による分析です。5つの主要な性格次元であなたの本質的なパーソナリティプロファイルを描き出します。`,
+    summary: `心理学で最も研究された性格モデル「ビッグファイブ（OCEAN）」による分析です。20問への回答（国際パーソナリティ項目プールの短縮版 Mini-IPIP を元にした質問）から、5つの性格次元のスコアを算出しました。`,
     details: [
       ...profile.map(p => ({ label: `${p.label}：${p.bar}（${p.score}/100）`, content: p.detail })),
       { label: "あなたのプロファイルの総合解釈", content: `最も際立つ特性は「${dominantTrait.label}」（スコア${dominantTrait.score}）です。この特性があなたの行動と反応パターンに最も大きな影響を与えています。5つの因子のバランスがあなた独自の性格の指紋を形成しています。` },
