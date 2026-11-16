@@ -72,6 +72,10 @@ import {
   getHSPReading,
   getBigFiveReading,
   BIG_FIVE_ITEMS,
+  HSP_ITEMS,
+  TEMPERAMENT_QUESTIONS,
+  FOUR_ELEMENTS_QUESTIONS,
+  type TwoChoiceQuestion,
   getTemperamentReading,
   getFourElementsReading,
   getAuraColorReading,
@@ -448,12 +452,6 @@ function ResultDisplay({ result, question, fortuneId, shareName, privateQuestion
 }
 
 // ──────────────────────────────────────────────────────────────
-const SLIDER_STYLE: React.CSSProperties = {
-  width: "100%",
-  accentColor: "var(--gold)",
-  cursor: "pointer",
-};
-
 const SELECT_STYLE: React.CSSProperties = {
   background: "#ffffff",
   border: "1px solid rgba(124, 58, 237, 0.35)",
@@ -464,6 +462,50 @@ const SELECT_STYLE: React.CSSProperties = {
   outline: "none",
 };
 
+// 1〜5の5段階で答える質問1問分
+function ScaleQuestion({ no, text, name, value, onChange }: { no: number; text: string; name: string; value?: string; onChange: (v: string) => void }) {
+  return (
+    <div className="bg-white/5 rounded-lg p-4">
+      <p className="text-base text-gray-100 mb-3">{no}. {text}</p>
+      <div className="flex items-center gap-2">
+        {["1", "2", "3", "4", "5"].map((v) => (
+          <label
+            key={v}
+            style={{ flex: 1, textAlign: "center", cursor: "pointer", padding: "8px 0", borderRadius: "6px", background: value === v ? "rgba(201,162,39,0.15)" : "#ffffff", border: value === v ? "1px solid rgba(201,162,39,0.8)" : "1px solid rgba(124,58,237,0.3)", color: value === v ? "var(--gold)" : "var(--text-secondary)", fontSize: "14px" }}
+          >
+            <input type="radio" name={name} value={v} checked={value === v} onChange={() => onChange(v)} style={{ display: "none" }} />
+            {v}
+          </label>
+        ))}
+      </div>
+      <div className="flex justify-between text-xs text-gray-500 mt-1">
+        <span>まったく当てはまらない</span>
+        <span>とても当てはまる</span>
+      </div>
+    </div>
+  );
+}
+
+// 2つのうち自分に近いほうを選ぶ質問1問分
+function TwoChoice({ no, item, name, value, onChange }: { no: number; item: TwoChoiceQuestion; name: string; value?: string; onChange: (v: string) => void }) {
+  return (
+    <div className="bg-white/5 rounded-lg p-4">
+      <p className="text-base text-gray-100 mb-3">{no}. {item.q}</p>
+      <div className="space-y-2">
+        {(["a", "b"] as const).map((v) => (
+          <label
+            key={v}
+            style={{ display: "block", cursor: "pointer", padding: "8px 10px", borderRadius: "6px", background: value === v ? "rgba(201,162,39,0.15)" : "#ffffff", border: value === v ? "1px solid rgba(201,162,39,0.8)" : "1px solid rgba(124,58,237,0.3)", color: value === v ? "var(--gold)" : "var(--text-secondary)", fontSize: "14px" }}
+          >
+            <input type="radio" name={name} value={v} checked={value === v} onChange={() => onChange(v)} style={{ display: "none" }} />
+            {item[v]}
+          </label>
+        ))}
+      </div>
+    </div>
+  );
+}
+
 function InputForm({
   inputType,
   fortuneId,
@@ -473,14 +515,7 @@ function InputForm({
   fortuneId: string;
   onSubmit: (values: Record<string, string>) => void;
 }) {
-  const [values, setValues] = useState<Record<string, string>>({
-    // HSP デフォルト（中間値5）
-    hsp_0: "5", hsp_1: "5", hsp_2: "5", hsp_3: "5", hsp_4: "5", hsp_5: "5", hsp_6: "5",
-    // 四気質・四元素デフォルト（中間値5）。スライダーの表示値と送信値を一致させるため、
-    // 未操作でも実際の値として持たせる（未定義のままだと0扱いになり結果が先頭に固定される）
-    temp_a: "5", temp_b: "5", temp_c: "5", temp_d: "5",
-    elem_fire: "5", elem_water: "5", elem_earth: "5", elem_air: "5",
-  });
+  const [values, setValues] = useState<Record<string, string>>({});
 
   const set = (key: string, val: string) => setValues((prev) => ({ ...prev, [key]: val }));
 
@@ -557,12 +592,6 @@ function InputForm({
         saveProfileFromValues({ birthday: normalized.birthday2, birthTime: normalized.birthTime2 || "" });
       }
     }
-    // HSP: combine scores into hsp_answers for the reading function
-    if (fortuneId === "hsp") {
-      const answers = [0,1,2,3,4,5,6].map(i => normalized[`hsp_${i}`] || "5").join(",");
-      onSubmit({ ...normalized, hsp_answers: answers });
-      return;
-    }
     onSubmit(normalized);
   };
 
@@ -584,18 +613,12 @@ function InputForm({
       if (fortuneId === "color-personality") return values.fav_color !== undefined && values.fav_color !== "";
       if (fortuneId === "deity") return isValidDate(values.birthday) && !!values.deity_q1 && !!values.deity_q2 && !!values.deity_q3;
       if (fortuneId === "face-reading") return !!values.face_shape && !!values.face_eye && !!values.face_nose && !!values.face_mouth && !!values.face_brow;
-      // 四気質・四元素は「最も高い項目」で型を決めるため、全項目が同じ値のままだと
-      // 誰が診断しても先頭の型（多血質／火）に固定されてしまう。差をつけた入力を必須にする
-      if (fortuneId === "temperament" || fortuneId === "four-elements") {
-        const keys = fortuneId === "temperament"
-          ? ["temp_a", "temp_b", "temp_c", "temp_d"]
-          : ["elem_fire", "elem_water", "elem_earth", "elem_air"];
-        const scores = keys.map((k) => values[k] ?? "5");
-        return new Set(scores).size > 1;
-      }
-      // ビッグファイブは20問すべてに答えてからでないと診断できない
+      // 質問形式の診断は、すべての問いに答えてからでないと診断できない
+      if (fortuneId === "temperament") return TEMPERAMENT_QUESTIONS.every((_, i) => !!values[`temp_q${i}`]);
+      if (fortuneId === "four-elements") return FOUR_ELEMENTS_QUESTIONS.every((_, i) => !!values[`elem_q${i}`]);
+      if (fortuneId === "hsp") return HSP_ITEMS.every((_, i) => !!values[`hsp_${i}`]);
       if (fortuneId === "big-five") return BIG_FIVE_ITEMS.every((_, i) => !!values[`big5_q${i}`]);
-      return true; // hsp has defaults
+      return false;
     }
     return false;
   };
@@ -864,28 +887,12 @@ function InputForm({
       {/* ── ビッグファイブ ── */}
       {/* ── 高感受性セルフチェック（HSP） ── */}
       {inputType === "quiz" && fortuneId === "hsp" && (
-        <div className="space-y-5">
-          <p className="text-sm text-yellow-500/70">各項目が自分にどの程度当てはまるかを0〜10で評価してください</p>
-          {[
-            { key: "hsp_0", label: "刺激への敏感さ", desc: "些細な物音・光・匂いなどの刺激に、人より敏感に反応する" },
-            { key: "hsp_1", label: "他者の感情への気づき", desc: "その場にいる人の気分や感情の変化に、すぐ気づいてしまう" },
-            { key: "hsp_2", label: "マルチタスクの負荷", desc: "一度に多くのことを頼まれると、混乱したり疲れたりしやすい" },
-            { key: "hsp_3", label: "刺激過多への疲れやすさ", desc: "大きな音・強い光・人混みが苦手で、長くいるとすぐに疲れる" },
-            { key: "hsp_4", label: "芸術・美への感受性", desc: "音楽や芸術、自然の美しさに深く心を動かされることが多い" },
-            { key: "hsp_5", label: "時間的プレッシャーへの反応", desc: "短時間で多くをこなさなければならない状況に、動揺しやすい" },
-            { key: "hsp_6", label: "見られることへの緊張", desc: "人に見られていると感じると、緊張していつも通りの力を出しにくい" },
-          ].map(({ key, label, desc }) => (
-            <div key={key} className="bg-white/5 rounded-lg p-4">
-              <p className="text-base text-gray-100 font-bold mb-1">{label}</p>
-              <p className="text-sm text-gray-300 mb-3 leading-relaxed">{desc}</p>
-              <div className="flex items-center gap-3">
-                <span className="text-xs text-gray-500 w-16">当てはまらない</span>
-                <input type="range" min={0} max={10} value={values[key] || "5"} onChange={(e) => set(key, e.target.value)} style={{ ...SLIDER_STYLE }} />
-                <span className="text-xs text-gray-500 w-16 text-right">よく当てはまる</span>
-                <span className="text-sm font-semibold gold-text w-6 text-right">{values[key] || "5"}</span>
-              </div>
-            </div>
+        <div className="space-y-4">
+          <p className="text-sm text-yellow-500/70">次の7問に、ふだんの自分にどれくらい当てはまるかで答えてください（1＝まったく当てはまらない〜5＝とても当てはまる）</p>
+          {HSP_ITEMS.map((text, i) => (
+            <ScaleQuestion key={i} no={i + 1} text={text} name={`hsp_${i}`} value={values[`hsp_${i}`]} onChange={(v) => set(`hsp_${i}`, v)} />
           ))}
+          <p className="text-xs text-gray-500">回答済み {HSP_ITEMS.filter((_, i) => !!values[`hsp_${i}`]).length} / {HSP_ITEMS.length}</p>
         </div>
       )}
 
@@ -895,27 +902,9 @@ function InputForm({
             次の20問に、ふだんの自分にどれくらい当てはまるかで答えてください（1＝まったく当てはまらない〜5＝とても当てはまる）。
             なりたい自分ではなく、今のありのままで選ぶと正確に出ます
           </p>
-          {BIG_FIVE_ITEMS.map((item, i) => {
-            const key = `big5_q${i}`;
-            return (
-              <div key={key} className="bg-white/5 rounded-lg p-4">
-                <p className="text-base text-gray-100 mb-3">{i + 1}. {item.text}</p>
-                <div className="flex items-center gap-2">
-                  <span className="text-xs text-gray-500 w-14 leading-tight">当てはまらない</span>
-                  {["1", "2", "3", "4", "5"].map((v) => (
-                    <label
-                      key={v}
-                      style={{ flex: 1, textAlign: "center", cursor: "pointer", padding: "8px 0", borderRadius: "6px", background: values[key] === v ? "rgba(201,162,39,0.15)" : "transparent", border: values[key] === v ? "1px solid rgba(201,162,39,0.6)" : "1px solid rgba(255,255,255,0.12)", color: values[key] === v ? "var(--gold)" : "var(--text-secondary)", fontSize: "14px" }}
-                    >
-                      <input type="radio" name={key} value={v} checked={values[key] === v} onChange={() => set(key, v)} style={{ display: "none" }} />
-                      {v}
-                    </label>
-                  ))}
-                  <span className="text-xs text-gray-500 w-14 leading-tight text-right">当てはまる</span>
-                </div>
-              </div>
-            );
-          })}
+          {BIG_FIVE_ITEMS.map((item, i) => (
+            <ScaleQuestion key={i} no={i + 1} text={item.text} name={`big5_q${i}`} value={values[`big5_q${i}`]} onChange={(v) => set(`big5_q${i}`, v)} />
+          ))}
           <p className="text-xs text-gray-500">
             回答済み {BIG_FIVE_ITEMS.filter((_, i) => !!values[`big5_q${i}`]).length} / {BIG_FIVE_ITEMS.length}
           </p>
@@ -926,24 +915,11 @@ function InputForm({
       {/* ── 四元素タイプ ── */}
       {inputType === "quiz" && fortuneId === "four-elements" && (
         <div className="space-y-4">
-          <p className="text-sm text-yellow-500/70">各元素が自分にどの程度当てはまるか評価してください（最も高い元素であなたの支配元素を判定するため、4つに差をつけてください）</p>
-          {[
-            { key: "elem_fire",  label: "🔥 火（Fire）",  desc: "情熱的・行動力がある・変化を起こしたい・リーダー気質" },
-            { key: "elem_water", label: "💧 水（Water）", desc: "感受性が高い・直感を信じる・共感力がある・流れに乗る" },
-            { key: "elem_earth", label: "🌍 地（Earth）", desc: "堅実・忍耐強い・安定を好む・現実的・誠実" },
-            { key: "elem_air",   label: "💨 風（Air）",   desc: "知的・自由を愛する・コミュニケーション好き・好奇心旺盛" },
-          ].map(({ key, label, desc }) => (
-            <div key={key} className="bg-white/5 rounded-lg p-4">
-              <p className="text-base text-gray-100 font-bold mb-1">{label}</p>
-              <p className="text-sm text-gray-300 mb-3 leading-relaxed">{desc}</p>
-              <div className="flex items-center gap-3">
-                <span className="text-xs text-gray-500 w-16">当てはまらない</span>
-                <input type="range" min={0} max={10} value={values[key] || "5"} onChange={(e) => set(key, e.target.value)} style={{ ...SLIDER_STYLE }} />
-                <span className="text-xs text-gray-500 w-16 text-right">よく当てはまる</span>
-                <span className="text-sm font-semibold gold-text w-6 text-right">{values[key] || "5"}</span>
-              </div>
-            </div>
+          <p className="text-sm text-yellow-500/70">次の10問で、自分により近いほうを選んでください。答えから「熱と冷」「乾と湿」の性質を測り、あなたの支配元素を導きます</p>
+          {FOUR_ELEMENTS_QUESTIONS.map((item, i) => (
+            <TwoChoice key={i} no={i + 1} item={item} name={`elem_q${i}`} value={values[`elem_q${i}`]} onChange={(v) => set(`elem_q${i}`, v)} />
           ))}
+          <p className="text-xs text-gray-500">回答済み {FOUR_ELEMENTS_QUESTIONS.filter((_, i) => !!values[`elem_q${i}`]).length} / {FOUR_ELEMENTS_QUESTIONS.length}</p>
         </div>
       )}
 
@@ -960,13 +936,12 @@ function InputForm({
             [5, "🟣 藍",   "直感・洞察・内省"],
             [6, "🔮 紫",   "霊性・神秘・知恵"],
             [7, "✨ 白・金", "純粋・保護・高次意識"],
-          ].map(([idx, label, desc]) => (
+          ].map(([idx, label]) => (
             <label key={idx} style={{ display: "flex", flexDirection: "column", gap: "2px", cursor: "pointer", padding: "10px", borderRadius: "8px", background: values.aura_color === String(idx) ? "rgba(201,162,39,0.15)" : "rgba(255,255,255,0.03)", border: values.aura_color === String(idx) ? "1px solid rgba(201,162,39,0.4)" : "1px solid rgba(255,255,255,0.08)" }}>
               <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <input type="radio" name="aura_color" value={String(idx)} checked={values.aura_color === String(idx)} onChange={() => set("aura_color", String(idx))} style={{ accentColor: "var(--gold)" }} />
                 <span style={{ color: values.aura_color === String(idx) ? "var(--gold)" : "var(--text-primary)", fontWeight: 600 }}>{label as string}</span>
               </span>
-              <span className="text-xs text-gray-500 pl-6">{desc as string}</span>
             </label>
           ))}
         </div>
@@ -987,13 +962,12 @@ function InputForm({
             ["white",  "⬜ 白",     "純粋・完璧・清潔感"],
             ["black",  "⬛ 黒",     "力・洗練・神秘"],
             ["brown",  "🟫 茶",     "安定・誠実・堅実"],
-          ].map(([key, label, desc]) => (
+          ].map(([key, label]) => (
             <label key={key} style={{ display: "flex", flexDirection: "column", gap: "2px", cursor: "pointer", padding: "10px", borderRadius: "8px", background: values.fav_color === key ? "rgba(201,162,39,0.15)" : "rgba(255,255,255,0.03)", border: values.fav_color === key ? "1px solid rgba(201,162,39,0.4)" : "1px solid rgba(255,255,255,0.08)" }}>
               <span style={{ display: "flex", alignItems: "center", gap: "8px" }}>
                 <input type="radio" name="fav_color" value={key} checked={values.fav_color === key} onChange={() => set("fav_color", key)} style={{ accentColor: "var(--gold)" }} />
                 <span style={{ color: values.fav_color === key ? "var(--gold)" : "var(--text-primary)", fontWeight: 600 }}>{label}</span>
               </span>
-              <span className="text-xs text-gray-500 pl-6">{desc}</span>
             </label>
           ))}
         </div>
@@ -1002,31 +976,11 @@ function InputForm({
       {/* ── 四気質診断 ── */}
       {inputType === "quiz" && fortuneId === "temperament" && (
         <div className="space-y-4">
-          <p className="text-sm text-yellow-500/70">各気質の説明を読み、自分にどの程度当てはまるかを0〜10で選んでください（最も高い気質で判定するため、4つに差をつけてください）</p>
-          {[
-            { key: "temp_a", label: "多血質（風）", desc: "社交的・明るい・行動が早い・飽きっぽい・楽観的" },
-            { key: "temp_b", label: "胆汁質（火）", desc: "意志が強い・情熱的・リーダー気質・怒りやすい・決断が速い" },
-            { key: "temp_c", label: "粘液質（水）", desc: "穏やか・忍耐強い・共感力が高い・変化が苦手・安定志向" },
-            { key: "temp_d", label: "黒胆汁質（地）", desc: "深く考える・完璧主義・芸術的感性・心配性・分析が得意" },
-          ].map(({ key, label, desc }) => (
-            <div key={key} className="bg-white/5 rounded-lg p-4">
-              <p className="text-base text-gray-100 font-bold mb-1">{label}</p>
-              <p className="text-sm text-gray-300 mb-3 leading-relaxed">{desc}</p>
-              <div className="flex items-center gap-3">
-                <span className="text-xs text-gray-500 w-16">当てはまらない</span>
-                <input
-                  type="range"
-                  min={0}
-                  max={10}
-                  value={values[key] || "5"}
-                  onChange={(e) => set(key, e.target.value)}
-                  style={{ ...SLIDER_STYLE }}
-                />
-                <span className="text-xs text-gray-500 w-16 text-right">よく当てはまる</span>
-                <span className="text-sm font-semibold gold-text w-6 text-right">{values[key] || "5"}</span>
-              </div>
-            </div>
+          <p className="text-sm text-yellow-500/70">次の10問で、自分により近いほうを選んでください。答えから「外向か内向か」「気持ちが安定しているか揺れやすいか」を測り、あなたの気質を導きます</p>
+          {TEMPERAMENT_QUESTIONS.map((item, i) => (
+            <TwoChoice key={i} no={i + 1} item={item} name={`temp_q${i}`} value={values[`temp_q${i}`]} onChange={(v) => set(`temp_q${i}`, v)} />
           ))}
+          <p className="text-xs text-gray-500">回答済み {TEMPERAMENT_QUESTIONS.filter((_, i) => !!values[`temp_q${i}`]).length} / {TEMPERAMENT_QUESTIONS.length}</p>
         </div>
       )}
 

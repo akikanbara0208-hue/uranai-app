@@ -15,11 +15,22 @@ function pick<T>(arr: T[], r: ReturnType<typeof rng>): T {
 // 26. 高感受性セルフチェック
 // ══════════════════════════════════════════════
 
+// 高感受性（HSP）の7つの側面を、それぞれ自分に当てはまるかで答えてもらう
+export const HSP_ITEMS: string[] = [
+  "些細な物音・光・匂いなどの刺激に、人より敏感に反応する",
+  "その場にいる人の気分や感情の変化に、すぐ気づいてしまう",
+  "一度に多くのことを頼まれると、混乱したり疲れたりしやすい",
+  "大きな音・強い光・人混みが苦手で、長くいるとすぐに疲れる",
+  "音楽や芸術、自然の美しさに深く心を動かされることが多い",
+  "短時間で多くをこなさなければならない状況に、動揺しやすい",
+  "人に見られていると感じると、緊張していつも通りの力を出しにくい",
+];
+
 export function getHSPReading(values: Record<string, string>): FortuneResult {
-  const answers = (values.hsp_answers || "").split(",").map(Number).filter(n => !isNaN(n));
+  // 7問を1〜5で回答。合計（7〜35）を0〜100%に換算する
+  const answers = HSP_ITEMS.map((_, i) => Math.min(5, Math.max(1, parseInt(values[`hsp_${i}`] || "3", 10) || 3)));
   const score = answers.reduce((sum, v) => sum + v, 0);
-  const maxScore = 70; // 7 questions × max 10
-  const percentage = answers.length > 0 ? Math.round((score / maxScore) * 100) : 50;
+  const percentage = Math.round(((score - HSP_ITEMS.length) / (HSP_ITEMS.length * 4)) * 100);
   const isHSP = percentage >= 50;
   const level = percentage >= 80 ? "非常に高い" : percentage >= 60 ? "高い" : percentage >= 40 ? "中程度" : "低め";
   const r = rng(score * 100 + Date.now() % 10000);
@@ -196,18 +207,54 @@ const TEMPERAMENTS = [
   },
 ];
 
+// 2択の質問で2つの軸を測り、4タイプを決める（各軸5問の多数決なので同点にならない）。
+// first は軸の前半（a）側にいくつ答えたかを数える問いの範囲
+export type TwoChoiceQuestion = { q: string; a: string; b: string };
+
+// 四気質：外向/内向 × 情緒の安定/不安定（ヴント、アイゼンクによる古典四気質の整理。
+// ガレノスの 熱/冷 × 湿/乾 と対応し、多血質＝外向・安定、胆汁質＝外向・不安定、
+// 粘液質＝内向・安定、黒胆汁質＝内向・不安定）
+export const TEMPERAMENT_QUESTIONS: TwoChoiceQuestion[] = [
+  { q: "休日に元気を取り戻すのは？", a: "人と会ったり出かけたりする", b: "一人や家で静かに過ごす" },
+  { q: "初対面の人が多い場では？", a: "自分から話しかけにいく", b: "話しかけられるのを待つことが多い" },
+  { q: "考えをまとめるときは？", a: "人に話しながらまとめる", b: "頭の中や紙の上で一人でまとめる" },
+  { q: "物事を決めるテンポは？", a: "思い立ったらすぐ動く", b: "よく考えてから動く" },
+  { q: "注目を浴びる場面は？", a: "わりと楽しめる", b: "できれば避けたい" },
+  { q: "予定外のトラブルが起きると？", a: "わりと平気で切り替えられる", b: "しばらく気持ちが乱れる" },
+  { q: "人から強く言われたあとは？", a: "その場で消化して引きずらない", b: "あとまで何度も思い返してしまう" },
+  { q: "ふだんの感情の起伏は？", a: "おだやかで波が小さい", b: "喜怒哀楽が強く出やすい" },
+  { q: "心配ごとがあるときは？", a: "考えても仕方ないと割り切れる", b: "頭から離れず落ち着かない" },
+  { q: "腹が立ったときは？", a: "すぐにおさまる", b: "表に出るか、内にこもって長く続く" },
+];
+
+// 四元素：アリストテレスの二対の性質 熱/冷 × 乾/湿 で決まる
+// （火＝熱・乾、風＝熱・湿、水＝冷・湿、地＝冷・乾）
+export const FOUR_ELEMENTS_QUESTIONS: TwoChoiceQuestion[] = [
+  { q: "あなたのエネルギーの向きは？", a: "外へ向かって広がっていく", b: "内に向かって深まっていく" },
+  { q: "新しいことには？", a: "まず飛び込んでみる", b: "様子を見てから入る" },
+  { q: "心地よい生活のリズムは？", a: "変化と動きが多い", b: "ゆったりして変わらない" },
+  { q: "人の輪の中では？", a: "自分から働きかける", b: "受け止める側にまわる" },
+  { q: "理想の一日は？", a: "予定がたくさん詰まった日", b: "余白の多い静かな日" },
+  { q: "物事の判断は？", a: "白黒をはっきりつける", b: "状況に合わせて柔らかく決める" },
+  { q: "人との距離感は？", a: "自分と相手の線引きがはっきりしている", b: "相手の気持ちに溶け込みやすい" },
+  { q: "意見が食い違ったときは？", a: "自分の考えを通す", b: "相手に合わせて形を変えられる" },
+  { q: "何かを説明するときは？", a: "要点を区切って簡潔に", b: "流れや雰囲気ごと伝える" },
+  { q: "立てた計画は？", a: "決めた形を守りたい", b: "流れに応じて変わってよい" },
+];
+
+// 前半5問・後半5問それぞれで a を3つ以上選んだかを返す
+function twoAxes(values: Record<string, string>, prefix: string): [boolean, boolean] {
+  const countA = (from: number) =>
+    [0, 1, 2, 3, 4].filter((i) => values[`${prefix}${from + i}`] === "a").length;
+  return [countA(0) >= 3, countA(5) >= 3];
+}
+
 export function getTemperamentReading(values: Record<string, string>): FortuneResult {
-  // 未入力時はUIのスライダー表示と同じ中間値5を既定とする（0にすると未操作の項目が
-  // 最低評価とみなされ、実際の回答と食い違った気質が選ばれてしまう）
-  const scores = [
-    parseInt(values.temp_a || "5", 10),
-    parseInt(values.temp_b || "5", 10),
-    parseInt(values.temp_c || "5", 10),
-    parseInt(values.temp_d || "5", 10),
-  ];
-  const maxIdx = scores.indexOf(Math.max(...scores));
-  const t = TEMPERAMENTS[maxIdx];
-  const seed = scores.reduce((a, v, i) => a + v * (i + 1), 0);
+  // TEMPERAMENTS の並び：0 多血質（外向・安定）1 胆汁質（外向・不安定）2 粘液質（内向・安定）3 黒胆汁質（内向・不安定）
+  const [outgoing, stable] = twoAxes(values, "temp_q");
+  const idx = outgoing ? (stable ? 0 : 1) : (stable ? 2 : 3);
+  const t = TEMPERAMENTS[idx];
+  const seed = TEMPERAMENT_QUESTIONS.reduce((a, _, i) => a + (values[`temp_q${i}`] === "a" ? i + 1 : 0), idx * 50);
   const r = rng(seed * 100 + Date.now() % 10000);
 
   return {
@@ -275,15 +322,11 @@ const FOUR_ELEMENTS = [
 ];
 
 export function getFourElementsReading(values: Record<string, string>): FortuneResult {
-  const scores = [
-    parseInt(values.elem_fire  || "5", 10),
-    parseInt(values.elem_water || "5", 10),
-    parseInt(values.elem_earth || "5", 10),
-    parseInt(values.elem_air   || "5", 10),
-  ];
-  const maxIdx = scores.indexOf(Math.max(...scores));
-  const e = FOUR_ELEMENTS[maxIdx];
-  const seed = scores.reduce((a, v, i) => a + v * (i + 1), 0);
+  // FOUR_ELEMENTS の並び：0 火（熱・乾）1 水（冷・湿）2 地（冷・乾）3 風（熱・湿）
+  const [hot, dry] = twoAxes(values, "elem_q");
+  const idx = hot ? (dry ? 0 : 3) : (dry ? 2 : 1);
+  const e = FOUR_ELEMENTS[idx];
+  const seed = FOUR_ELEMENTS_QUESTIONS.reduce((a, _, i) => a + (values[`elem_q${i}`] === "a" ? i + 1 : 0), idx * 50);
   const r = rng(seed * 100 + Date.now() % 10000);
 
   return {
